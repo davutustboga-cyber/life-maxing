@@ -1,0 +1,553 @@
+/* style.css — Life Maxing. Rustige, donkere basis (Nachtwaarde-stijl).
+   v2.5 §5.5: zelfgehoste fonts. De woff2-bestanden staan nu in
+   /public/fonts/ (dezelfde Instrument Serif / Hanken Grotesk als de
+   React-versie, via @fontsource — geen extern netwerkverzoek, v1.0 §11.4). */
+
+@font-face {
+  font-family: "Instrument Serif";
+  src: url("/fonts/InstrumentSerif-Regular.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Hanken Grotesk";
+  src: url("/fonts/HankenGrotesk-Regular.woff2") format("woff2");
+  font-display: swap;
+}
+
+:root {
+  /* v2.3 §1.2 — zes tokens, meer niet. Neutralen zijn blauwgrijs getint
+     richting inkt, nooit een neutraal grijs uit de doos. Deze waarden zijn
+     de donkere kolom uit dat palet; de app kent voorlopig alleen de nacht. */
+  --ground: #0e1420;
+  --ink: #e8e4da;
+  --brass: #c9922f;
+  --dusk: #7c8cb0;
+  --ember: #c86a4e;
+  --moss: #7a9070;
+
+  /* De namen die de rest van dit bestand al gebruikte, nu op het palet. */
+  --achtergrond: var(--ground);
+  --voorgrond: var(--ink);
+  --voorgrond-zacht: rgba(232, 228, 218, 0.65);
+  --lijn: rgba(232, 228, 218, 0.28);
+  --oppervlak: #151d2c;
+  --serif: "Instrument Serif", Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  --sans: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: var(--achtergrond);
+  color: var(--voorgrond);
+  font-family: var(--sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6vh 6vw;
+  gap: 2rem;
+  transition: opacity 900ms ease;
+}
+
+.scherm {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+  text-align: center;
+}
+
+.vraag {
+  font-family: var(--serif);
+  font-size: 1.7rem;
+  font-weight: 400;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.regel {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--voorgrond-zacht);
+  margin: 0;
+}
+
+.regels {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.knop {
+  background: transparent;
+  border: 1px solid var(--lijn);
+  color: var(--voorgrond);
+  padding: 0.9rem 2rem;
+  font-size: 1rem;
+  border-radius: 999px;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+
+.knop:hover,
+.knop:focus-visible {
+  border-color: var(--voorgrond);
+  background: rgba(230, 220, 200, 0.06);
+}
+
+.knop-klein {
+  background: transparent;
+  border: none;
+  color: var(--voorgrond-zacht);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0.3rem;
+}
+
+.deuren {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.deur {
+  border: 1px solid var(--lijn);
+  border-radius: 18px;
+  padding: 1.4rem 1.2rem;
+  background: var(--oppervlak);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  color: var(--voorgrond);
+  font-size: 1.05rem;
+  transition: border-color 200ms ease;
+}
+
+.deur:hover,
+.deur:focus-visible {
+  border-color: var(--voorgrond);
+}
+
+.deur-onderschrift {
+  color: var(--voorgrond-zacht);
+  font-size: 0.85rem;
+}
+
+.woorden-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.woord-knop {
+  background: transparent;
+  border: 1px solid var(--lijn);
+  color: var(--voorgrond);
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
+}
+
+.woord-knop[aria-pressed="true"] {
+  background: rgba(230, 220, 200, 0.14);
+  border-color: var(--voorgrond);
+}
+
+input[type="text"],
+input[type="search"] {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--lijn);
+  color: var(--voorgrond);
+  font-size: 1rem;
+  padding: 0.5rem 0.2rem;
+  width: 100%;
+  font-family: inherit;
+  text-align: center;
+}
+
+input[type="text"]:focus,
+input[type="search"]:focus,
+textarea:focus {
+  outline: none;
+  border-bottom-color: var(--voorgrond);
+}
+
+textarea {
+  background: transparent;
+  border: 1px solid var(--lijn);
+  border-radius: 12px;
+  color: var(--voorgrond);
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 0.9rem;
+  width: 100%;
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
+.schijf-canvas {
+  width: min(70vw, 320px);
+  height: min(70vw, 320px);
+  touch-action: none;
+}
+
+.hemel-canvas {
+  width: 100%;
+  height: 60vh;
+  touch-action: manipulation;
+}
+
+.tijd-opties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  justify-content: center;
+}
+
+.zacht {
+  color: var(--voorgrond-zacht);
+  font-size: 0.92rem;
+}
+
+.toggle-rij {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--lijn);
+  text-align: left;
+}
+
+.toggle-rij:last-of-type {
+  border-bottom: none;
+}
+
+.toggle-tekst {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.switch {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-schuif {
+  position: absolute;
+  inset: 0;
+  background: rgba(230, 220, 200, 0.2);
+  border-radius: 999px;
+  transition: background 200ms ease;
+  cursor: pointer;
+}
+
+.switch-schuif::before {
+  content: "";
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  top: 3px;
+  background: var(--voorgrond);
+  border-radius: 50%;
+  transition: transform 200ms ease;
+}
+
+.switch input:checked + .switch-schuif {
+  background: rgba(230, 220, 200, 0.55);
+}
+
+.switch input:checked + .switch-schuif::before {
+  transform: translateX(18px);
+  background: var(--achtergrond);
+}
+
+.hulplijst {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  text-align: left;
+}
+
+.hulplijn {
+  border-bottom: 1px solid var(--lijn);
+  padding-bottom: 0.8rem;
+}
+
+.hulplijn strong {
+  font-size: 1.05rem;
+}
+
+.lengte-link {
+  background: none;
+  border: none;
+  color: var(--voorgrond-zacht);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.fade-uit {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* De Hemel — onderkant, aanbod en tekenmodus (v1.1) */
+.hemel-onder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  min-height: 6.5rem;
+}
+
+.aanbod {
+  max-width: 30rem;
+  text-align: center;
+}
+
+.aanbod-knoppen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.9rem;
+}
+
+.naam-veld {
+  width: min(22rem, 80vw);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--lijn);
+  color: var(--voorgrond);
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  text-align: center;
+  padding: 0.5rem 0.25rem;
+}
+
+.naam-veld:focus {
+  outline: none;
+  border-bottom-color: var(--voorgrond);
+}
+
+.naam-veld::placeholder {
+  color: var(--voorgrond-zacht);
+  font-family: var(--sans);
+  font-size: 0.9rem;
+}
+
+/* De Maandbrief — v2.4 §11: puur typografie, geen beeld, geen animatie.
+   De enige plek in de app waar tekst het hele scherm mag hebben. */
+.brief-scherm {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 2rem;
+  text-align: left;
+  align-items: flex-start;
+}
+
+.brief-opschrift {
+  font-family: var(--serif);
+  font-size: 2.4rem;
+  font-weight: 400;
+  line-height: 1.1;
+  margin: 0 0 2rem;
+  color: var(--voorgrond);
+}
+
+/* De herkomstregels op S5 — de belofte uit S0 dat wetenschap, geloof en een
+   eigen idee altijd apart gezegd worden. Rustig, niet als badge: dit is een
+   voetnoot, geen keurmerk. Elke regel staat op zichzelf. */
+.herkomst {
+  margin: 1.6rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 30rem;
+}
+
+.herkomst-regel {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--voorgrond-zacht);
+  border-left: 1px solid rgba(201, 146, 47, 0.45);
+  padding-left: 0.7rem;
+  text-align: left;
+}
+
+/* v2.3 §2.8 / schermenoverzicht.md S5: "waar relevant een eenvoudige
+   timer... geen voortgangsbalk met percentage, wel een rustige visuele
+   indicatie." De vorm draagt de instructie, geen tekst en geen aftelling
+   erbij. `.rustig` (de eigen schakelaar, telt net zo hard als
+   prefers-reduced-motion hieronder) zet de animatie uit. */
+.timer-visual {
+  width: min(52vw, 220px);
+  height: min(52vw, 220px);
+  margin: 0.4rem auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ademvorm — de schijf zet uit en trekt samen op een echt ritme: vier
+   tellen in, zes tellen uit, tien seconden per cyclus, oneindig herhaald.
+   Alleen bij adem-lange-uitademing. */
+.ademvorm::before {
+  content: "";
+  display: block;
+  width: 60%;
+  height: 60%;
+  border-radius: 50%;
+  background: rgba(201, 146, 47, 0.2);
+  animation: ademvorm-cyclus 10s ease-in-out infinite;
+}
+
+.ademvorm.rustig::before {
+  animation: none;
+  transform: scale(0.82);
+  opacity: 0.55;
+}
+
+@keyframes ademvorm-cyclus {
+  0% { transform: scale(0.62); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 0.75; }
+  60% { transform: scale(1); opacity: 0.75; }
+  100% { transform: scale(0.62); opacity: 0.4; }
+}
+
+/* Lichtpunt — één punt dat helderder wordt zolang je erbij blijft: hier
+   ingevuld als zolang dit scherm open staat, geleidelijk over ~60 seconden
+   (dezelfde tijdspanne als "een minuut is genoeg" in het script). Alleen
+   bij savoring-zestig-seconden. */
+.lichtpunt::before {
+  content: "";
+  display: block;
+  width: 14%;
+  height: 14%;
+  border-radius: 50%;
+  background: var(--brass);
+  opacity: 0.18;
+  box-shadow: 0 0 6px 2px rgba(201, 146, 47, 0.25);
+  animation: lichtpunt-oplichten 60s ease-out forwards;
+}
+
+.lichtpunt.rustig::before {
+  animation: none;
+  opacity: 0.55;
+  box-shadow: 0 0 14px 5px rgba(201, 146, 47, 0.35);
+}
+
+@keyframes lichtpunt-oplichten {
+  from { opacity: 0.18; box-shadow: 0 0 6px 2px rgba(201, 146, 47, 0.25); }
+  to { opacity: 0.92; box-shadow: 0 0 26px 10px rgba(201, 146, 47, 0.55); }
+}
+
+/* Eén rustige regel onderaan, bv. als bewaren niet lukte of een eigen woord
+   is onthouden. Geen toast met icoon, geen kleur die alarmeert. */
+.melding {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  max-width: min(28rem, 88vw);
+  margin: 0;
+  text-align: center;
+  color: var(--voorgrond-zacht);
+  background: var(--oppervlak);
+  border: 1px solid var(--lijn);
+  border-radius: 999px;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.85rem;
+}
+
+.brief-tekst p {
+  font-family: var(--sans);
+  font-size: 1.02rem;
+  line-height: 1.75;
+  color: var(--voorgrond);
+  margin: 0 0 1.15rem;
+}
+
+.brief-tekst p:last-child {
+  color: var(--voorgrond-zacht);
+  margin-top: 2rem;
+}
+
+.brief-scherm .knop-klein {
+  margin-top: 2.5rem;
+  align-self: flex-start;
+}
+
+.brieven-lijst {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: min(22rem, 82vw);
+  margin-bottom: 2rem;
+}
+
+.brief-regel {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--lijn);
+  color: var(--voorgrond);
+  font-family: var(--serif);
+  font-size: 1.4rem;
+  text-align: left;
+  padding: 0.9rem 0.2rem;
+  cursor: pointer;
+}
+
+.brief-regel:hover,
+.brief-regel:focus-visible {
+  border-bottom-color: var(--voorgrond);
+  outline: none;
+}
