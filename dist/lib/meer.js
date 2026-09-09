@@ -8,26 +8,39 @@
 // aan te vullen met `leegBestand()`-standaarden — hetzelfde patroon als
 // `data.brieven ?? []` en `data.weekmomenten` elders in app.ts al gebruiken
 // voor velden die na de eerste versie zijn toegevoegd.
+
+                                                 
+
 /** "2026-09" — maandsleutel, nooit als getal getoond (v2.5 §5.2-conventie). */
-export function huidigeMaandSleutel(nu = new Date()) {
-    return `${nu.getFullYear()}-${String(nu.getMonth() + 1).padStart(2, "0")}`;
+export function huidigeMaandSleutel(nu       = new Date())         {
+  return `${nu.getFullYear()}-${String(nu.getMonth() + 1).padStart(2, "0")}`;
 }
-export function perfectionismeCheckBeschikbaar(data) {
-    const maand = huidigeMaandSleutel();
-    return !(data.perfectionismeChecks ?? []).some((c) => c.maand === maand);
+
+export function perfectionismeCheckBeschikbaar(data                )          {
+  const maand = huidigeMaandSleutel();
+  return !(data.perfectionismeChecks ?? []).some((c) => c.maand === maand);
 }
-export function registreerPerfectionismeCheck(data, antwoord) {
-    data.perfectionismeChecks = [...(data.perfectionismeChecks ?? []), { maand: huidigeMaandSleutel(), antwoord }];
+
+export function registreerPerfectionismeCheck(
+  data                ,
+  antwoord                                 
+)       {
+  data.perfectionismeChecks = [...(data.perfectionismeChecks ?? []), { maand: huidigeMaandSleutel(), antwoord }];
 }
-export function frictieBeschikbaar(data) {
-    const maand = huidigeMaandSleutel();
-    return !(data.frictieAangebodenMaanden ?? []).includes(maand);
+
+export function frictieBeschikbaar(data                )          {
+  const maand = huidigeMaandSleutel();
+  return !(data.frictieAangebodenMaanden ?? []).includes(maand);
 }
+
 /** Registreert alleen dát het aanbod deze maand getoond is — nooit welke
  * suggestie gekozen is of of hij is uitgevoerd (v2.2 Wet 8). */
-export function registreerFrictieAangeboden(data) {
-    const maand = huidigeMaandSleutel();
-    if (!(data.frictieAangebodenMaanden ?? []).includes(maand)) {
-        data.frictieAangebodenMaanden = [...(data.frictieAangebodenMaanden ?? []), maand];
-    }
+export function registreerFrictieAangeboden(data                )       {
+  const maand = huidigeMaandSleutel();
+  if (!(data.frictieAangebodenMaanden ?? []).includes(maand)) {
+    data.frictieAangebodenMaanden = [...(data.frictieAangebodenMaanden ?? []), maand];
+  }
 }
+
+
+//# sourceURL=src/lib/meer.ts

@@ -65,21 +65,45 @@ function koppelDisabled(veld: HTMLTextAreaElement | HTMLInputElement, knop: HTML
   veld.addEventListener("input", controleer);
 }
 
+/**
+ * v23 — een herbruikbaar oriëntatiepatroon voor elke flow van meer dan twee
+ * stappen (de WOOP-flow, de dag sluiten): een label ("stap 2 van 5") en
+ * dezelfde stippenrij die de losse oefeningen al gebruikten. Dit telt niets
+ * over je gebruik (Wet 4 blijft ongemoeid) — het toont alleen waar je bent
+ * binnen het scherm dat je nu al doorloopt.
+ */
+function stapKop(titel: string, index: number, totaal: number): ReturnType<typeof el>[] {
+  return [
+    el("p", { class: "stap-label" }, [`${titel} · stap ${index} van ${totaal}`]),
+    el(
+      "div",
+      { class: "stip-rij" },
+      Array.from({ length: totaal }, (_, i) => el("span", { class: `stip${i < index ? " vol" : ""}` }))
+    ),
+  ];
+}
+
 async function bewaren(): Promise<void> {
   const gelukt = await bewaarBestand(data);
   if (!gelukt) {
     // teksten.yaml → lege_staten.storage_vol_of_geweigerd. Die tekst bestond
     // wel maar werd nooit getoond; stil falen is het ergste wat een app die
     // "dit bestand is alles" belooft kan doen.
-    toonMelding(teksten.legeStaten.storageVolOfGeweigerd);
+    toonMelding(teksten.legeStaten.storageVolOfGeweigerd, "fout");
   }
 }
 
-/** Eén rustige regel onderaan het scherm, die vanzelf weer weggaat. */
-function toonMelding(tekst: string): void {
+/**
+ * Eén rustige regel onderaan het scherm, die vanzelf weer weggaat. Drie
+ * varianten (style.css): neutraal (default), "succes" (moss) en "fout"
+ * (ember) — spaarzaam, alleen de rand en de tekstkleur veranderen, nooit
+ * een groot gekleurd vlak.
+ */
+function toonMelding(tekst: string, soort: "neutraal" | "succes" | "fout" = "neutraal"): void {
   const bestaand = document.querySelector(".melding");
   if (bestaand) bestaand.remove();
-  const regel = el("p", { class: "melding zacht" }, [tekst]);
+  const klasse = soort === "neutraal" ? "melding zacht" : `melding zacht melding--${soort}`;
+  const regel = el("p", { class: klasse }, [tekst]);
   document.body.append(regel);
   setTimeout(() => regel.remove(), 6000);
 }
@@ -514,14 +538,18 @@ function toonS6(streek: Streek): void {
 }
 
 // ── S7 — Afsluiten ────────────────────────────────────────────────────
+// v2.5 §6.1 onderdeel 9 / v2.3 §3.1: het dimmen blijft de belangrijkste
+// animatie van de app -- een rustig moment dat een handeling afsluit. Tot
+// v23 bleef het scherm daarna permanent leeg (Wet 3: "je sluit de app
+// zelf"), wat vóór v21 bij het oude S1-first-ontwerp hoorde. Sinds v21 is
+// de app een doorlopende metgezel met een vaste navigatie (Nu/Doen/
+// Terugkijken) -- een blijvend leeg scherm na elke afgeronde actie voelt
+// dan niet als rust maar als een vastgelopen app. Op uitdrukkelijk verzoek
+// gefixt: na het dimmen ga je terug naar het startscherm, niet naar niets.
 function toonS7(): void {
-  // v2.5 §6.1 onderdeel 9 en v2.3 §3.1: het dimmen is de belangrijkste
-  // animatie van de app, want hij stuurt je weg. `dimEnDan` bestond al maar
-  // werd nergens aangeroepen. Er is bewust geen knop en geen klikvlak terug
-  // naar het begin (schermenoverzicht.md S7, Wet 3) — je sluit de app zelf.
   render([el("div", { class: "scherm", style: "min-height:60vh;width:100%;" }, [])]);
   dimEnDan(() => {
-    /* het scherm blijft leeg; de app doet niets meer tot je hem opnieuw opent */
+    toonThuis();
   });
 }
 
@@ -936,7 +964,7 @@ function toonS15Beweging(bewegingId: string): void {
         ? el(
             "div",
             { class: "herkomst" },
-            beweging.medischeGrens.map((regel) => el("p", { class: "herkomst-regel" }, [regel]))
+            beweging.medischeGrens.map((regel) => el("p", { class: "herkomst-regel herkomst-regel--grens" }, [regel]))
           )
         : null,
       el("button", { class: "knop", onclick: () => toonS7() }, ["Klaar"]),
@@ -1113,7 +1141,7 @@ function toonS19Beweging(bewegingId: string): void {
         ? el(
             "div",
             { class: "herkomst" },
-            beweging.medischeGrens.map((regel) => el("p", { class: "herkomst-regel" }, [regel]))
+            beweging.medischeGrens.map((regel) => el("p", { class: "herkomst-regel herkomst-regel--grens" }, [regel]))
           )
         : null,
       el("button", { class: "knop", onclick: () => toonS19Verder() }, ["Klaar"]),
@@ -1226,6 +1254,7 @@ function toonS22Ochtend(): void {
 
   render([
     el("div", { class: "scherm" }, [
+      el("button", { class: "terug-knop", onclick: () => toonThuis() }, ["← terug"]),
       el("h1", { class: "brief-opschrift" }, [teksten.ochtend.kop]),
       fragment ? el("p", { class: "opmerking" }, [`${fragment.label}: ${fragment.tekst}`]) : null,
       kwaliteit
@@ -1249,27 +1278,61 @@ function toonS22Ochtend(): void {
 // v2.md §9.1 punt 7, v2.3 §2.5 "De Grond". De chips zijn de enige plek waar
 // de grondbewegingen worden vastgelegd (`ritme.ts`); geen apart scherm leest
 // ze terug als lijst of getal.
-function toonS23AvondSluiten(): void {
-  const canvas = el("canvas", { class: "schijf-canvas" });
-  let positie: { energie: number; toon: number } | null = null;
-  const gekozenChips = new Set<string>();
-  const dankVeld = el("textarea", { placeholder: teksten.avondSluiten.dankbaarheidPlaceholder });
-  const zinVeld = el("textarea", { placeholder: teksten.avondSluiten.zinPlaceholder });
-  const voorMorgenVeld = el("textarea", { placeholder: teksten.avondSluiten.voorMorgenPlaceholder });
-  const chipsGrid = el("div", { class: "woorden-grid" });
+//
+// v23 — dit scherm toonde tot nu toe vijf vragen tegelijk op één lange
+// pagina, zonder enige terugknop: precies de stapeling die "niet te veel
+// tegelijk laten zien" vraagt te vermijden. Dezelfde inhoud, nu één vraag
+// per scherm, met dezelfde stip-rij als de WOOP-flow — en overal een weg
+// terug. Alleen de laatste stap bewaart daadwerkelijk.
+interface AvondState {
+  positie: { energie: number; toon: number } | null;
+  chips: Set<string>;
+  dankbaarheid: string;
+  zin: string;
+  voorMorgen: string;
+}
+
+function avondVisieBlok(): ReturnType<typeof el> | null {
   // v22: 's avonds de volledige visie teruglezen (geen invoer, alleen
   // lezen) — het enige dagdeel met de volle tekst, zie het plan.
   const visieRegels = data.visie
     ? [data.visie.wieIkBen, data.visie.watIkHeb, data.visie.waarIkSta].filter((r) => r.trim().length > 0)
     : [];
-  const visieBlok =
-    data.visie && visieCheckInsVoor(data).avond && visieRegels.length > 0
-      ? el(
-          "div",
-          { class: "herkomst" },
-          visieRegels.map((r) => el("p", { class: "herkomst-regel" }, [r]))
-        )
-      : null;
+  if (!data.visie || !visieCheckInsVoor(data).avond || visieRegels.length === 0) return null;
+  return el("div", { class: "herkomst" }, visieRegels.map((r) => el("p", { class: "herkomst-regel" }, [r])));
+}
+
+function toonS23AvondSluiten(): void {
+  toonS23Stap1Kompas({ positie: null, chips: new Set<string>(), dankbaarheid: "", zin: "", voorMorgen: "" });
+}
+
+function toonS23Stap1Kompas(state: AvondState): void {
+  const canvas = el("canvas", { class: "schijf-canvas" });
+  const visieBlok = avondVisieBlok();
+
+  render([
+    el("div", { class: "scherm" }, [
+      el("button", { class: "terug-knop", onclick: () => toonThuis() }, ["← terug"]),
+      ...stapKop(teksten.avondSluiten.kop, 1, 5),
+      visieBlok ? el("div", {}, [el("p", { class: "vraag" }, [teksten.avondSluiten.visieKop]), visieBlok]) : null,
+      el("p", { class: "vraag" }, [teksten.avondSluiten.kompasVraag]),
+      el("p", { class: "zacht" }, [teksten.kompas.schijfUitleg]),
+      kompasVeld(canvas),
+      el("button", { class: "knop", onclick: () => toonS23Stap2Chips(state) }, ["Volgende"]),
+    ]),
+  ]);
+
+  tekenSchijf(
+    canvas,
+    (energie, toon) => {
+      state.positie = { energie, toon };
+    },
+    { rustig: data.instellingen.rustigeBeelden, beginPositie: state.positie }
+  );
+}
+
+function toonS23Stap2Chips(state: AvondState): void {
+  const chipsGrid = el("div", { class: "woorden-grid" });
 
   function vulChips(): void {
     chipsGrid.replaceChildren(
@@ -1278,10 +1341,10 @@ function toonS23AvondSluiten(): void {
           "button",
           {
             class: "woord-knop",
-            "aria-pressed": gekozenChips.has(c.id),
+            "aria-pressed": state.chips.has(c.id),
             onclick: () => {
-              if (gekozenChips.has(c.id)) gekozenChips.delete(c.id);
-              else gekozenChips.add(c.id);
+              if (state.chips.has(c.id)) state.chips.delete(c.id);
+              else state.chips.add(c.id);
               vulChips();
             },
           },
@@ -1292,16 +1355,78 @@ function toonS23AvondSluiten(): void {
   }
   vulChips();
 
+  render([
+    el("div", { class: "scherm" }, [
+      el("button", { class: "terug-knop", onclick: () => toonS23Stap1Kompas(state) }, ["← terug"]),
+      ...stapKop(teksten.avondSluiten.kop, 2, 5),
+      el("p", { class: "vraag" }, [teksten.avondSluiten.chipsVraag]),
+      chipsGrid,
+      el("button", { class: "knop", onclick: () => toonS23Stap3Dank(state) }, ["Volgende"]),
+    ]),
+  ]);
+}
+
+function toonS23Stap3Dank(state: AvondState): void {
+  const veld = el("textarea", { placeholder: teksten.avondSluiten.dankbaarheidPlaceholder }) as HTMLTextAreaElement;
+  veld.value = state.dankbaarheid;
+
+  render([
+    el("div", { class: "scherm" }, [
+      el(
+        "button",
+        { class: "terug-knop", onclick: () => { state.dankbaarheid = veld.value; toonS23Stap2Chips(state); } },
+        ["← terug"]
+      ),
+      ...stapKop(teksten.avondSluiten.kop, 3, 5),
+      el("p", { class: "vraag" }, [teksten.avondSluiten.dankbaarheidVraag]),
+      veld,
+      el(
+        "button",
+        { class: "knop", onclick: () => { state.dankbaarheid = veld.value; toonS23Stap4Zin(state); } },
+        ["Volgende"]
+      ),
+    ]),
+  ]);
+}
+
+function toonS23Stap4Zin(state: AvondState): void {
+  const veld = el("textarea", { placeholder: teksten.avondSluiten.zinPlaceholder }) as HTMLTextAreaElement;
+  veld.value = state.zin;
+
+  render([
+    el("div", { class: "scherm" }, [
+      el(
+        "button",
+        { class: "terug-knop", onclick: () => { state.zin = veld.value; toonS23Stap3Dank(state); } },
+        ["← terug"]
+      ),
+      ...stapKop(teksten.avondSluiten.kop, 4, 5),
+      el("p", { class: "vraag" }, [teksten.avondSluiten.zinVraag]),
+      veld,
+      el(
+        "button",
+        { class: "knop", onclick: () => { state.zin = veld.value; toonS23Stap5VoorMorgen(state); } },
+        ["Volgende"]
+      ),
+    ]),
+  ]);
+}
+
+function toonS23Stap5VoorMorgen(state: AvondState): void {
+  const veld = el("textarea", { placeholder: teksten.avondSluiten.voorMorgenPlaceholder }) as HTMLTextAreaElement;
+  veld.value = state.voorMorgen;
+
   function klaar(): void {
+    state.voorMorgen = veld.value;
     data.dagsluitingen = data.dagsluitingen ?? [];
     data.dagsluitingen.push({
       id: nieuwId("d"),
       datum: huidigeDagSleutel(),
-      positie,
-      chips: [...gekozenChips],
-      dankbaarheid: (dankVeld as HTMLTextAreaElement).value.trim() || null,
-      zin: (zinVeld as HTMLTextAreaElement).value.trim() || null,
-      voorMorgen: (voorMorgenVeld as HTMLTextAreaElement).value.trim() || null,
+      positie: state.positie,
+      chips: [...state.chips],
+      dankbaarheid: state.dankbaarheid.trim() || null,
+      zin: state.zin.trim() || null,
+      voorMorgen: state.voorMorgen.trim() || null,
     });
     void bewaren();
     // Ayat al-Kursi hoort vlak voor het slapen, als allerlaatste — dus na
@@ -1317,30 +1442,17 @@ function toonS23AvondSluiten(): void {
 
   render([
     el("div", { class: "scherm" }, [
-      el("h1", { class: "brief-opschrift" }, [teksten.avondSluiten.kop]),
-      visieBlok ? el("div", {}, [el("p", { class: "vraag" }, [teksten.avondSluiten.visieKop]), visieBlok]) : null,
-      el("p", { class: "vraag" }, [teksten.avondSluiten.kompasVraag]),
-      el("p", { class: "zacht" }, [teksten.kompas.schijfUitleg]),
-      kompasVeld(canvas),
-      el("p", { class: "vraag" }, [teksten.avondSluiten.chipsVraag]),
-      chipsGrid,
-      el("p", { class: "vraag" }, [teksten.avondSluiten.dankbaarheidVraag]),
-      dankVeld,
-      el("p", { class: "vraag" }, [teksten.avondSluiten.zinVraag]),
-      zinVeld,
+      el(
+        "button",
+        { class: "terug-knop", onclick: () => { state.voorMorgen = veld.value; toonS23Stap4Zin(state); } },
+        ["← terug"]
+      ),
+      ...stapKop(teksten.avondSluiten.kop, 5, 5),
       el("p", { class: "vraag" }, [teksten.avondSluiten.voorMorgenVraag]),
-      voorMorgenVeld,
+      veld,
       el("button", { class: "knop", onclick: klaar }, [teksten.avondSluiten.klaar]),
     ]),
   ]);
-
-  tekenSchijf(
-    canvas,
-    (energie, toon) => {
-      positie = { energie, toon };
-    },
-    { rustig: data.instellingen.rustigeBeelden }
-  );
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -1865,7 +1977,7 @@ function toonOefening(bewegingId: string, opties: OefeningOpties): void {
           ? el(
               "div",
               { class: "herkomst" },
-              beweging!.medischeGrens.map((regel) => el("p", { class: "herkomst-regel" }, [regel]))
+              beweging!.medischeGrens.map((regel) => el("p", { class: "herkomst-regel herkomst-regel--grens" }, [regel]))
             )
           : null,
         el(
@@ -1978,6 +2090,7 @@ function toonS24Wish(): void {
 
   render([
     el("div", { class: "scherm" }, [
+      ...stapKop(teksten.doelen.toegangTitel, 1, 5),
       el("p", { class: "vraag" }, [teksten.doelen.wishVraag]),
       el("p", { class: "zacht" }, [teksten.doelen.wishOnderschrift]),
       veld,
@@ -1998,6 +2111,7 @@ function toonS24Outcome(wish: string): void {
 
   render([
     el("div", { class: "scherm" }, [
+      ...stapKop(teksten.doelen.toegangTitel, 2, 5),
       el("p", { class: "vraag" }, [teksten.doelen.outcomeVraag]),
       el("p", { class: "zacht" }, [teksten.doelen.outcomeOnderschrift]),
       veld,
@@ -2010,9 +2124,11 @@ function toonS24Outcome(wish: string): void {
 function toonS24Verbeelding(wish: string, outcome: string): void {
   render([
     el("div", { class: "scherm" }, [
+      ...stapKop(teksten.doelen.toegangTitel, 3, 5),
       el("p", { class: "vraag" }, [teksten.doelen.verbeeldingKop]),
       el("p", { class: "regel" }, [teksten.doelen.verbeeldingTekst]),
       el("button", { class: "knop", onclick: () => toonS24Obstacle(wish, outcome) }, [teksten.doelen.klaar]),
+      el("button", { class: "knop-klein", onclick: () => toonS24Outcome(wish) }, [teksten.doelen.terug]),
     ]),
   ]);
 }
@@ -2028,6 +2144,7 @@ function toonS24Obstacle(wish: string, outcome: string): void {
 
   render([
     el("div", { class: "scherm" }, [
+      ...stapKop(teksten.doelen.toegangTitel, 4, 5),
       el("p", { class: "vraag" }, [teksten.doelen.obstacleVraag]),
       el("p", { class: "zacht" }, [teksten.doelen.obstacleOnderschrift]),
       veld,
@@ -2064,6 +2181,7 @@ function toonS24Plan(wish: string, outcome: string, obstacle: string): void {
 
   render([
     el("div", { class: "scherm" }, [
+      ...stapKop(teksten.doelen.toegangTitel, 5, 5),
       el("p", { class: "vraag" }, [teksten.doelen.planVraag]),
       el("p", { class: "zacht" }, [teksten.doelen.planAlsLabel]),
       alsVeld,
@@ -2180,6 +2298,7 @@ export function toonS10(): void {
         onclick: () => {
           exporteerBestand(data);
           meldingTekst.textContent = teksten.instellingen.exportGelukt;
+          meldingTekst.classList.add("zacht--succes");
         },
       }, ["Exporteren"]),
       meldingTekst,
@@ -2209,6 +2328,7 @@ function toonS11(): void {
     const geimporteerd = parseGeimporteerdBestand(tekst);
     if (!geimporteerd) {
       melding.textContent = teksten.legeStaten.importMislukt;
+      melding.classList.add("zacht--fout");
       return;
     }
     data = geimporteerd;

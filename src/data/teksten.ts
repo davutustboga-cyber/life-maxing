@@ -96,11 +96,11 @@ export const teksten = {
     },
     beeld: {
       vraag: "Over een jaar, op een gewone dag. Je voelt je zoals je wil. Waar ben je? Wat doe je? Hoe praat je tegen jezelf?",
-      placeholder: "neem er even de tijd voor",
+      placeholder: "bijvoorbeeld: ik werk rustig, ik slaap goed, mensen om me heen kennen me",
     },
     werkelijkheid: {
       vraag: "En nu eerlijk: wat staat er in jou tussen vandaag en dat beeld? Eén ding.",
-      placeholder: "wat er echt in de weg staat",
+      placeholder: "bijvoorbeeld: ik stel het uit tot het te laat voelt",
     },
     plan: {
       vraag: "Als dat gebeurt, wat doe je dan?",
@@ -267,9 +267,9 @@ export const teksten = {
     toegangKnoptekst: "richting voor vandaag",
     kop: "Richting",
     intentieVraag: "Eén zin, als je wil — waarom vandaag?",
-    intentiePlaceholder: "mag leeg blijven",
+    intentiePlaceholder: "bijvoorbeeld: ik wil vandaag rust vinden voor het druk wordt",
     kerntaakVraag: "Wat is vandaag de kerntaak?",
-    kerntaakPlaceholder: "één ding, niet een lijst",
+    kerntaakPlaceholder: "bijvoorbeeld: het rapport afmaken",
     geenVerlangen: "Nog geen verlangen gekozen voor deze periode.",
     kiesVerlangen: "kiezen",
     klaar: "Klaar",
@@ -290,15 +290,15 @@ export const teksten = {
       { id: "goede_dag", label: "goede dag" },
     ],
     dankbaarheidVraag: "Eén dankbaarheid.",
-    dankbaarheidPlaceholder: "mag klein zijn",
+    dankbaarheidPlaceholder: "bijvoorbeeld: dat het rustig was tijdens het eten",
     zinVraag: "Eén zin over vandaag.",
-    zinPlaceholder: "mag leeg blijven",
+    zinPlaceholder: "bijvoorbeeld: het was een drukke dag, maar ik bleef rustig",
     // v22: apart van zinVraag (terugkijkend) — een klein, concreet,
     // vooruitkijkend puntje. Scullin e.a. 2018: dat is wat vlak voor het
     // slapen sneller in slaap helpt, niet nog een keer terugblikken.
     visieKop: "Je visie",
     voorMorgenVraag: "Eén klein ding voor morgen.",
-    voorMorgenPlaceholder: "concreet en klein, mag leeg blijven",
+    voorMorgenPlaceholder: "bijvoorbeeld: eerst tien minuten wandelen, dan pas de telefoon",
     klaar: "Klaar",
   },
   // v21, spoor W6 (Onderzoek-W6-Doelen-en-Verbeelding.md, content/doelen.md).
