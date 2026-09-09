@@ -87,20 +87,36 @@ export function tekenSchijf(canvas, onKies, opties = {}) {
         const gloedR = Math.max(1, straal * (staat.straal + puls) * 0.72);
         const gx = punt ? punt.x : cx;
         const gy = punt ? punt.y : cy;
+        // Een bredere, zachtere ademwolk onder de kernvorm — geeft de Warmte
+        // atmosferische diepte in plaats van een harde cirkel van licht.
+        const bloemR = gloedR * 2.1;
+        const bloem = ctx.createRadialGradient(gx, gy, 0, gx, gy, bloemR);
+        bloem.addColorStop(0, rgb(staat.kleur, 0.1));
+        bloem.addColorStop(0.5, rgb(staat.kleur, 0.045));
+        bloem.addColorStop(1, rgb(staat.kleur, 0));
+        ctx.fillStyle = bloem;
+        ctx.beginPath();
+        ctx.arc(gx, gy, bloemR, 0, Math.PI * 2);
+        ctx.fill();
         const gloed = ctx.createRadialGradient(gx, gy, 0, gx, gy, gloedR);
-        gloed.addColorStop(0, rgb(staat.kleur, 0.34));
-        gloed.addColorStop(Math.min(0.95, staat.scherpte), rgb(staat.kleur, 0.14));
+        gloed.addColorStop(0, rgb(staat.kleur, 0.42));
+        gloed.addColorStop(Math.min(0.95, staat.scherpte), rgb(staat.kleur, 0.17));
         gloed.addColorStop(1, rgb(staat.kleur, 0));
         ctx.fillStyle = gloed;
         ctx.beginPath();
         ctx.arc(gx, gy, gloedR, 0, Math.PI * 2);
         ctx.fill();
-        // hairline cirkel
+        // hairline cirkel, met een fijne messinggloed op de rand — het instrument
+        // zelf, niet alleen de staat die erop ligt.
+        ctx.save();
+        ctx.shadowColor = `rgba(${MESSING}, 0.35)`;
+        ctx.shadowBlur = 6;
         ctx.beginPath();
         ctx.arc(cx, cy, straal, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(232, 228, 218, 0.35)";
+        ctx.strokeStyle = "rgba(237, 233, 222, 0.3)";
         ctx.lineWidth = 1;
         ctx.stroke();
+        ctx.restore();
         // de schaalverdeling: alleen terwijl je sleept
         if (sleept) {
             ctx.strokeStyle = `rgba(${MESSING}, 0.45)`;
@@ -117,10 +133,25 @@ export function tekenSchijf(canvas, onKies, opties = {}) {
             }
         }
         if (punt) {
+            // Terwijl je sleept groeit het puntje licht en krijgt het een dunne
+            // ring — "het instrument toont zijn precisie alleen wanneer je hem
+            // gebruikt" geldt ook voor de greep zelf, niet alleen de ticks.
+            const r = sleept ? 6.5 : 5;
+            ctx.save();
+            ctx.shadowColor = "rgba(237, 233, 222, 0.6)";
+            ctx.shadowBlur = sleept ? 10 : 5;
             ctx.beginPath();
-            ctx.arc(punt.x, punt.y, 5, 0, Math.PI * 2);
-            ctx.fillStyle = "rgba(232, 228, 218, 0.9)";
+            ctx.arc(punt.x, punt.y, r, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(237, 233, 222, 0.94)";
             ctx.fill();
+            ctx.restore();
+            if (sleept) {
+                ctx.beginPath();
+                ctx.arc(punt.x, punt.y, r + 4, 0, Math.PI * 2);
+                ctx.strokeStyle = "rgba(237, 233, 222, 0.35)";
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
         }
         raf = requestAnimationFrame(herteken);
     }
@@ -224,7 +255,7 @@ export function tekenVerschil(canvas, van, naar, rustig = false) {
         const t = stil ? 1 : Math.min(1, (performance.now() - begonnen) / DUUR);
         ctx.beginPath();
         ctx.arc(cx, cy, straal, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(232, 228, 218, 0.35)";
+        ctx.strokeStyle = "rgba(237, 233, 222, 0.3)";
         ctx.lineWidth = 1;
         ctx.stroke();
         const p1 = { x: cx + van.toon * straal, y: cy - van.energie * straal };
@@ -251,10 +282,14 @@ export function tekenVerschil(canvas, van, naar, rustig = false) {
             [p2, 0.9 * t],
         ];
         for (const [p, alpha] of punten) {
+            ctx.save();
+            ctx.shadowColor = `rgba(237, 233, 222, ${alpha * 0.6})`;
+            ctx.shadowBlur = 6;
             ctx.beginPath();
             ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(232, 228, 218, ${alpha})`;
+            ctx.fillStyle = `rgba(237, 233, 222, ${alpha})`;
             ctx.fill();
+            ctx.restore();
         }
         if (t < 1)
             raf = requestAnimationFrame(herteken);
@@ -275,7 +310,7 @@ export function tekenVerschil(canvas, van, naar, rustig = false) {
  * v2.3 §1.2 `--brass` (donkere waarde): het ene accent dat de hele interface
  * draagt. Stond hier op een zelfgekozen tint; nu de waarde uit het palet.
  */
-const MESSING = "201, 146, 47";
+const MESSING = "212, 161, 58";
 function seededRandom(seed) {
     let h = 2166136261;
     for (let i = 0; i < seed.length; i++) {
@@ -359,8 +394,10 @@ function tekenLijnen(ctx, posities, sterIds, fractie, alpha) {
     const segmenten = punten.length - 1;
     const tot = fractie * segmenten;
     ctx.save();
+    ctx.shadowColor = `rgba(${MESSING}, ${alpha * 0.8})`;
+    ctx.shadowBlur = 4;
     ctx.strokeStyle = `rgba(${MESSING}, ${alpha})`;
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1.1;
     ctx.lineCap = "round";
     ctx.beginPath();
     ctx.moveTo(punten[0].x, punten[0].y);
@@ -401,10 +438,15 @@ function tekenNaam(ctx, posities, sterrenbeeld, alpha) {
     ctx.restore();
 }
 function tekenSter(ctx, p, metZin, helderheid) {
+    const r = p.r * (metZin ? 1.4 : 1);
+    ctx.save();
+    ctx.shadowColor = `rgba(237, 226, 196, ${Math.min(0.8, helderheid)})`;
+    ctx.shadowBlur = r * (metZin ? 6 : 3.5);
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r * (metZin ? 1.4 : 1), 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(230, 220, 200, ${helderheid})`;
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(245, 238, 220, ${helderheid})`;
     ctx.fill();
+    ctx.restore();
 }
 /**
  * De Hemel: sterren verdeeld over vier streken, met de getekende sterrenbeelden

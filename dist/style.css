@@ -1,7 +1,8 @@
-/* style.css — Life Maxing. Rustige, donkere basis (Nachtwaarde-stijl).
-   v2.5 §5.5: zelfgehoste fonts. De woff2-bestanden staan nu in
-   /public/fonts/ (dezelfde Instrument Serif / Hanken Grotesk als de
-   React-versie, via @fontsource — geen extern netwerkverzoek, v1.0 §11.4). */
+/* style.css — Life Maxing.
+   v2: dezelfde zes betekeniskleuren, dezelfde terughoudendheid — maar met de
+   diepte (gelaagde gradients, getinte schaduwen, een gloed die op de
+   messingkleur reageert) die stil van leeg onderscheidt. v2.5 §5.5:
+   zelfgehoste fonts, /public/fonts/. */
 
 @font-face {
   font-family: "Instrument Serif";
@@ -15,24 +16,30 @@
 }
 
 :root {
-  /* v2.3 §1.2 — zes tokens, meer niet. Neutralen zijn blauwgrijs getint
-     richting inkt, nooit een neutraal grijs uit de doos. Deze waarden zijn
-     de donkere kolom uit dat palet; de app kent voorlopig alleen de nacht. */
-  --ground: #0e1420;
-  --ink: #e8e4da;
-  --brass: #c9922f;
-  --dusk: #7c8cb0;
-  --ember: #c86a4e;
-  --moss: #7a9070;
+  --ground: #0a0d16;
+  --ink: #ede9de;
+  --brass: #d4a13a;
+  --dusk: #8b9bc0;
+  --ember: #d97a5a;
+  --moss: #86a078;
 
-  /* De namen die de rest van dit bestand al gebruikte, nu op het palet. */
   --achtergrond: var(--ground);
   --voorgrond: var(--ink);
-  --voorgrond-zacht: rgba(232, 228, 218, 0.65);
-  --lijn: rgba(232, 228, 218, 0.28);
-  --oppervlak: #151d2c;
+  --voorgrond-zacht: rgba(237, 233, 222, 0.66);
+  --voorgrond-zwak: rgba(237, 233, 222, 0.4);
+  --lijn: rgba(237, 233, 222, 0.14);
+  --lijn-sterk: rgba(237, 233, 222, 0.26);
+  --lijn-warm: rgba(212, 161, 58, 0.4);
+  --oppervlak: #131a29;
+  --oppervlak-hoog: #182238;
+  --brass-gloed: rgba(212, 161, 58, 0.5);
+
   --serif: "Instrument Serif", Georgia, "Iowan Old Style", "Palatino Linotype", serif;
   --sans: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+
+  --ease-standaard: cubic-bezier(0.16, 1, 0.3, 1);
+  --schaduw-zwevend: 0 1px 1px rgba(4, 6, 12, 0.3), 0 8px 24px -8px rgba(4, 6, 12, 0.55), 0 24px 48px -20px rgba(4, 6, 12, 0.5);
+  --schaduw-gloed-brass: 0 0 0 1px rgba(212, 161, 58, 0.16), 0 4px 28px -6px rgba(212, 161, 58, 0.28);
 }
 
 * {
@@ -47,9 +54,79 @@ body {
   color: var(--voorgrond);
   font-family: var(--sans);
   -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+body {
+  position: relative;
+  isolation: isolate;
+}
+
+::selection {
+  background: rgba(212, 161, 58, 0.28);
+  color: var(--voorgrond);
+}
+
+/* ── De Sfeer ──────────────────────────────────────────────────────────
+   Een vaste onderlaag onder elk scherm: een zachte mesh-gloed die traag
+   ademt, een vignet dat de aandacht naar het midden trekt, en een fijne
+   korrel die het vlakke zwart breekt. Statische markup in index.html, dus
+   nooit opnieuw opgebouwd bij een schermwissel. */
+@property --mx1 { syntax: "<percentage>"; inherits: false; initial-value: 18%; }
+@property --my1 { syntax: "<percentage>"; inherits: false; initial-value: 12%; }
+@property --mx2 { syntax: "<percentage>"; inherits: false; initial-value: 86%; }
+@property --my2 { syntax: "<percentage>"; inherits: false; initial-value: 8%; }
+@property --mx3 { syntax: "<percentage>"; inherits: false; initial-value: 78%; }
+@property --my3 { syntax: "<percentage>"; inherits: false; initial-value: 92%; }
+@property --mx4 { syntax: "<percentage>"; inherits: false; initial-value: 8%; }
+@property --my4 { syntax: "<percentage>"; inherits: false; initial-value: 88%; }
+
+.sfeer-mesh {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(52% 38% at var(--mx1, 18%) var(--my1, 12%), rgba(212, 161, 58, 0.1), transparent 70%),
+    radial-gradient(46% 34% at var(--mx2, 86%) var(--my2, 8%), rgba(139, 155, 192, 0.09), transparent 70%),
+    radial-gradient(60% 46% at var(--mx3, 78%) var(--my3, 92%), rgba(134, 160, 120, 0.07), transparent 70%),
+    radial-gradient(48% 40% at var(--mx4, 8%) var(--my4, 88%), rgba(217, 122, 90, 0.06), transparent 70%),
+    linear-gradient(180deg, #0c1019 0%, #0a0d16 46%, #080a11 100%);
+  animation: sfeer-ademen 46s ease-in-out infinite;
+}
+
+@keyframes sfeer-ademen {
+  0%,
+  100% {
+    --mx1: 18%; --my1: 12%; --mx2: 86%; --my2: 8%; --mx3: 78%; --my3: 92%; --mx4: 8%; --my4: 88%;
+  }
+  50% {
+    --mx1: 24%; --my1: 18%; --mx2: 80%; --my2: 14%; --mx3: 72%; --my3: 86%; --mx4: 14%; --my4: 82%;
+  }
+}
+
+.sfeer-vignet {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(120% 80% at 50% 42%, transparent 45%, rgba(4, 5, 9, 0.55) 100%);
+}
+
+.sfeer-korrel {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
 }
 
 #app {
+  position: relative;
+  z-index: 10;
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
@@ -73,10 +150,13 @@ body {
 
 .vraag {
   font-family: var(--serif);
-  font-size: 1.7rem;
+  font-size: clamp(1.75rem, 7vw, 2.3rem);
   font-weight: 400;
-  line-height: 1.4;
+  line-height: 1.28;
+  letter-spacing: -0.01em;
   margin: 0;
+  text-wrap: balance;
+  text-shadow: 0 1px 24px rgba(212, 161, 58, 0.12);
 }
 
 .regel {
@@ -98,19 +178,29 @@ button {
 }
 
 .knop {
-  background: transparent;
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
   border: 1px solid var(--lijn);
   color: var(--voorgrond);
   padding: 0.9rem 2rem;
   font-size: 1rem;
   border-radius: 999px;
-  transition: border-color 200ms ease, background 200ms ease;
+  box-shadow: var(--schaduw-zwevend);
+  transition: border-color 220ms var(--ease-standaard), background 220ms var(--ease-standaard),
+    transform 220ms var(--ease-standaard), box-shadow 220ms var(--ease-standaard);
 }
 
 .knop:hover,
 .knop:focus-visible {
-  border-color: var(--voorgrond);
-  background: rgba(230, 220, 200, 0.06);
+  border-color: var(--lijn-sterk);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02));
+}
+
+.knop:active {
+  transform: scale(0.97);
+  border-color: rgba(212, 161, 58, 0.5);
+  box-shadow: var(--schaduw-gloed-brass);
+  transition-duration: 140ms;
 }
 
 .knop-klein {
@@ -119,8 +209,19 @@ button {
   color: var(--voorgrond-zacht);
   font-size: 0.85rem;
   text-decoration: underline;
+  text-decoration-color: var(--lijn-sterk);
   text-underline-offset: 3px;
   padding: 0.3rem;
+  transition: color 160ms ease, text-decoration-color 160ms ease, opacity 140ms ease;
+}
+
+.knop-klein:hover {
+  color: var(--voorgrond);
+  text-decoration-color: rgba(212, 161, 58, 0.6);
+}
+
+.knop-klein:active {
+  opacity: 0.55;
 }
 
 .deuren {
@@ -132,25 +233,28 @@ button {
 
 .deur {
   border: 1px solid var(--lijn);
-  border-radius: 18px;
-  padding: 1.4rem 1.2rem;
-  background: var(--oppervlak);
+  border-radius: 20px;
+  padding: 1.4rem 1.25rem;
+  background: linear-gradient(180deg, var(--oppervlak-hoog), var(--oppervlak));
   text-align: left;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
   color: var(--voorgrond);
   font-size: 1.05rem;
-  transition: border-color 200ms ease;
+  box-shadow: var(--schaduw-zwevend);
+  transition: border-color 220ms var(--ease-standaard), box-shadow 220ms var(--ease-standaard);
 }
 
 .deur:hover,
-.deur:focus-visible {
-  border-color: var(--voorgrond);
+.deur:focus-visible,
+.deur:has(button:active) {
+  border-color: rgba(212, 161, 58, 0.4);
+  box-shadow: var(--schaduw-gloed-brass);
 }
 
 .deur-onderschrift {
-  color: var(--voorgrond-zacht);
+  color: var(--voorgrond-zwak);
   font-size: 0.85rem;
 }
 
@@ -164,15 +268,29 @@ button {
 .woord-knop {
   background: transparent;
   border: 1px solid var(--lijn);
-  color: var(--voorgrond);
-  padding: 0.5rem 1.1rem;
+  color: var(--voorgrond-zacht);
+  padding: 0.55rem 1.15rem;
   border-radius: 999px;
   font-size: 0.95rem;
+  transition: border-color 220ms var(--ease-standaard), background 220ms var(--ease-standaard),
+    color 220ms var(--ease-standaard), transform 140ms var(--ease-standaard), box-shadow 220ms var(--ease-standaard);
+}
+
+.woord-knop:hover {
+  border-color: var(--lijn-sterk);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--voorgrond);
+}
+
+.woord-knop:active {
+  transform: scale(0.94);
 }
 
 .woord-knop[aria-pressed="true"] {
-  background: rgba(230, 220, 200, 0.14);
-  border-color: var(--voorgrond);
+  background: linear-gradient(180deg, rgba(212, 161, 58, 0.25), rgba(212, 161, 58, 0.08));
+  border-color: rgba(212, 161, 58, 0.55);
+  color: var(--voorgrond);
+  box-shadow: var(--schaduw-gloed-brass);
 }
 
 input[type="text"],
@@ -186,17 +304,18 @@ input[type="search"] {
   width: 100%;
   font-family: inherit;
   text-align: center;
+  transition: border-color 220ms ease;
 }
 
 input[type="text"]:focus,
 input[type="search"]:focus,
 textarea:focus {
   outline: none;
-  border-bottom-color: var(--voorgrond);
+  border-bottom-color: rgba(212, 161, 58, 0.6);
 }
 
 textarea {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--lijn);
   border-radius: 12px;
   color: var(--voorgrond);
@@ -206,6 +325,12 @@ textarea {
   width: 100%;
   min-height: 5.5rem;
   resize: vertical;
+  transition: border-color 220ms ease, background 220ms ease;
+}
+
+textarea:focus {
+  border-color: rgba(212, 161, 58, 0.6);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .schijf-canvas {
@@ -228,7 +353,7 @@ textarea {
 }
 
 .zacht {
-  color: var(--voorgrond-zacht);
+  color: var(--voorgrond-zwak);
   font-size: 0.92rem;
 }
 
@@ -269,9 +394,10 @@ textarea {
 .switch-schuif {
   position: absolute;
   inset: 0;
-  background: rgba(230, 220, 200, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
   border-radius: 999px;
-  transition: background 200ms ease;
+  transition: background 220ms ease;
   cursor: pointer;
 }
 
@@ -283,12 +409,13 @@ textarea {
   left: 3px;
   top: 3px;
   background: var(--voorgrond);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   border-radius: 50%;
-  transition: transform 200ms ease;
+  transition: transform 220ms var(--ease-standaard);
 }
 
 .switch input:checked + .switch-schuif {
-  background: rgba(230, 220, 200, 0.55);
+  background: linear-gradient(90deg, rgba(212, 161, 58, 0.7), rgba(212, 161, 58, 0.5));
 }
 
 .switch input:checked + .switch-schuif::before {
@@ -318,10 +445,17 @@ textarea {
   border: none;
   color: var(--voorgrond-zacht);
   text-decoration: underline;
+  text-decoration-color: var(--lijn-sterk);
   text-underline-offset: 3px;
   font-size: 0.88rem;
   cursor: pointer;
   padding: 0;
+  transition: color 160ms ease, text-decoration-color 160ms ease;
+}
+
+.lengte-link:hover {
+  color: var(--voorgrond);
+  text-decoration-color: rgba(212, 161, 58, 0.6);
 }
 
 .fade-uit {
@@ -369,11 +503,12 @@ textarea {
   font-size: 1.35rem;
   text-align: center;
   padding: 0.5rem 0.25rem;
+  transition: border-color 220ms ease;
 }
 
 .naam-veld:focus {
   outline: none;
-  border-bottom-color: var(--voorgrond);
+  border-bottom-color: rgba(212, 161, 58, 0.6);
 }
 
 .naam-veld::placeholder {
@@ -399,6 +534,7 @@ textarea {
   line-height: 1.1;
   margin: 0 0 2rem;
   color: var(--voorgrond);
+  text-shadow: 0 1px 24px rgba(212, 161, 58, 0.1);
 }
 
 /* De herkomstregels op S5 — de belofte uit S0 dat wetenschap, geloof en een
@@ -417,16 +553,12 @@ textarea {
   font-size: 0.82rem;
   line-height: 1.5;
   color: var(--voorgrond-zacht);
-  border-left: 1px solid rgba(201, 146, 47, 0.45);
+  border-left: 1px solid rgba(212, 161, 58, 0.45);
   padding-left: 0.7rem;
   text-align: left;
 }
 
-/* v2.3 §2.8 / schermenoverzicht.md S5: "waar relevant een eenvoudige
-   timer... geen voortgangsbalk met percentage, wel een rustige visuele
-   indicatie." De vorm draagt de instructie, geen tekst en geen aftelling
-   erbij. `.rustig` (de eigen schakelaar, telt net zo hard als
-   prefers-reduced-motion hieronder) zet de animatie uit. */
+/* v2.3 §2.8 / schermenoverzicht.md S5: de vorm draagt de instructie. */
 .timer-visual {
   width: min(52vw, 220px);
   height: min(52vw, 220px);
@@ -434,22 +566,37 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 /* Ademvorm — de schijf zet uit en trekt samen op een echt ritme: vier
    tellen in, zes tellen uit, tien seconden per cyclus, oneindig herhaald.
-   Alleen bij adem-lange-uitademing. */
+   Een bredere, zachtere ademwolk eronder geeft atmosferische diepte. */
+.ademvorm::after {
+  content: "";
+  position: absolute;
+  inset: 7%;
+  border-radius: 50%;
+  background: rgba(212, 161, 58, 0.1);
+  filter: blur(24px);
+  animation: ademvorm-cyclus 10s ease-in-out infinite;
+}
+
 .ademvorm::before {
   content: "";
   display: block;
   width: 60%;
   height: 60%;
   border-radius: 50%;
-  background: rgba(201, 146, 47, 0.2);
+  background: linear-gradient(135deg, rgba(212, 161, 58, 0.3), rgba(212, 161, 58, 0.1));
+  box-shadow: var(--schaduw-gloed-brass);
   animation: ademvorm-cyclus 10s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
 }
 
-.ademvorm.rustig::before {
+.ademvorm.rustig::before,
+.ademvorm.rustig::after {
   animation: none;
   transform: scale(0.82);
   opacity: 0.55;
@@ -462,10 +609,7 @@ textarea {
   100% { transform: scale(0.62); opacity: 0.4; }
 }
 
-/* Lichtpunt — één punt dat helderder wordt zolang je erbij blijft: hier
-   ingevuld als zolang dit scherm open staat, geleidelijk over ~60 seconden
-   (dezelfde tijdspanne als "een minuut is genoeg" in het script). Alleen
-   bij savoring-zestig-seconden. */
+/* Lichtpunt — één punt dat helderder wordt zolang je erbij blijft. */
 .lichtpunt::before {
   content: "";
   display: block;
@@ -473,38 +617,40 @@ textarea {
   height: 14%;
   border-radius: 50%;
   background: var(--brass);
+  filter: blur(0.5px);
   opacity: 0.18;
-  box-shadow: 0 0 6px 2px rgba(201, 146, 47, 0.25);
+  box-shadow: 0 0 8px 3px rgba(212, 161, 58, 0.28);
   animation: lichtpunt-oplichten 60s ease-out forwards;
 }
 
 .lichtpunt.rustig::before {
   animation: none;
   opacity: 0.55;
-  box-shadow: 0 0 14px 5px rgba(201, 146, 47, 0.35);
+  box-shadow: 0 0 18px 6px rgba(212, 161, 58, 0.38);
 }
 
 @keyframes lichtpunt-oplichten {
-  from { opacity: 0.18; box-shadow: 0 0 6px 2px rgba(201, 146, 47, 0.25); }
-  to { opacity: 0.92; box-shadow: 0 0 26px 10px rgba(201, 146, 47, 0.55); }
+  from { opacity: 0.18; box-shadow: 0 0 8px 3px rgba(212, 161, 58, 0.28); }
+  to { opacity: 0.94; box-shadow: 0 0 34px 13px rgba(212, 161, 58, 0.6); }
 }
 
-/* Eén rustige regel onderaan, bv. als bewaren niet lukte of een eigen woord
-   is onthouden. Geen toast met icoon, geen kleur die alarmeert. */
+/* Eén rustige regel onderaan. */
 .melding {
   position: fixed;
   left: 50%;
   bottom: 1.5rem;
   transform: translateX(-50%);
+  z-index: 20;
   max-width: min(28rem, 88vw);
   margin: 0;
   text-align: center;
   color: var(--voorgrond-zacht);
-  background: var(--oppervlak);
+  background: linear-gradient(180deg, var(--oppervlak-hoog), var(--oppervlak));
   border: 1px solid var(--lijn);
   border-radius: 999px;
   padding: 0.6rem 1.1rem;
   font-size: 0.85rem;
+  box-shadow: var(--schaduw-zwevend);
 }
 
 .brief-tekst p {
@@ -544,26 +690,23 @@ textarea {
   text-align: left;
   padding: 0.9rem 0.2rem;
   cursor: pointer;
+  transition: border-color 220ms ease, opacity 140ms ease;
 }
 
 .brief-regel:hover,
 .brief-regel:focus-visible {
-  border-bottom-color: var(--voorgrond);
+  border-bottom-color: rgba(212, 161, 58, 0.5);
   outline: none;
 }
 
-/* ── v21 — het nieuwe startscherm, de "Doen"-bibliotheek, de stap-voor-
-   stap-oefening en de dhikr-lezer. Zelfde zes tokens als hierboven, twee
-   afgeleiden erbij (messing-hairline, zwakkere inkt) voor dit dichtere,
-   app-vormige deel. #app blijft de gecentreerde vraag-voor-vraag-indeling
-   houden voor S1–S18; alleen de schermen met .scherm-app krijgen de
-   boven-uitgelijnde, scrollbare indeling met ruimte voor de vaste
-   navigatiebalk. */
-:root {
-  --lijn-warm: rgba(201, 146, 47, 0.4);
-  --voorgrond-zwak: rgba(232, 228, 218, 0.4);
+.brief-regel:active {
+  opacity: 0.6;
 }
 
+/* ── v21 — het startscherm, de "Doen"-bibliotheek, de stap-voor-stap-
+   oefening en de dhikr-lezer. #app blijft de gecentreerde vraag-voor-vraag-
+   indeling houden voor S1–S18; alleen .scherm-app krijgt de boven-
+   uitgelijnde, scrollbare indeling met ruimte voor de vaste navigatiebalk. */
 #app:has(.scherm-app) {
   justify-content: flex-start;
   align-items: stretch;
@@ -592,10 +735,12 @@ textarea {
   font-size: 2rem;
   line-height: 1.15;
   margin: 0;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 20px rgba(212, 161, 58, 0.1);
 }
 .thuis-datum {
   font-size: 0.85rem;
-  color: var(--voorgrond-zacht);
+  color: var(--voorgrond-zwak);
   margin: 0.25rem 0 0;
 }
 
@@ -604,6 +749,7 @@ textarea {
   font-weight: 400;
   font-size: 1.75rem;
   margin: 0 0 0.1rem;
+  letter-spacing: -0.01em;
 }
 
 .sectie-kop {
@@ -627,17 +773,30 @@ textarea {
   display: block;
   width: 100%;
   text-align: left;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.015);
   border: 1px solid var(--lijn);
   border-radius: 16px;
   padding: 0.9rem 1rem;
+  transition: border-color 220ms ease, background 220ms ease;
+}
+
+.kaart:hover,
+.kaart:focus-visible {
+  border-color: var(--lijn-sterk);
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .kaart-primair {
-  background: var(--oppervlak);
+  background: linear-gradient(165deg, var(--oppervlak-hoog), var(--oppervlak));
   border-color: var(--lijn-warm);
   border-radius: 18px;
   padding: 1.2rem 1.25rem 1.05rem;
+  box-shadow: var(--schaduw-zwevend);
+}
+.kaart-primair:hover,
+.kaart-primair:focus-visible {
+  border-color: rgba(212, 161, 58, 0.55);
+  box-shadow: var(--schaduw-gloed-brass);
 }
 .kaart-primair .kaart-label {
   display: block;
@@ -678,7 +837,10 @@ textarea {
   padding: 0.75rem 0.9rem;
   margin-top: 0.55rem;
 }
-.kaart-klein.past-nu { border-color: var(--lijn-warm); }
+.kaart-klein.past-nu {
+  border-color: var(--lijn-warm);
+  box-shadow: 0 0 0 1px rgba(212, 161, 58, 0.1);
+}
 .kaart-titel-klein { font-size: 0.98rem; }
 .kaart-meta { font-size: 0.78rem; color: var(--voorgrond-zwak); }
 .kaart-klein.past-nu .kaart-meta { color: var(--brass); }
@@ -694,8 +856,11 @@ textarea {
   border-bottom: 1px solid var(--lijn);
   padding: 0.85rem 0.05rem;
   gap: 0.1rem;
+  transition: border-color 180ms ease;
 }
-.rij-titel { font-size: 1rem; }
+.rij-knop:hover { border-bottom-color: var(--lijn-sterk); }
+.rij-titel { font-size: 1rem; transition: color 180ms ease; }
+.rij-knop:hover .rij-titel { color: var(--brass); }
 .rij-onder { font-size: 0.82rem; color: var(--voorgrond-zacht); }
 
 .terug-knop {
@@ -705,7 +870,9 @@ textarea {
   font-size: 0.85rem;
   padding: 0.2rem 0;
   margin-bottom: 0.2rem;
+  transition: color 160ms ease;
 }
+.terug-knop:hover { color: var(--voorgrond); }
 
 /* ── vaste navigatiebalk onderaan ────────────────────────────────── */
 .nav-balk {
@@ -713,14 +880,16 @@ textarea {
   left: 0;
   right: 0;
   bottom: 0;
+  z-index: 15;
   display: flex;
   justify-content: center;
   gap: 0.3rem;
   padding: 0.5rem 0.7rem calc(0.6rem + env(safe-area-inset-bottom));
-  background: rgba(14, 20, 32, 0.94);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(10, 13, 22, 0.85);
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
   border-top: 1px solid var(--lijn);
+  box-shadow: 0 -8px 32px -8px rgba(4, 6, 12, 0.5);
   margin-top: 1.6rem !important;
 }
 .nav-item {
@@ -732,10 +901,12 @@ textarea {
   padding: 0.5rem 0.3rem;
   font-size: 0.85rem;
   color: var(--voorgrond-zwak);
+  transition: color 180ms ease, background 180ms ease;
 }
+.nav-item:hover { color: var(--voorgrond-zacht); }
 .nav-item.actief {
   color: var(--voorgrond);
-  background: rgba(232, 228, 218, 0.07);
+  background: linear-gradient(180deg, rgba(212, 161, 58, 0.16), rgba(212, 161, 58, 0.05));
 }
 
 /* ── de stap-voor-stap-oefening ──────────────────────────────────── */
@@ -751,9 +922,13 @@ textarea {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: rgba(232, 228, 218, 0.2);
+  background: rgba(237, 233, 222, 0.18);
+  transition: background 220ms ease, box-shadow 220ms ease;
 }
-.stip.vol { background: var(--brass); }
+.stip.vol {
+  background: var(--brass);
+  box-shadow: 0 0 6px rgba(212, 161, 58, 0.6);
+}
 .scherm-app .vraag {
   font-family: var(--serif);
   font-size: 1.55rem;
