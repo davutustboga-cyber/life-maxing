@@ -31,8 +31,16 @@ export const zoneConfig = {
         // v1.1: aanname-omdraaien komt alleen in de wisseling mee als een van de
         // gekozen woorden eenzaam, onzeker of wantrouwend is — anders blijft
         // bericht-sturen vast staan (geen rotatie).
+        // v1.2: de eerste deur wordt een rotatie van drie — vijf-minuten-naar-
+        // buiten, korte-koude-douche, en (alleen vóór 12:00 lokale tijd)
+        // ochtendlicht-zien. bericht-sturen als tweede deur vraagt geen douche,
+        // geen buitenruimte en geen tijdstip — de vangnetdeur voor alle drie.
         bij2min: {
-            eerste: "vijf-minuten-naar-buiten",
+            eerste: [
+                { id: "vijf-minuten-naar-buiten" },
+                { id: "korte-koude-douche" },
+                { id: "ochtendlicht-zien", vereistDagvenster: "ochtend" },
+            ],
             tweede: [
                 { id: "bericht-sturen" },
                 { id: "aanname-omdraaien", vereistWoord: ["eenzaam", "onzeker", "wantrouwend"] },
@@ -77,7 +85,20 @@ export const zoneConfig = {
             // de instelling. Geldt bij 2 min (tawakkul-route of
             // afstand-nemen-van-jezelf) én bij 10 min of meer
             // (afstand-nemen-van-jezelf).
-            { bijWoord: ["schuldig", "zelfkritisch"], vervangtDoor: "zelfcompassie-na-misstap" },
+            // v1.4 (9 sept 2026): vervangtDoor roteert voortaan tussen
+            // zelfcompassie-na-misstap en sayyid-al-istighfar (islamitische laag
+            // aan) — een vaste, afgeronde smeekbede naast het open zelfonderzoek,
+            // precies zoals Onderzoek-I3-Dua-en-Dhikr.md bedoelde ("breder
+            // inzetbaar, ook bij schuld en zelfkritiek naast
+            // zelfcompassie-na-misstap"). Nooit twee keer op rij dezelfde, zoals
+            // elke andere rotatie.
+            {
+                bijWoord: ["schuldig", "zelfkritisch"],
+                vervangtDoor: [
+                    { id: "zelfcompassie-na-misstap" },
+                    { id: "sayyid-al-istighfar", vereistIslamitischeLaag: true },
+                ],
+            },
             // v1.1: vergeven-eerste-stap vervangt de tweede deur bij wantrouwend of
             // verdrietig — nooit bij 2 min, alleen bij 10 min of meer. Deze regel
             // wordt alleen toegepast als de vorige (schuldig/zelfkritisch) niet al
@@ -89,12 +110,19 @@ export const zoneConfig = {
         // v1.1: omhoogkijken erbij als derde optie in de rotatie van de tweede
         // deur; shukr-drie-dingen blijft alleen meedoen met de islamitische laag
         // aan. Savoring blijft altijd eerst.
+        // v1.3/v1.4 (9 sept 2026): muhasabah-twee-vragen en sayyid-al-istighfar
+        // erbij, allebei alleen met de islamitische laag aan — hun eigen
+        // past_bij (rustig/vredig/tevreden/dankbaar, resp. ook rustig/vredig)
+        // wijst via de zone-afstand precies naar D_verdiepen_laag, zie
+        // Onderzoek-I2-Muhasabah-en-Waswas.md en Onderzoek-I3-Dua-en-Dhikr.md.
         bij2min: {
             eerste: "savoring-zestig-seconden",
             tweede: [
                 { id: "dankbaarheid-naar-persoon" },
                 { id: "shukr-drie-dingen", vereistIslamitischeLaag: true },
                 { id: "omhoogkijken" },
+                { id: "muhasabah-twee-vragen", vereistIslamitischeLaag: true },
+                { id: "sayyid-al-istighfar", vereistIslamitischeLaag: true },
             ],
         },
         bij10minOfMeer: {
@@ -103,6 +131,8 @@ export const zoneConfig = {
                 { id: "dankbaarheid-naar-persoon" },
                 { id: "shukr-drie-dingen", vereistIslamitischeLaag: true },
                 { id: "omhoogkijken" },
+                { id: "muhasabah-twee-vragen", vereistIslamitischeLaag: true },
+                { id: "sayyid-al-istighfar", vereistIslamitischeLaag: true },
             ],
         },
     },

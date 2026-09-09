@@ -94,10 +94,16 @@ function lostSlotOp(slot, data, islamitischeLaag, woordIds) {
     if (typeof slot === "string")
         return slot;
     const gekozenWoorden = new Set(woordIds);
+    const ochtend = new Date().getHours() < 12;
     const geldigeOpties = slot.filter((optie) => {
         if (optie.vereistIslamitischeLaag && !islamitischeLaag)
             return false;
         if (optie.vereistWoord && !optie.vereistWoord.some((w) => gekozenWoorden.has(w)))
+            return false;
+        // v1.2: ochtendlicht-zien is de eerste beweging die alleen op een deel
+        // van de dag zinvol is — zie selectie.yaml §v1.2. Lokale kloktijd, geen
+        // netwerk, geen vraag aan de gebruiker.
+        if (optie.vereistDagvenster === "ochtend" && !ochtend)
             return false;
         return true;
     });
@@ -137,7 +143,11 @@ export function bepaalDeuren(zone, tijd, data, islamitischeLaag, woordIds = []) 
             if (vervanging.nooitBijTijd?.includes(tijd))
                 continue;
             if (woordIds.some((id) => vervanging.bijWoord.includes(id))) {
-                tweede = vervanging.vervangtDoor;
+                // v1.4: vervangtDoor is sinds selectie.ts §v1.4 een volwaardig
+                // DeurSlot — dus ook een rotatie (schuldig/zelfkritisch roteert nu
+                // tussen zelfcompassie-na-misstap en sayyid-al-istighfar) in plaats
+                // van altijd naar dezelfde vaste string te wijzen.
+                tweede = lostSlotOp(vervanging.vervangtDoor, data, islamitischeLaag, woordIds);
                 break;
             }
         }

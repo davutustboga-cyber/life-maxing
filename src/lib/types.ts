@@ -51,6 +51,15 @@ export interface Beweging {
   pastNietBij: string[];
   /** genoemde regels uit selectie.yaml (nooit_aanbieden_als). */
   nooitAanbiedenAls: string[];
+  /**
+   * bewegingen.yaml → grenzen.medisch. Alleen gevuld bij een beweging met
+   * een reëel fysiek risico (voorlopig alleen korte-koude-douche — de
+   * eerste in de bibliotheek). Staat op S5/S15 vast onder het script, elke
+   * keer, in dezelfde typografie als de herkomstregels — geen apart
+   * waarschuwingsscherm, geen eenmalige acceptatieklik (veiligheid.md §4,
+   * "koude blootstelling").
+   */
+  medischeGrens?: string[];
 }
 
 export interface Moment {
@@ -161,6 +170,39 @@ export interface LifeMaxingData {
    * v2.2 Wet 8: "hij houdt niet bij hoe vaak dit gebeurt".
    */
   frictieAangebodenMaanden: string[];
+  /**
+   * S20, "Wie ik word" (v2.md §9.1 punt 10). Eén zelfgeschreven zin, altijd
+   * overschrijfbaar — geen geschiedenis. De bewijslijst-functie zelf zit al
+   * in De Hemel (S8); dit veld is puur de losse zin ernaast. Gespiegeld aan
+   * de React-versie (v20).
+   */
+  wieIkWord: string | null;
+  /**
+   * S21, "Verlangen van de periode" (v2.md §9.1 punt 9, Masterplan-v2.md
+   * §7.3). Islamitische naam alleen zichtbaar met de laag aan. Geen vaste
+   * cadans. Gespiegeld aan de React-versie (v20).
+   */
+  verlangenVanDePeriode: { kwaliteitId: string; sinds: string } | null;
+  /** S22, Ochtend — Richting (v2.md §9.1 punt 6, v2.3 §2.4 "Het Ritme"). */
+  ochtendMomenten: OchtendMoment[];
+  /** S23, Avond — Dag sluiten (v2.md §9.1 punt 7, v2.3 §2.5 "De Grond"). */
+  dagsluitingen: DagSluiting[];
+}
+
+export interface OchtendMoment {
+  id: string;
+  datum: string;
+  intentie: string | null;
+  kerntaak: string | null;
+}
+
+export interface DagSluiting {
+  id: string;
+  datum: string;
+  positie: { energie: number; toon: number } | null;
+  chips: string[];
+  dankbaarheid: string | null;
+  zin: string | null;
 }
 
 export function leegBestand(): LifeMaxingData {
@@ -183,5 +225,9 @@ export function leegBestand(): LifeMaxingData {
     weekmomenten: [],
     perfectionismeChecks: [],
     frictieAangebodenMaanden: [],
+    wieIkWord: null,
+    verlangenVanDePeriode: null,
+    ochtendMomenten: [],
+    dagsluitingen: [],
   };
 }

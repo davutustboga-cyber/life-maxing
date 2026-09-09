@@ -191,6 +191,11 @@ export const bewegingen: Beweging[] = [
         regel:
           "Overgave na inspanning: doen wat binnen je macht ligt, en de uitkomst loslaten — nooit als vervanging van actie, alleen als aanvulling erop.",
       },
+      {
+        label: "W",
+        regel:
+          "Bij mensen die tawakkul al beoefenen, hangt een grotere mate ervan samen met minder angst en somberheid; een bredere blik op religieuze overgave aan een hogere macht in het algemeen vindt hetzelfde patroon. Dit is samenhang uit onderzoek bij anderen, geen bewezen effect — de app belooft dus niet dat dit jouw angst vermindert.",
+      },
     ],
     pastBij: ["piekerend", "malend", "onzeker", "machteloos"],
     pastNietBij: [],
@@ -451,6 +456,122 @@ export const bewegingen: Beweging[] = [
     pastBij: ["gemotiveerd", "vol", "hoopvol", "trots", "blij", "rustig"],
     pastNietBij: ["leeg", "uitgeput", "op", "overprikkeld", "somber", "niets"],
     nooitAanbiedenAls: ["drie_zware_dagen_en_richting"],
+  },
+  // ──────────────────────────────────────────────────────────────────────────────
+  // v1.2 (8 sept 2026): twee bewegingen uit Onderzoek-Dopamine-Ochtend.md.
+  // Beide alleen bereikbaar via selectie.yaml §v1.2 (B_activeren, bij2min).
+  // ──────────────────────────────────────────────────────────────────────────────
+  {
+    id: "korte-koude-douche",
+    titel: "Een korte koude douche",
+    soort: "nu",
+    streek: "lichaam",
+    domeinLabel: "activering — koude blootstelling",
+    kosten: { tijdMinuten: [1, 3], energie: "midden", drempel: "groot" },
+    minimumversie: "Tien seconden koud water aan het einde van je gewone douche.",
+    script:
+      "Zet aan het einde van je douche het water even helemaal koud. Blijf staan tot je ademhaling weer rustig wordt, dan pas eruit.",
+    herkomst: [
+      {
+        label: "W",
+        regel:
+          "Eén kleine studie vond na een uur onderdompeling in koud water een sterke stijging van dopamine en adrenaline in het bloed, die uren aanhield. Belangrijke kanttekening: dat is bloed, niet je hersenen — het is vooral een teken dat je lichaam in de actiestand schiet, geen bewijs voor een beloningsgevoel. Een grotere studie naar koud douchen vond minder ziekteverzuim, maar niet minder vaak ziek worden — het effect zat in energie en volhouden, niet in een meetbare gezondheidsuitkomst.",
+      },
+    ],
+    pastBij: ["leeg", "lusteloos", "dof", "moe", "somber"],
+    pastNietBij: ["uitgeput", "op", "overprikkeld", "paniekerig", "gespannen", "gejaagd"],
+    nooitAanbiedenAls: [],
+    medischeGrens: [
+      "Niet bij hart- en vaatziekten, bij zwangerschap, of als je bloeddruk niet onder controle is — bij twijfel: niet doen, of eerst een arts.",
+      "Begin klein: aan het einde van een gewone douche, niet met een volledige onderdompeling.",
+    ],
+  },
+  {
+    id: "ochtendlicht-zien",
+    titel: "Ochtendlicht zien",
+    soort: "nu",
+    streek: "lichaam",
+    domeinLabel: "slaap en herstel — ritme",
+    kosten: { tijdMinuten: [2, 5], energie: "laag", drempel: "klein" },
+    minimumversie: "Eén minuut voor het raam, gordijnen open.",
+    script:
+      "Ga binnen het eerste uur na het wakker worden even naar buiten, of voor een raam zonder zonnebril. Geen minimum aantal minuten — het gaat om het moment, niet om de duur.",
+    herkomst: [
+      {
+        label: "W",
+        regel:
+          "Licht vroeg op de dag helpt je interne klok vroeger te lopen, wat 's avonds makkelijker inslapen geeft — dat is stevig onderzocht. Minder stevig: dat het je die ochtend zelf al vrolijker maakt. Dat belooft deze beweging dan ook niet.",
+      },
+    ],
+    pastBij: ["lusteloos", "dof", "moe", "somber", "leeg"],
+    pastNietBij: [],
+    nooitAanbiedenAls: [],
+  },
+  // ──────────────────────────────────────────────────────────────────────────────
+  // v1.3 (9 sept 2026): muhasabah-twee-vragen, uit Onderzoek-I2-Muhasabah-en-
+  // Waswas.md. Alleen bereikbaar via selectie.yaml §v1.3 (D_verdiepen_laag).
+  // ──────────────────────────────────────────────────────────────────────────────
+  {
+    id: "muhasabah-twee-vragen",
+    titel: "Muhasabah: twee vragen terugkijken",
+    soort: "nu",
+    streek: "ziel",
+    domeinLabel: "zingeving en geloof",
+    kosten: { tijdMinuten: [2, 3], energie: "laag", drempel: "klein" },
+    minimumversie: "Eén vraag: wat ging vandaag goed?",
+    script:
+      "Twee vragen, kort. Wat ging vandaag goed, in lijn met wie je wilt zijn? En is er één klein ding dat je morgen anders zou doen? Wat nu door je hoofd gaat maar dat je niet uitspreekt of erop handelt, telt niet mee — dat is een oud onderscheid, geen nieuw excuus.",
+    herkomst: [
+      {
+        label: "I",
+        regel:
+          "Kort bij jezelf te rade gaan aan het einde van de dag — niet als zelfkritiek maar als zuivering, en uitdrukkelijk begrensd tot twee vragen, nooit een uitputtende lijst van tekortkomingen.",
+      },
+    ],
+    pastBij: ["rustig", "vredig", "tevreden", "dankbaar"],
+    pastNietBij: [
+      "piekerend",
+      "malend",
+      "onzeker",
+      "schuldig",
+      "zelfkritisch",
+      "besluiteloos",
+      "wantrouwend",
+      "verward",
+      "gespannen",
+      "gejaagd",
+      "overprikkeld",
+      "paniekerig",
+      "somber",
+      "verdrietig",
+      "machteloos",
+    ],
+    nooitAanbiedenAls: ["direct_na_iets_pijnlijks"],
+  },
+  // ──────────────────────────────────────────────────────────────────────────────
+  // v1.4 (9 sept 2026): sayyid-al-istighfar, uit Onderzoek-I3-Dua-en-Dhikr.md.
+  // Alleen bereikbaar via selectie.yaml §v1.4 (C_ordenen en D_verdiepen_laag).
+  // ──────────────────────────────────────────────────────────────────────────────
+  {
+    id: "sayyid-al-istighfar",
+    titel: "Sayyid al-Istighfar",
+    soort: "nu",
+    streek: "ziel",
+    domeinLabel: "zingeving en geloof",
+    kosten: { tijdMinuten: [1, 2], energie: "laag", drempel: "klein" },
+    minimumversie: "De betekenis lezen is genoeg als het Arabisch niet lukt.",
+    script:
+      "Eén smeekbede, in je eigen tempo — Arabisch als dat lukt, anders de betekenis: 'O Allah, U bent mijn Heer, er is geen god dan U... Ik erken mijn zonde. Vergeef mij, want niemand vergeeft zonden behalve U.' Eén keer is genoeg.",
+    herkomst: [
+      {
+        label: "I",
+        regel:
+          "De 'heer der vergevingsverzoeken': één vaste, afgeronde smeekbede om vergeving — geen open zelfonderzoek, dus breder inzetbaar dan muhasabah, ook naast stilstaan bij een misstap.",
+      },
+    ],
+    pastBij: ["schuldig", "zelfkritisch", "somber", "verdrietig", "rustig", "vredig"],
+    pastNietBij: [],
+    nooitAanbiedenAls: [],
   },
 ];
 

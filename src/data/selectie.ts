@@ -32,6 +32,14 @@ export interface RotatieOptie {
   id: string;
   vereistIslamitischeLaag?: boolean;
   vereistWoord?: string[];
+  /**
+   * v1.2 (8 sept 2026): alleen "ochtend" bestaat vooralsnog. Filtert de
+   * optie uit de rotatie na 12:00 lokale tijd (zie `lostSlotOp` in
+   * selection.ts) — geen netwerk, geen vraag aan de gebruiker, puur de klok
+   * van het toestel. Eerste keer dat de selectie iets anders raadpleegt dan
+   * het kompas, de tijdvraag en de woordvlaggen.
+   */
+  vereistDagvenster?: "ochtend";
 }
 
 /** Eén slot (eerste of tweede deur) is óf een vaste id, óf een rotatie over
@@ -46,10 +54,14 @@ interface TijdConfig {
 
 /** Eén woord-afhankelijke vervanging van de tweede deur (selectie.yaml
  * §v1.1, C_ordenen). `nooitBijTijd` sluit de vervanging uit voor een tijd
- * (vergeven-eerste-stap mag nooit bij 2 minuten). */
+ * (vergeven-eerste-stap mag nooit bij 2 minuten). `vervangtDoor` is een
+ * volwaardig DeurSlot sinds §v1.4: bij schuldig/zelfkritisch roteert de
+ * vervanging voortaan tussen zelfcompassie-na-misstap en (met de
+ * islamitische laag aan) sayyid-al-istighfar, in plaats van altijd naar
+ * hetzelfde vaste doel te wijzen. */
 export interface Vervanging {
   bijWoord: string[];
-  vervangtDoor: string;
+  vervangtDoor: DeurSlot;
   nooitBijTijd?: Tijd[];
 }
 
@@ -82,8 +94,16 @@ export const zoneConfig: Record<Zone, ZoneConfig> = {
     // v1.1: aanname-omdraaien komt alleen in de wisseling mee als een van de
     // gekozen woorden eenzaam, onzeker of wantrouwend is — anders blijft
     // bericht-sturen vast staan (geen rotatie).
+    // v1.2: de eerste deur wordt een rotatie van drie — vijf-minuten-naar-
+    // buiten, korte-koude-douche, en (alleen vóór 12:00 lokale tijd)
+    // ochtendlicht-zien. bericht-sturen als tweede deur vraagt geen douche,
+    // geen buitenruimte en geen tijdstip — de vangnetdeur voor alle drie.
     bij2min: {
-      eerste: "vijf-minuten-naar-buiten",
+      eerste: [
+        { id: "vijf-minuten-naar-buiten" },
+        { id: "korte-koude-douche" },
+        { id: "ochtendlicht-zien", vereistDagvenster: "ochtend" },
+      ],
       tweede: [
         { id: "bericht-sturen" },
         { id: "aanname-omdraaien", vereistWoord: ["eenzaam", "onzeker", "wantrouwend"] },
@@ -129,7 +149,20 @@ export const zoneConfig: Record<Zone, ZoneConfig> = {
       // de instelling. Geldt bij 2 min (tawakkul-route of
       // afstand-nemen-van-jezelf) én bij 10 min of meer
       // (afstand-nemen-van-jezelf).
-      { bijWoord: ["schuldig", "zelfkritisch"], vervangtDoor: "zelfcompassie-na-misstap" },
+      // v1.4 (9 sept 2026): vervangtDoor roteert voortaan tussen
+      // zelfcompassie-na-misstap en sayyid-al-istighfar (islamitische laag
+      // aan) — een vaste, afgeronde smeekbede naast het open zelfonderzoek,
+      // precies zoals Onderzoek-I3-Dua-en-Dhikr.md bedoelde ("breder
+      // inzetbaar, ook bij schuld en zelfkritiek naast
+      // zelfcompassie-na-misstap"). Nooit twee keer op rij dezelfde, zoals
+      // elke andere rotatie.
+      {
+        bijWoord: ["schuldig", "zelfkritisch"],
+        vervangtDoor: [
+          { id: "zelfcompassie-na-misstap" },
+          { id: "sayyid-al-istighfar", vereistIslamitischeLaag: true },
+        ],
+      },
       // v1.1: vergeven-eerste-stap vervangt de tweede deur bij wantrouwend of
       // verdrietig — nooit bij 2 min, alleen bij 10 min of meer. Deze regel
       // wordt alleen toegepast als de vorige (schuldig/zelfkritisch) niet al
@@ -142,12 +175,19 @@ export const zoneConfig: Record<Zone, ZoneConfig> = {
     // v1.1: omhoogkijken erbij als derde optie in de rotatie van de tweede
     // deur; shukr-drie-dingen blijft alleen meedoen met de islamitische laag
     // aan. Savoring blijft altijd eerst.
+    // v1.3/v1.4 (9 sept 2026): muhasabah-twee-vragen en sayyid-al-istighfar
+    // erbij, allebei alleen met de islamitische laag aan — hun eigen
+    // past_bij (rustig/vredig/tevreden/dankbaar, resp. ook rustig/vredig)
+    // wijst via de zone-afstand precies naar D_verdiepen_laag, zie
+    // Onderzoek-I2-Muhasabah-en-Waswas.md en Onderzoek-I3-Dua-en-Dhikr.md.
     bij2min: {
       eerste: "savoring-zestig-seconden",
       tweede: [
         { id: "dankbaarheid-naar-persoon" },
         { id: "shukr-drie-dingen", vereistIslamitischeLaag: true },
         { id: "omhoogkijken" },
+        { id: "muhasabah-twee-vragen", vereistIslamitischeLaag: true },
+        { id: "sayyid-al-istighfar", vereistIslamitischeLaag: true },
       ],
     },
     bij10minOfMeer: {
@@ -156,6 +196,8 @@ export const zoneConfig: Record<Zone, ZoneConfig> = {
         { id: "dankbaarheid-naar-persoon" },
         { id: "shukr-drie-dingen", vereistIslamitischeLaag: true },
         { id: "omhoogkijken" },
+        { id: "muhasabah-twee-vragen", vereistIslamitischeLaag: true },
+        { id: "sayyid-al-istighfar", vereistIslamitischeLaag: true },
       ],
     },
   },

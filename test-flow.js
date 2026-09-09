@@ -51,6 +51,10 @@ const { chromium } = require('/home/claude/.npm-global/lib/node_modules/playwrig
   await page.reload();
   await page.waitForTimeout(600);
 
+  // v1.1-meer.md (6 sept 2026): "instellingen" zit niet meer los op S1,
+  // maar achter het stille "meer"-toegangspunt (S16).
+  await page.click('text=meer');
+  await page.waitForTimeout(300);
   await page.click('text=instellingen');
   await page.waitForTimeout(300);
   await page.screenshot({ path: '/tmp/shots2/05-s10-instellingen.png' });

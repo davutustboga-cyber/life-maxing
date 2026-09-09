@@ -210,4 +210,63 @@ export const teksten = {
   foutmeldingen: {
     algemeen: "Er ging iets mis. Er is niets verloren — probeer het opnieuw.",
   },
+  // Onderstaande vier secties zijn gespiegeld aan de React-versie (v20):
+  // datamodel en teksten staan hier al klaar; de schermen (S19-S23) zelf
+  // zijn in déze codebase nog niet gebouwd — zie Fase-3-Bouw-status.md v20.
+  herstelroute: {
+    toegangKnoptekst: "ik ben eruit gevallen",
+    normaliseren: "Even eruit gevallen. Dat hoort erbij — het is geen bewijs dat het niet lukt.",
+    verder: "Verder",
+    kleinsteStapVraag: "Wat is nu de kleinste stap?",
+    geenStapNu: "geen stap nu, gewoon verder",
+    verderTekst: "Dat is alles. Niet een nieuw begin — gewoon verder.",
+    klaar: "Klaar",
+  },
+  wieIkWord: {
+    toegangKnoptekst: "wie ik word",
+    vraag: "Wie word je?",
+    placeholder: "één zin, in je eigen woorden",
+    bewaren: "Bewaren",
+    bewaard: "Bewaard.",
+    bewijslijst: "laat me zien wat ik al gedaan heb",
+    terug: "Terug",
+  },
+  kwaliteiten: {
+    toegangKnoptekst: "het verlangen van deze periode",
+    vraag: "Wat verlang je het meest, deze periode?",
+    onderschrift: "Verander dit wanneer je wil — er zit geen klok op.",
+    terug: "Terug",
+  },
+  ochtend: {
+    toegangKnoptekst: "richting voor vandaag",
+    kop: "Richting",
+    intentieVraag: "Eén zin, als je wil — waarom vandaag?",
+    intentiePlaceholder: "mag leeg blijven",
+    kerntaakVraag: "Wat is vandaag de kerntaak?",
+    kerntaakPlaceholder: "één ding, niet een lijst",
+    geenVerlangen: "Nog geen verlangen gekozen voor deze periode.",
+    kiesVerlangen: "kiezen",
+    klaar: "Klaar",
+  },
+  avondSluiten: {
+    toegangKnoptekst: "de dag sluiten",
+    kop: "Dag sluiten",
+    kompasVraag: "Waar was je, over de hele dag genomen?",
+    chipsVraag: "Wat speelde mee? (kies wat past, of niets)",
+    chips: [
+      { id: "slecht_geslapen", label: "slecht geslapen" },
+      { id: "niet_bewogen", label: "niet bewogen" },
+      { id: "veel_scherm", label: "veel scherm" },
+      { id: "niet_buiten_geweest", label: "niet buiten geweest" },
+      { id: "veel_alleen", label: "veel alleen" },
+      { id: "veel_drukte", label: "veel drukte" },
+      { id: "pijn_ziek", label: "pijn of ziek" },
+      { id: "goede_dag", label: "goede dag" },
+    ],
+    dankbaarheidVraag: "Eén dankbaarheid.",
+    dankbaarheidPlaceholder: "mag klein zijn",
+    zinVraag: "Eén zin over vandaag.",
+    zinPlaceholder: "mag leeg blijven",
+    klaar: "Klaar",
+  },
 };

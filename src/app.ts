@@ -25,6 +25,8 @@ import {
   frictieBeschikbaar,
   registreerFrictieAangeboden,
 } from "./lib/meer.js";
+import { kwaliteiten, kwaliteitById } from "./data/kwaliteiten.js";
+import { huidigeDagSleutel, ochtendVandaagGedaan, avondVandaagGedaan } from "./lib/ritme.js";
 
 let data: LifeMaxingData;
 
@@ -362,6 +364,17 @@ function toonS5(bewegingId: string): void {
         { class: "herkomst" },
         beweging.herkomst.map((h) => el("p", { class: "herkomst-regel" }, [h.regel]))
       ),
+      // v1.2, veiligheid.md §4 "koude blootstelling": een medische grens
+      // staat vast onder het script, elke keer — geen apart
+      // waarschuwingsscherm, geen eenmalige acceptatieklik. Zelfde
+      // typografie als de herkomstregels hierboven.
+      beweging.medischeGrens
+        ? el(
+            "div",
+            { class: "herkomst" },
+            beweging.medischeGrens.map((regel) => el("p", { class: "herkomst-regel" }, [regel]))
+          )
+        : null,
       el("button", { class: "knop", onclick: () => toonS6(beweging.streek) }, ["Klaar"]),
     ]),
   ]);
@@ -854,6 +867,13 @@ function toonS15Beweging(bewegingId: string): void {
         { class: "herkomst" },
         beweging.herkomst.map((h) => el("p", { class: "herkomst-regel" }, [h.regel]))
       ),
+      beweging.medischeGrens
+        ? el(
+            "div",
+            { class: "herkomst" },
+            beweging.medischeGrens.map((regel) => el("p", { class: "herkomst-regel" }, [regel]))
+          )
+        : null,
       el("button", { class: "knop", onclick: () => toonS7() }, ["Klaar"]),
     ]),
   ]);
@@ -886,6 +906,15 @@ function toonS16Meer(): void {
         ? el("button", { class: "knop-klein", onclick: () => toonS17PerfectionismeCheck() }, [
             teksten.meer.perfectionismeKnoptekst,
           ])
+        : null,
+      el("button", { class: "knop-klein", onclick: () => toonS21Kwaliteiten() }, [teksten.kwaliteiten.toegangKnoptekst]),
+      el("button", { class: "knop-klein", onclick: () => toonS20WieIkWord() }, [teksten.wieIkWord.toegangKnoptekst]),
+      el("button", { class: "knop-klein", onclick: () => toonS19Normaliseren() }, [teksten.herstelroute.toegangKnoptekst]),
+      !ochtendVandaagGedaan(data)
+        ? el("button", { class: "knop-klein", onclick: () => toonS22Ochtend() }, [teksten.ochtend.toegangKnoptekst])
+        : null,
+      !avondVandaagGedaan(data)
+        ? el("button", { class: "knop-klein", onclick: () => toonS23AvondSluiten() }, [teksten.avondSluiten.toegangKnoptekst])
         : null,
       el("button", { class: "knop-klein", onclick: () => toonS10() }, [teksten.meer.instellingenKnoptekst]),
       el("button", { class: "knop-klein", onclick: () => toonS1() }, [teksten.meer.terug]),
@@ -972,6 +1001,249 @@ function toonS18Frictie(): void {
       }, [teksten.frictie.gezien]),
     ]),
   ]);
+}
+
+// ── S19 — De herstelroute ("ik ben eruit gevallen") ────────────────────
+// v2.md §9.1 punt 12: "60 seconden: normaliseren, kleinste stap, verder."
+// Gespiegeld aan de React-versie (v20). Schrijft, net als De Onderbreker,
+// bewust niets naar het datamodel (Wet 4: geen teller van hoe vaak je
+// "eruit valt").
+function toonS19Normaliseren(): void {
+  render([
+    el("div", { class: "scherm" }, [
+      el("p", { class: "vraag" }, [teksten.herstelroute.normaliseren]),
+      el("button", { class: "knop", onclick: () => toonS19KleinsteStap() }, [teksten.herstelroute.verder]),
+    ]),
+  ]);
+}
+
+function toonS19KleinsteStap(): void {
+  render([
+    el("div", { class: "scherm" }, [
+      el("p", { class: "vraag" }, [teksten.herstelroute.kleinsteStapVraag]),
+      el(
+        "div",
+        { class: "brieven-lijst" },
+        bewegingen.map((b) => el("button", { class: "brief-regel", onclick: () => toonS19Beweging(b.id) }, [b.titel]))
+      ),
+      el("button", { class: "knop-klein", onclick: () => toonS19Verder() }, [teksten.herstelroute.geenStapNu]),
+    ]),
+  ]);
+}
+
+function toonS19Beweging(bewegingId: string): void {
+  const beweging = bewegingById(bewegingId);
+  if (!beweging) return toonS19Verder();
+  render([
+    el("div", { class: "scherm" }, [
+      el("p", { class: "vraag" }, [beweging.script]),
+      el("p", { class: "zacht" }, [`Kort kan ook: ${beweging.minimumversie}`]),
+      timerVisual(bewegingId),
+      el(
+        "div",
+        { class: "herkomst" },
+        beweging.herkomst.map((h) => el("p", { class: "herkomst-regel" }, [h.regel]))
+      ),
+      beweging.medischeGrens
+        ? el(
+            "div",
+            { class: "herkomst" },
+            beweging.medischeGrens.map((regel) => el("p", { class: "herkomst-regel" }, [regel]))
+          )
+        : null,
+      el("button", { class: "knop", onclick: () => toonS19Verder() }, ["Klaar"]),
+    ]),
+  ]);
+}
+
+function toonS19Verder(): void {
+  render([
+    el("div", { class: "scherm" }, [
+      el("p", { class: "vraag" }, [teksten.herstelroute.verderTekst]),
+      el("button", { class: "knop", onclick: () => toonS7() }, [teksten.herstelroute.klaar]),
+    ]),
+  ]);
+}
+
+// ── S20 — "Wie ik word" ─────────────────────────────────────────────────
+// v2.md §9.1 punt 10. Eén zelfgeschreven zin, altijd overschrijfbaar. De
+// bewijslijst-functie bestaat al als De Hemel (S8); hier alleen een link.
+function toonS20WieIkWord(): void {
+  const veld = el("textarea", { placeholder: teksten.wieIkWord.placeholder });
+  (veld as HTMLTextAreaElement).value = data.wieIkWord ?? "";
+  const melding = el("p", { class: "zacht" }, [""]);
+  render([
+    el("div", { class: "scherm" }, [
+      el("p", { class: "vraag" }, [teksten.wieIkWord.vraag]),
+      veld,
+      el("button", {
+        class: "knop",
+        onclick: () => {
+          data.wieIkWord = (veld as HTMLTextAreaElement).value.trim() || null;
+          void bewaren();
+          melding.textContent = teksten.wieIkWord.bewaard;
+        },
+      }, [teksten.wieIkWord.bewaren]),
+      melding,
+      el("button", { class: "knop-klein", onclick: () => toonS8() }, [teksten.wieIkWord.bewijslijst]),
+      el("button", { class: "knop-klein", onclick: () => toonS16Meer() }, [teksten.wieIkWord.terug]),
+    ]),
+  ]);
+}
+
+// ── S21 — Kwaliteiten ("verlangen van de periode") ──────────────────────
+// v2.md §9.1 punt 9, Masterplan-v2.md §7.3. Het enige echte MVP-gat
+// (Onderzoek-I6-Hal-Maqam.md, Audit-MVP-Scope-9-september-2026.md).
+// Islamitische naam alleen zichtbaar met de laag aan. Geen vaste cadans.
+function toonS21Kwaliteiten(): void {
+  const islamAan = data.instellingen.islamitischeLaag;
+  const lijst = el("div", { class: "woorden-grid" });
+
+  function vulLijst(): void {
+    const huidig = data.verlangenVanDePeriode?.kwaliteitId ?? null;
+    lijst.replaceChildren(
+      ...kwaliteiten.map((k) =>
+        el(
+          "button",
+          {
+            class: "woord-knop",
+            "aria-pressed": huidig === k.id,
+            onclick: () => {
+              data.verlangenVanDePeriode = { kwaliteitId: k.id, sinds: new Date().toISOString() };
+              void bewaren();
+              vulLijst();
+            },
+          },
+          [islamAan && k.islamNaam ? `${k.naam} (${k.islamNaam})` : k.naam]
+        )
+      )
+    );
+  }
+  vulLijst();
+
+  render([
+    el("div", { class: "scherm" }, [
+      el("p", { class: "vraag" }, [teksten.kwaliteiten.vraag]),
+      el("p", { class: "zacht" }, [teksten.kwaliteiten.onderschrift]),
+      lijst,
+      el("button", { class: "knop-klein", onclick: () => toonS16Meer() }, [teksten.kwaliteiten.terug]),
+    ]),
+  ]);
+}
+
+// ── S22 — Ochtend: Richting ──────────────────────────────────────────────
+// v2.md §9.1 punt 6, v2.3 §2.4 "Het Ritme". De boog met gebedstijden-
+// inkepingen staat hier (nog) niet: die vereist `adhan-js`, dat in deze
+// omgeving niet te installeren was (geen npm-registry-toegang) — zie
+// Fase-3-Bouw-status.md v20. Deze tekstuele versie van S22 is functioneel
+// wel compleet: intentie, kerntaak, het gekozen verlangen in beeld.
+function toonS22Ochtend(): void {
+  const intentieVeld = el("input", { type: "text", placeholder: teksten.ochtend.intentiePlaceholder });
+  const kerntaakVeld = el("textarea", { placeholder: teksten.ochtend.kerntaakPlaceholder });
+  const kwaliteit = data.verlangenVanDePeriode ? kwaliteitById(data.verlangenVanDePeriode.kwaliteitId) : null;
+  const islamAan = data.instellingen.islamitischeLaag;
+
+  function klaar(): void {
+    data.ochtendMomenten = data.ochtendMomenten ?? [];
+    data.ochtendMomenten.push({
+      id: nieuwId("o"),
+      datum: huidigeDagSleutel(),
+      intentie: (intentieVeld as HTMLInputElement).value.trim() || null,
+      kerntaak: (kerntaakVeld as HTMLTextAreaElement).value.trim() || null,
+    });
+    void bewaren();
+    toonS7();
+  }
+
+  render([
+    el("div", { class: "scherm" }, [
+      el("h1", { class: "brief-opschrift" }, [teksten.ochtend.kop]),
+      kwaliteit
+        ? el("p", { class: "zacht" }, [
+            islamAan && kwaliteit.islamNaam ? `${kwaliteit.naam} (${kwaliteit.islamNaam})` : kwaliteit.naam,
+          ])
+        : el("div", {}, [
+            el("span", { class: "zacht" }, [teksten.ochtend.geenVerlangen + " "]),
+            el("button", { class: "knop-klein", onclick: () => toonS21Kwaliteiten() }, [teksten.ochtend.kiesVerlangen]),
+          ]),
+      el("p", { class: "vraag" }, [teksten.ochtend.intentieVraag]),
+      intentieVeld,
+      el("p", { class: "vraag" }, [teksten.ochtend.kerntaakVraag]),
+      kerntaakVeld,
+      el("button", { class: "knop", onclick: klaar }, [teksten.ochtend.klaar]),
+    ]),
+  ]);
+}
+
+// ── S23 — Avond: Dag sluiten ──────────────────────────────────────────────
+// v2.md §9.1 punt 7, v2.3 §2.5 "De Grond". De chips zijn de enige plek waar
+// de grondbewegingen worden vastgelegd (`ritme.ts`); geen apart scherm leest
+// ze terug als lijst of getal.
+function toonS23AvondSluiten(): void {
+  const canvas = el("canvas", { class: "schijf-canvas" });
+  let positie: { energie: number; toon: number } | null = null;
+  const gekozenChips = new Set<string>();
+  const dankVeld = el("textarea", { placeholder: teksten.avondSluiten.dankbaarheidPlaceholder });
+  const zinVeld = el("textarea", { placeholder: teksten.avondSluiten.zinPlaceholder });
+  const chipsGrid = el("div", { class: "woorden-grid" });
+
+  function vulChips(): void {
+    chipsGrid.replaceChildren(
+      ...teksten.avondSluiten.chips.map((c) =>
+        el(
+          "button",
+          {
+            class: "woord-knop",
+            "aria-pressed": gekozenChips.has(c.id),
+            onclick: () => {
+              if (gekozenChips.has(c.id)) gekozenChips.delete(c.id);
+              else gekozenChips.add(c.id);
+              vulChips();
+            },
+          },
+          [c.label]
+        )
+      )
+    );
+  }
+  vulChips();
+
+  function klaar(): void {
+    data.dagsluitingen = data.dagsluitingen ?? [];
+    data.dagsluitingen.push({
+      id: nieuwId("d"),
+      datum: huidigeDagSleutel(),
+      positie,
+      chips: [...gekozenChips],
+      dankbaarheid: (dankVeld as HTMLTextAreaElement).value.trim() || null,
+      zin: (zinVeld as HTMLTextAreaElement).value.trim() || null,
+    });
+    void bewaren();
+    toonS7();
+  }
+
+  render([
+    el("div", { class: "scherm" }, [
+      el("h1", { class: "brief-opschrift" }, [teksten.avondSluiten.kop]),
+      el("p", { class: "vraag" }, [teksten.avondSluiten.kompasVraag]),
+      canvas,
+      el("p", { class: "vraag" }, [teksten.avondSluiten.chipsVraag]),
+      chipsGrid,
+      el("p", { class: "vraag" }, [teksten.avondSluiten.dankbaarheidVraag]),
+      dankVeld,
+      el("p", { class: "vraag" }, [teksten.avondSluiten.zinVraag]),
+      zinVeld,
+      el("button", { class: "knop", onclick: klaar }, [teksten.avondSluiten.klaar]),
+    ]),
+  ]);
+
+  tekenSchijf(
+    canvas,
+    (energie, toon) => {
+      positie = { energie, toon };
+    },
+    { rustig: data.instellingen.rustigeBeelden }
+  );
 }
 
 // ── S10 — Instellingen ────────────────────────────────────────────────

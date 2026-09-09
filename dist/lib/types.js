@@ -19,5 +19,9 @@ export function leegBestand() {
         weekmomenten: [],
         perfectionismeChecks: [],
         frictieAangebodenMaanden: [],
+        wieIkWord: null,
+        verlangenVanDePeriode: null,
+        ochtendMomenten: [],
+        dagsluitingen: [],
     };
 }

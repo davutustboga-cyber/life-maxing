@@ -109,6 +109,10 @@ function check(naam, waar, extra) {
   await page.evaluate(schrijfNaarIndexedDb, zaadBestand());
   await page.reload();
   await page.waitForTimeout(400);
+  // v1.1-meer.md (6 sept 2026): De Hemel zit niet meer los op S1, maar
+  // achter het stille "meer"-toegangspunt (S16).
+  await page.click('text=meer');
+  await page.waitForTimeout(300);
 
   // ── 2. De Hemel openen, aanbod moet er zijn ───────────────────────
   await page.click('text=laat me zien wat ik al gedaan heb');
@@ -231,6 +235,8 @@ function check(naam, waar, extra) {
   await page.evaluate(schrijfNaarIndexedDb, doc2);
   await page.reload();
   await page.waitForTimeout(400);
+  await page.click('text=meer');
+  await page.waitForTimeout(300);
   await page.click('text=laat me zien wat ik al gedaan heb');
   await page.waitForTimeout(500);
   check('Aanbod verschijnt opnieuw na verse data', await page.$('text=Wil je er lijnen tussen trekken'));

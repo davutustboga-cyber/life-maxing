@@ -170,6 +170,10 @@ function check(naam, waar, extra) {
   check('Géén brief voor de lopende maand', !maanden.includes(lopend));
 
   // ── 2. De aankondiging staat op S1 ────────────────────────────────
+  // v1.1-meer.md (6 sept 2026): de aankondiging zit niet meer los op S1,
+  // maar achter het stille "meer"-toegangspunt (S16).
+  await page.click('text=meer');
+  await page.waitForTimeout(300);
   check('S1 kondigt aan dat er een brief ligt', await page.$('text=er ligt een brief'));
 
   await page.click('text=er ligt een brief');
@@ -220,6 +224,8 @@ function check(naam, waar, extra) {
   // en opent hem opnieuw. In de test is dat een herlaad.
   await page.reload();
   await page.waitForTimeout(600);
+  await page.click('text=meer');
+  await page.waitForTimeout(300);
   await page.screenshot({ path: '/tmp/mb/03-s1-na-lezen.png' });
   const nogSteedsAankondiging = await page.$('text=er ligt een brief');
   check('Na het lezen verdwijnt de aankondiging niet meteen (de zware maand is nog ongelezen)', !!nogSteedsAankondiging);
@@ -245,6 +251,8 @@ function check(naam, waar, extra) {
   // en opent hem opnieuw. In de test is dat een herlaad.
   await page.reload();
   await page.waitForTimeout(600);
+  await page.click('text=meer');
+  await page.waitForTimeout(300);
 
   check('Aankondiging is weg als alles gelezen is', !(await page.$('text=er ligt een brief')));
   check('Het archief is nu bereikbaar', await page.$('text=de brieven'));
