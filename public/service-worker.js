@@ -2,12 +2,13 @@
 // Geen push, geen achtergrondsynchronisatie, geen netwerkverzoek naar
 // buiten (v1.0 §11.4, nul netwerkverzoeken).
 
-const CACHE_NAAM = "life-maxing-v7";
+const CACHE_NAAM = "life-maxing-v9";
 // Alle modules staan erbij: "volledig offline" mag niet afhangen van de vraag
 // of de eerste lading toevallig alles heeft opgehaald. v7: lib/meer.js
 // (S16/S17/S18) ontbrak sinds de meer-menu-bouw (v12) — nooit toegevoegd
 // aan deze lijst, dus nooit voorgecached — en de twee zelfgehoste
-// font-bestanden zijn nieuw.
+// font-bestanden zijn nieuw. v8: lib/visie.js (De Visie) toegevoegd. v9:
+// Kompas-uitleg, schermovergang en duidelijkere knoppen (style.css/app.ts).
 const BESTANDEN = [
   "/",
   "/index.html",
@@ -20,13 +21,19 @@ const BESTANDEN = [
   "/lib/dom.js",
   "/lib/maandbrief.js",
   "/lib/meer.js",
+  "/lib/nu.js",
+  "/lib/ritme.js",
   "/lib/selection.js",
   "/lib/sterrenbeeld.js",
+  "/lib/visie.js",
   "/lib/weekmoment.js",
   "/lib/types.js",
+  "/data/adhkar.js",
   "/data/bewegingen.js",
+  "/data/kwaliteiten.js",
   "/data/selectie.js",
   "/data/teksten.js",
+  "/data/themas.js",
   "/data/woorden.js",
   "/icons/icon-192.png",
   "/icons/icon-512.png",

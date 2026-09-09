@@ -146,6 +146,23 @@ body {
   align-items: center;
   gap: 1.75rem;
   text-align: center;
+  animation: scherm-in 320ms var(--ease-standaard);
+}
+
+/* Elke render() is vandaag een harde, instante wissel (replaceChildren) —
+   dit geeft elke schermwissel een korte, zachte intrede in plaats daarvan.
+   Puur CSS op de wrapper die toch al elk scherm heeft, dus geen dom.ts- of
+   app.ts-wijziging nodig. prefers-reduced-motion zet 'm net als alle andere
+   animaties in dit bestand al uit (zie onderaan). */
+@keyframes scherm-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .vraag {
@@ -203,6 +220,22 @@ button {
   transition-duration: 140ms;
 }
 
+/* Een knop die bij een lege invoer niets zou doen, ziet er ook zo uit —
+   anders tik je en gebeurt er zichtbaar niets. Geen kleur die waarschuwt,
+   gewoon minder aanwezig. */
+.knop:disabled {
+  opacity: 0.4;
+  cursor: default;
+  box-shadow: none;
+}
+.knop:disabled:hover,
+.knop:disabled:active {
+  transform: none;
+  border-color: var(--lijn);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
+  box-shadow: none;
+}
+
 .knop-klein {
   background: transparent;
   border: none;
@@ -256,6 +289,24 @@ button {
 .deur-onderschrift {
   color: var(--voorgrond-zwak);
   font-size: 0.85rem;
+}
+
+.deur-titel {
+  display: block;
+  width: 100%;
+  margin: 0;
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: opacity 140ms ease;
+}
+.deur-titel:active {
+  opacity: 0.6;
 }
 
 .woorden-grid {
@@ -337,6 +388,31 @@ textarea:focus {
   width: min(70vw, 320px);
   height: min(70vw, 320px);
   touch-action: none;
+}
+
+/* v22 — De Schijf uitgelegd: labels rond het instrument, niet erop (de
+   cirkel zelf blijft "zonder assen, zonder cijfers"). asBoven/asOnder
+   nemen de normale flow (ruim genoeg verticaal); asLinks/asRechts staan in
+   een rij die exact de breedte van de schijf deelt via space-between, zodat
+   ze nooit buiten het scherm kunnen vallen, ook niet op een smalle telefoon. */
+.kompas-veld {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+.kompas-as-verticaal {
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: var(--voorgrond-zwak);
+}
+.kompas-as-horizontaal {
+  display: flex;
+  justify-content: space-between;
+  width: min(70vw, 320px);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: var(--voorgrond-zwak);
 }
 
 .hemel-canvas {

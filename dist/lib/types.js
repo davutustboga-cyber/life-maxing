@@ -8,6 +8,8 @@ export function leegBestand() {
             rustigeBeelden: false,
             ethischeOndergrensGezien: false,
             weekmomentAan: true,
+            visieCheckIns: { ochtend: true, middag: true, avond: true },
+            visieIntroAangeboden: false,
         },
         woordenUitbreiding: [],
         momenten: [],
@@ -24,5 +26,6 @@ export function leegBestand() {
         ochtendMomenten: [],
         dagsluitingen: [],
         doel: null,
+        visie: null,
     };
 }

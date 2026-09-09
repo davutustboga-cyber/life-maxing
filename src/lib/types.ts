@@ -141,6 +141,19 @@ export interface LifeMaxingData {
     ethischeOndergrensGezien: boolean;
     /** v2.2 §11: het weekmoment is uitschakelbaar. Standaard aan. */
     weekmomentAan: boolean;
+    /**
+     * v22 — per dagdeel uit- te zetten of het visie-fragment/-blok
+     * verschijnt. Geen tijdstip-instelling (geen tijdpicker): dit volgt de
+     * bestaande dagdeel-grenzen uit lib/nu.ts. Standaard alle drie aan.
+     */
+    visieCheckIns: { ochtend: boolean; middag: boolean; avond: boolean };
+    /**
+     * v22 — of de eenmalige visie-onboarding al is aangeboden (geaccepteerd
+     * of overgeslagen, maakt niet uit). Zonder dit veld zou toonVisieIntro
+     * bij elke app-open terugkomen voor wie hem oversloeg — precies het
+     * soort aandringen dat Wet 5 verbiedt.
+     */
+    visieIntroAangeboden: boolean;
   };
   woordenUitbreiding: Woord[];
   momenten: Moment[];
@@ -193,6 +206,8 @@ export interface LifeMaxingData {
    * waar je nu naartoe werkt, niet een logboek van eerdere doelen.
    */
   doel: Doel | null;
+  /** v22 — De Visie, zie de interface hierboven. */
+  visie: Visie | null;
 }
 
 export interface Doel {
@@ -202,6 +217,25 @@ export interface Doel {
   planAls: string;
   planDan: string;
   sinds: string;
+}
+
+export type VisiePeriode = "3_maanden" | "1_jaar" | "5_jaar";
+
+/**
+ * De Visie (v22, bij onboarding): een zelfgeschreven "toekomst in het nu" —
+ * drie delen, tegenwoordige tijd. Net als wieIkWord/doel altijd overschrijf-
+ * baar, geen geschiedenis (Wet 4). Bewust geen "manifestatie-belofte" op
+ * zich: puur een identiteitsbeeld, zoals wieIkWord dat ook al mag zijn
+ * zonder obstakel — de brug naar een concreet doel (met obstakel + plan,
+ * v21 se Doel) staat los, als vrijblijvende link na het schrijven.
+ */
+export interface Visie {
+  periode: VisiePeriode;
+  wieIkBen: string;
+  watIkHeb: string;
+  waarIkSta: string;
+  geschrevenOp: string;
+  laatstGewijzigdOp: string;
 }
 
 export interface OchtendMoment {
@@ -218,6 +252,13 @@ export interface DagSluiting {
   chips: string[];
   dankbaarheid: string | null;
   zin: string | null;
+  /**
+   * v22 — "iets kleins voor morgen": één concreet, vooruitkijkend puntje,
+   * los van `zin` (terugkijkend). Scullin e.a. 2018: een korte, concrete
+   * to-do voor morgen vlak voor het slapen verkort de inslaaptijd; dat is
+   * een ander mechanisme dan terugkijken/dankbaarheid, dus een eigen veld.
+   */
+  voorMorgen: string | null;
 }
 
 export function leegBestand(): LifeMaxingData {
@@ -229,6 +270,8 @@ export function leegBestand(): LifeMaxingData {
       rustigeBeelden: false,
       ethischeOndergrensGezien: false,
       weekmomentAan: true,
+      visieCheckIns: { ochtend: true, middag: true, avond: true },
+      visieIntroAangeboden: false,
     },
     woordenUitbreiding: [],
     momenten: [],
@@ -245,5 +288,6 @@ export function leegBestand(): LifeMaxingData {
     ochtendMomenten: [],
     dagsluitingen: [],
     doel: null,
+    visie: null,
   };
 }

@@ -23,8 +23,20 @@ export const teksten = {
             { label: "meer dan dat", waarde: "10min_of_meer" },
             { label: "geen idee", waarde: "10min_of_meer" },
         ],
+        // v22 — De Schijf uitgelegd: geen assen op het instrument zelf (dat
+        // blijft "een cirkel zonder assen, zonder cijfers" — v2.3 §2.1), maar
+        // wél eromheen, in de chrome, zodat de eerste keer duidelijk is wat
+        // slepen betekent. asBoven/asOnder = energie, asLinks/asRechts = toon.
+        schijfUitleg: "Sleep het lichtpunt ernaartoe. Boven voelt energiek, onder voelt moe; rechts voelt licht, links voelt zwaar.",
+        schijfUitkomst: "Dit bepaalt welke opties je zo meteen te zien krijgt.",
+        asBoven: "energiek",
+        asOnder: "moe",
+        asLinks: "zwaar",
+        asRechts: "licht",
     },
     deuren: {
+        kop: "Wat past nu?",
+        onderschrift: "Drie opties, waaronder altijd niets doen.",
         nietsDoen: { titel: "Niets doen", onderschrift: "Dat is ook een antwoord.", bijKiezen: "Goed. Tot een volgende keer." },
         ditKloptNiet: { knoptekst: "dit klopt niet", appAntwoord: "Goed. Waar zit je dan wel?" },
         afsluitvraag: "Waar ben je nu?",
@@ -191,6 +203,20 @@ export const teksten = {
             label: "De spiegel van de week",
             onderschrift: "Eén keer per week: de beeldoefening en een eigen keuze voor de week.",
         },
+        visieMomentenKop: "Visie-momenten",
+        visieMomentenOnderschrift: "Dit volgt de gewone ochtend/middag/avond-indeling van de app, geen apart tijdstip.",
+        visieOchtend: {
+            label: "Ochtend",
+            onderschrift: "Eén regel bij Richting voor vandaag.",
+        },
+        visieMiddag: {
+            label: "Middag",
+            onderschrift: "Eén rustige regel op het startscherm, wisselend.",
+        },
+        visieAvond: {
+            label: "Avond",
+            onderschrift: "De volledige visie teruglezen bij het sluiten van de dag.",
+        },
         allesMeenemenEnStoppen: {
             label: "Alles meenemen en stoppen",
         },
@@ -260,6 +286,12 @@ export const teksten = {
         dankbaarheidPlaceholder: "mag klein zijn",
         zinVraag: "Eén zin over vandaag.",
         zinPlaceholder: "mag leeg blijven",
+        // v22: apart van zinVraag (terugkijkend) — een klein, concreet,
+        // vooruitkijkend puntje. Scullin e.a. 2018: dat is wat vlak voor het
+        // slapen sneller in slaap helpt, niet nog een keer terugblikken.
+        visieKop: "Je visie",
+        voorMorgenVraag: "Eén klein ding voor morgen.",
+        voorMorgenPlaceholder: "concreet en klein, mag leeg blijven",
         klaar: "Klaar",
     },
     // v21, spoor W6 (Onderzoek-W6-Doelen-en-Verbeelding.md, content/doelen.md).
@@ -292,5 +324,45 @@ export const teksten = {
         opnieuw: "Opnieuw doordenken",
         terug: "Terug",
         klaar: "Klaar",
+    },
+    // v22 — De Visie: een zelfgeschreven "toekomst in het nu" bij onboarding.
+    // Zie het plan: mentale contrastering (Oettingen) laat zien dat een wens
+    // alleen visualiseren de inspanning kan verlágen — dit blijft daarom een
+    // identiteitsbeeld (zoals wieIkWord), nooit een dagelijks herhaalritueel,
+    // en de brug naar een concreet doel (met obstakel + plan) is een vrije
+    // keuze, geen automatische volgende stap.
+    visie: {
+        introKop: "Waar je naartoe leeft",
+        introRegels: [
+            "Je kunt hier kort opschrijven hoe je leven eruitziet als het al is geworden wat je wil — niet als wens, maar alsof het nu al zo is.",
+            "Dat helpt vooral om helder te krijgen wie je wil zijn. Het lukt het best in combinatie met eerlijk kijken naar wat er nu in de weg zit — dat kun je hierna altijd apart doen, bij \"Richting en doelen\".",
+        ],
+        introHerkomst: "Zelf geschreven, in je eigen woorden werkt beter dan een kant-en-klare zin steeds herhalen.",
+        beginnen: "Beginnen",
+        latereKeer: "Later misschien",
+        periodeVraag: "Over welke periode denk je na?",
+        periodeOnderschrift: "Dit bepaalt alleen de vraag hierna — geen deadline, geen klok.",
+        stapWieIkBenVraag: "Wie ben je?",
+        stapWieIkBenOnderschrift: "In tegenwoordige tijd, alsof het al zo is.",
+        stapWieIkBenPlaceholder: "Ik ben energiek. Ik sta rustig in wie ik ben, ook onder druk.",
+        stapWatIkHebVraag: "Wat heb je? Wat heb je bereikt?",
+        stapWatIkHebOnderschrift: "Mensen, dingen, een ritme — wat er om je heen staat.",
+        stapWatIkHebPlaceholder: "Ik heb een ritme dat bij me past. Ik heb mensen om me heen die me kennen.",
+        stapWaarIkStaVraagPrefix: "Waar sta je, over",
+        stapWaarIkStaOnderschrift: "Concreet: wat doe je op een gewone dag?",
+        stapWaarIkStaPlaceholder: "Ik beweeg elke dag. Ik slaap goed. Ik werk aan iets dat me iets doet.",
+        verder: "Verder",
+        slaOver: "sla dit deel over",
+        terug: "Terug",
+        klaarKop: "Bewaard.",
+        klaarRegel: "Je kunt dit altijd herlezen of herschrijven bij Terugkijken.",
+        klaarNaarDoel: "Dit kan de basis zijn voor een concreet doel",
+        naarDeApp: "Naar de app",
+        toegangKnoptekst: "mijn visie",
+        bekijkGeenVisie: "Nog geen visie geschreven.",
+        bekijkSchrijf: "Schrijven",
+        herschrijven: "Herschrijven",
+        bewaren: "Bewaren",
+        bewaard: "Bewaard.",
     },
 };

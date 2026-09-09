@@ -126,10 +126,17 @@ export function suggestiesVoorNu(data, nu = new Date()) {
                 });
             }
             break;
-        case "voor_slapen":
-            if (islam)
+        case "voor_slapen": {
+            // Ayat al-Kursi hoort als allerlaatste vóór het slapen (adhkar.ts,
+            // "wanneer": "voor het slapen") — die volgt nu vanzelf ná Dag sluiten
+            // (zie toonS23AvondSluiten se klaar()), dus die staat hier voorop
+            // zolang de dag nog niet gesloten is. Is de dag al gesloten, dan is
+            // de dhikr zelf het enige bedtijd-ritueel dat nog rest, en wordt die
+            // wél de hoofdsuggestie.
+            const avondAlGedaan = avondVandaagGedaan(data);
+            if (islam && avondAlGedaan)
                 lijst.push(dhikrSuggestie("ayat-al-kursi"));
-            if (!avondVandaagGedaan(data)) {
+            if (!avondAlGedaan) {
                 lijst.push({
                     soort: "avond",
                     titel: "Dag sluiten",
@@ -137,8 +144,11 @@ export function suggestiesVoorNu(data, nu = new Date()) {
                     waaromNu: "Nog niet gedaan vandaag — kan ook kort.",
                 });
             }
+            if (islam && !avondAlGedaan)
+                lijst.push(dhikrSuggestie("ayat-al-kursi"));
             lijst.push(bewegingSuggestie("adem-lange-uitademing", "Rustiger ademen vlak voor het slapen scheelt."));
             break;
+        }
         case "nacht":
             lijst.push({
                 soort: "rust",

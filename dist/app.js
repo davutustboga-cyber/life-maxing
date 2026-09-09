@@ -18,12 +18,25 @@ import { dhikrById } from "./data/adhkar.js";
 import { themas, themaById } from "./data/themas.js";
 import { begroeting, dagdeelVan, datumregel, suggestiesVoorNu } from "./lib/nu.js";
 import { alleWoorden } from "./data/woorden.js";
+import { visieBeschikbaarAlsIntro, registreerVisieIntroAangeboden, schrijfVisie, periodeLabel, visieFragment, visieFragmentZichtbaar, visieCheckInsVoor, toekomstSignaal, } from "./lib/visie.js";
 let data;
 // state voor het moment dat nu wordt opgebouwd
 let huidigeTikPositie = null;
 let huidigMoment = null;
 function nieuwId(prefix) {
     return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+/**
+ * v22 — een knop die bij een leeg veld niets zou doen, ziet er nu ook zo
+ * uit (.knop:disabled), in plaats van dat je erop tikt en er zichtbaar
+ * niets gebeurt. Werkt meteen bij een vooringevulde waarde (herschrijven).
+ */
+function koppelDisabled(veld, knop) {
+    const controleer = () => {
+        knop.disabled = !veld.value.trim();
+    };
+    controleer();
+    veld.addEventListener("input", controleer);
 }
 async function bewaren() {
     const gelukt = await bewaarBestand(data);
@@ -58,6 +71,13 @@ export async function startApp() {
     if (!data.instellingen.ethischeOndergrensGezien) {
         toonS0();
     }
+    else if (visieBeschikbaarAlsIntro(data)) {
+        // v22: eenmalig aangeboden — bij gloednieuwe gebruikers vlak na S0, bij
+        // bestaande gebruikers die de app bijwerken de eerste keer dat ze hem
+        // weer openen. Daarna nooit meer vanzelf (Wet 5); altijd bereikbaar via
+        // Terugkijken → "mijn visie".
+        toonVisieIntro();
+    }
     else {
         // v21: de app opent op het startscherm dat zelf zegt wat er nu past,
         // niet meer op een lege schijf zonder uitleg.
@@ -75,11 +95,30 @@ function toonS0() {
                     data.aangemaaktOp = new Date().toISOString();
                     data.instellingen.ethischeOndergrensGezien = true;
                     await bewaren();
-                    toonThuis();
+                    if (visieBeschikbaarAlsIntro(data))
+                        toonVisieIntro();
+                    else
+                        toonThuis();
                 },
             }, [teksten.eerstOpening.knop]),
             el("button", { class: "knop-klein", onclick: () => toonS11() }, ["Ik heb al een bestand"]),
         ]),
+    ]);
+}
+/**
+ * v22 — De Schijf uitgelegd: labels rond het instrument (niet erop — de
+ * cirkel zelf blijft "zonder assen, zonder cijfers"). Gedeeld door S1 en
+ * S23 (Avond), de twee plekken waar de kale schijf staat.
+ */
+function kompasVeld(canvas) {
+    return el("div", { class: "kompas-veld" }, [
+        el("span", { class: "kompas-as-verticaal" }, [teksten.kompas.asBoven]),
+        canvas,
+        el("span", { class: "kompas-as-horizontaal" }, [
+            el("span", {}, [teksten.kompas.asLinks]),
+            el("span", {}, [teksten.kompas.asRechts]),
+        ]),
+        el("span", { class: "kompas-as-verticaal" }, [teksten.kompas.asOnder]),
     ]);
 }
 // ── S1 — Het Kompas (De Schijf) ───────────────────────────────────────
@@ -98,7 +137,9 @@ function toonS1(beginPositie = null) {
     // altijd al vroegen.
     const scherm = el("div", { class: "scherm" }, [
         el("p", { class: "vraag" }, [teksten.eerstOpening.vraag]),
-        canvas,
+        el("p", { class: "zacht" }, [teksten.kompas.schijfUitleg]),
+        kompasVeld(canvas),
+        el("p", { class: "zacht" }, [teksten.kompas.schijfUitkomst]),
         el("button", { class: "knop-klein", onclick: () => toonS15Onderbreker() }, [teksten.onderbreker.toegangKnoptekst]),
         el("button", { class: "knop-klein", onclick: () => toonThuis() }, ["terug naar start"]),
     ]);
@@ -174,6 +215,10 @@ function toonS2() {
         toonS3();
     }
     const grid = el("div", { class: "woorden-grid" });
+    const verderKnop = el("button", { class: "knop", onclick: verder, disabled: true }, ["Verder"]);
+    function verversVerderKnop() {
+        verderKnop.disabled = gekozen.size === 0 && !eigenWoordTekst.trim();
+    }
     function vulGrid() {
         // Zonder tekst: de woorden bij je tikpositie. Met tekst: de hele lijst
         // doorzocht (schermenoverzicht.md S2).
@@ -188,16 +233,19 @@ function toonS2() {
                 else if (gekozen.size < 2)
                     gekozen.add(w.id);
                 e.currentTarget.setAttribute("aria-pressed", String(gekozen.has(w.id)));
+                verversVerderKnop();
             },
         }, [w.woord])));
     }
     vulGrid();
+    verversVerderKnop();
     const zoekInvoer = el("input", {
         type: "text",
         placeholder: teksten.kompas.zoekveldPlaceholder,
         oninput: (e) => {
             eigenWoordTekst = e.target.value;
             vulGrid();
+            verversVerderKnop();
         },
     });
     render([
@@ -205,7 +253,7 @@ function toonS2() {
             el("p", { class: "vraag" }, [teksten.kompas.openingsvraag]),
             grid,
             zoekInvoer,
-            el("button", { class: "knop", onclick: verder }, ["Verder"]),
+            verderKnop,
             viaSchijf
                 ? null
                 : el("button", { class: "knop-klein", onclick: () => toonS1(tikPositie) }, ["nauwkeuriger aangeven met de cirkel"]),
@@ -280,14 +328,18 @@ function toonS4() {
         if (!beweging)
             return el("div", {}, []);
         return el("div", { class: "deur" }, [
-            el("button", { class: "knop-klein", style: "all:unset;cursor:pointer;text-align:left;color:inherit;font-size:1.05rem;", onclick: () => kiesDeur(id) }, [
-                beweging.titel,
-            ]),
+            el("button", { class: "deur-titel", onclick: () => kiesDeur(id) }, [beweging.titel]),
             el("span", { class: "deur-onderschrift" }, [`${beweging.kosten.tijdMinuten[0]}–${beweging.kosten.tijdMinuten[1]} min`]),
             el("button", { class: "lengte-link", onclick: () => ditKloptNiet(id) }, [teksten.deuren.ditKloptNiet.knoptekst]),
         ]);
     });
-    render([el("div", { class: "scherm" }, [el("div", { class: "deuren" }, kaarten)])]);
+    render([
+        el("div", { class: "scherm" }, [
+            el("p", { class: "vraag" }, [teksten.deuren.kop]),
+            el("p", { class: "zacht" }, [teksten.deuren.onderschrift]),
+            el("div", { class: "deuren" }, kaarten),
+        ]),
+    ]);
 }
 // ── S5 — Beweging uitvoeren ───────────────────────────────────────────
 // v2.3 §2.8 / schermenoverzicht.md S5: "waar relevant een eenvoudige
@@ -939,6 +991,9 @@ function toonS22Ochtend() {
     const kerntaakVeld = el("textarea", { placeholder: teksten.ochtend.kerntaakPlaceholder });
     const kwaliteit = data.verlangenVanDePeriode ? kwaliteitById(data.verlangenVanDePeriode.kwaliteitId) : null;
     const islamAan = data.instellingen.islamitischeLaag;
+    // v22: hetzelfde lichte fragment als op het startscherm, alleen als de
+    // ochtend-toggle aan staat.
+    const fragment = data.visie && visieCheckInsVoor(data).ochtend ? visieFragment(data.visie, new Date()) : null;
     function klaar() {
         data.ochtendMomenten = data.ochtendMomenten ?? [];
         data.ochtendMomenten.push({
@@ -953,6 +1008,7 @@ function toonS22Ochtend() {
     render([
         el("div", { class: "scherm" }, [
             el("h1", { class: "brief-opschrift" }, [teksten.ochtend.kop]),
+            fragment ? el("p", { class: "opmerking" }, [`${fragment.label}: ${fragment.tekst}`]) : null,
             kwaliteit
                 ? el("p", { class: "zacht" }, [
                     islamAan && kwaliteit.islamNaam ? `${kwaliteit.naam} (${kwaliteit.islamNaam})` : kwaliteit.naam,
@@ -979,7 +1035,16 @@ function toonS23AvondSluiten() {
     const gekozenChips = new Set();
     const dankVeld = el("textarea", { placeholder: teksten.avondSluiten.dankbaarheidPlaceholder });
     const zinVeld = el("textarea", { placeholder: teksten.avondSluiten.zinPlaceholder });
+    const voorMorgenVeld = el("textarea", { placeholder: teksten.avondSluiten.voorMorgenPlaceholder });
     const chipsGrid = el("div", { class: "woorden-grid" });
+    // v22: 's avonds de volledige visie teruglezen (geen invoer, alleen
+    // lezen) — het enige dagdeel met de volle tekst, zie het plan.
+    const visieRegels = data.visie
+        ? [data.visie.wieIkBen, data.visie.watIkHeb, data.visie.waarIkSta].filter((r) => r.trim().length > 0)
+        : [];
+    const visieBlok = data.visie && visieCheckInsVoor(data).avond && visieRegels.length > 0
+        ? el("div", { class: "herkomst" }, visieRegels.map((r) => el("p", { class: "herkomst-regel" }, [r])))
+        : null;
     function vulChips() {
         chipsGrid.replaceChildren(...teksten.avondSluiten.chips.map((c) => el("button", {
             class: "woord-knop",
@@ -1003,27 +1068,211 @@ function toonS23AvondSluiten() {
             chips: [...gekozenChips],
             dankbaarheid: dankVeld.value.trim() || null,
             zin: zinVeld.value.trim() || null,
+            voorMorgen: voorMorgenVeld.value.trim() || null,
         });
         void bewaren();
-        toonS7();
+        // Ayat al-Kursi hoort vlak voor het slapen, als allerlaatste — dus na
+        // het sluiten van de dag, niet ernaast als los alternatief (adhkar.ts:
+        // "wanneer": "voor het slapen"). Alleen met de islamitische laag aan;
+        // zonder die laag dimt de app direct, zoals voorheen.
+        if (data.instellingen.islamitischeLaag) {
+            toonDhikr("ayat-al-kursi", () => toonS7(), () => toonS7());
+        }
+        else {
+            toonS7();
+        }
     }
     render([
         el("div", { class: "scherm" }, [
             el("h1", { class: "brief-opschrift" }, [teksten.avondSluiten.kop]),
+            visieBlok ? el("div", {}, [el("p", { class: "vraag" }, [teksten.avondSluiten.visieKop]), visieBlok]) : null,
             el("p", { class: "vraag" }, [teksten.avondSluiten.kompasVraag]),
-            canvas,
+            el("p", { class: "zacht" }, [teksten.kompas.schijfUitleg]),
+            kompasVeld(canvas),
             el("p", { class: "vraag" }, [teksten.avondSluiten.chipsVraag]),
             chipsGrid,
             el("p", { class: "vraag" }, [teksten.avondSluiten.dankbaarheidVraag]),
             dankVeld,
             el("p", { class: "vraag" }, [teksten.avondSluiten.zinVraag]),
             zinVeld,
+            el("p", { class: "vraag" }, [teksten.avondSluiten.voorMorgenVraag]),
+            voorMorgenVeld,
             el("button", { class: "knop", onclick: klaar }, [teksten.avondSluiten.klaar]),
         ]),
     ]);
     tekenSchijf(canvas, (energie, toon) => {
         positie = { energie, toon };
     }, { rustig: data.instellingen.rustigeBeelden });
+}
+// ══════════════════════════════════════════════════════════════════════
+// v22 — De Visie: een zelfgeschreven "toekomst in het nu" bij onboarding.
+// Zie het plan (serialized-toasting-iverson.md): mentale contrastering
+// (Oettingen) laat zien dat een wens alleen visualiseren de inspanning kan
+// verlágen. Dit blijft daarom een identiteitsbeeld (zoals wieIkWord), nooit
+// een dagelijks herhaalritueel — het fragment op Nu/Ochtend wisselt, en de
+// brug naar een concreet doel (Doel, met obstakel en plan) is een vrije
+// link, geen automatische stap. Volledig optioneel: elk scherm hieronder
+// heeft een uitgang die niets vastlegt.
+// ══════════════════════════════════════════════════════════════════════
+function toonVisieIntro() {
+    render([
+        el("div", { class: "scherm" }, [
+            el("p", { class: "vraag" }, [teksten.visie.introKop]),
+            el("div", { class: "regels" }, teksten.visie.introRegels.map((r) => el("p", { class: "regel" }, [r]))),
+            el("div", { class: "herkomst" }, [el("p", { class: "herkomst-regel" }, [teksten.visie.introHerkomst])]),
+            el("button", { class: "knop", onclick: () => toonVisiePeriode() }, [teksten.visie.beginnen]),
+            el("button", {
+                class: "knop-klein",
+                onclick: () => {
+                    registreerVisieIntroAangeboden(data);
+                    void bewaren();
+                    toonThuis();
+                },
+            }, [teksten.visie.latereKeer]),
+        ]),
+    ]);
+}
+function toonVisiePeriode() {
+    const periodes = ["3_maanden", "1_jaar", "5_jaar"];
+    let gekozen = data.visie?.periode ?? null;
+    const grid = el("div", { class: "woorden-grid" });
+    function vulGrid() {
+        grid.replaceChildren(...periodes.map((p) => el("button", {
+            class: "woord-knop",
+            "aria-pressed": gekozen === p,
+            onclick: () => {
+                gekozen = p;
+                vulGrid();
+            },
+        }, [periodeLabel(p)])));
+    }
+    vulGrid();
+    render([
+        el("div", { class: "scherm" }, [
+            el("p", { class: "vraag" }, [teksten.visie.periodeVraag]),
+            el("p", { class: "zacht" }, [teksten.visie.periodeOnderschrift]),
+            grid,
+            el("button", {
+                class: "knop",
+                onclick: () => {
+                    if (!gekozen)
+                        return;
+                    toonVisieDeel(gekozen, 0, { wieIkBen: "", watIkHeb: "", waarIkSta: "" });
+                },
+            }, [teksten.visie.verder]),
+            el("button", { class: "knop-klein", onclick: () => toonThuis() }, [teksten.visie.latereKeer]),
+        ]),
+    ]);
+}
+/** De drie vragen, één gedeelde functie — index 0/1/2, met de stip-rij uit
+ * toonOefening() als voortgang. Elk deel is individueel over te slaan (mag
+ * leeg blijven, zelfde geest als elders in de app); de herschrijfhulp is
+ * een hint, nooit een blokkade. */
+function toonVisieDeel(periode, index, onderweg) {
+    const stappen = [
+        {
+            veld: "wieIkBen",
+            vraag: teksten.visie.stapWieIkBenVraag,
+            onderschrift: teksten.visie.stapWieIkBenOnderschrift,
+            placeholder: teksten.visie.stapWieIkBenPlaceholder,
+        },
+        {
+            veld: "watIkHeb",
+            vraag: teksten.visie.stapWatIkHebVraag,
+            onderschrift: teksten.visie.stapWatIkHebOnderschrift,
+            placeholder: teksten.visie.stapWatIkHebPlaceholder,
+        },
+        {
+            veld: "waarIkSta",
+            vraag: `${teksten.visie.stapWaarIkStaVraagPrefix} ${periodeLabel(periode)}?`,
+            onderschrift: teksten.visie.stapWaarIkStaOnderschrift,
+            placeholder: teksten.visie.stapWaarIkStaPlaceholder,
+        },
+    ];
+    const stap = stappen[index];
+    const veld = el("textarea", { placeholder: stap.placeholder });
+    veld.value = onderweg[stap.veld];
+    const hint = el("p", { class: "zacht" }, [""]);
+    function verversHint() {
+        const signaal = toekomstSignaal(veld.value);
+        hint.textContent = signaal ?? "";
+    }
+    verversHint();
+    veld.addEventListener("input", verversHint);
+    function verder(tekst) {
+        const volgende = { ...onderweg, [stap.veld]: tekst.trim() };
+        if (index < stappen.length - 1) {
+            toonVisieDeel(periode, index + 1, volgende);
+        }
+        else {
+            toonVisieKlaar(periode, volgende);
+        }
+    }
+    render([
+        el("div", { class: "scherm" }, [
+            el("div", { class: "stip-rij" }, stappen.map((_, i) => el("span", { class: `stip${i <= index ? " vol" : ""}` }))),
+            el("p", { class: "vraag" }, [stap.vraag]),
+            el("p", { class: "zacht" }, [stap.onderschrift]),
+            veld,
+            hint,
+            el("button", { class: "knop", onclick: () => verder(veld.value) }, [
+                teksten.visie.verder,
+            ]),
+            el("button", { class: "knop-klein", onclick: () => verder("") }, [teksten.visie.slaOver]),
+            index > 0
+                ? el("button", {
+                    class: "knop-klein",
+                    onclick: () => {
+                        const huidig = { ...onderweg, [stap.veld]: veld.value.trim() };
+                        toonVisieDeel(periode, index - 1, huidig);
+                    },
+                }, [teksten.visie.terug])
+                : el("button", { class: "knop-klein", onclick: () => toonVisiePeriode() }, [teksten.visie.terug]),
+        ]),
+    ]);
+}
+function toonVisieKlaar(periode, onderweg) {
+    data.visie = schrijfVisie(periode, onderweg.wieIkBen, onderweg.watIkHeb, onderweg.waarIkSta, data.visie);
+    registreerVisieIntroAangeboden(data);
+    void bewaren();
+    render([
+        el("div", { class: "scherm" }, [
+            el("p", { class: "vraag" }, [teksten.visie.klaarKop]),
+            el("p", { class: "regel" }, [teksten.visie.klaarRegel]),
+            el("button", { class: "knop", onclick: () => toonThuis() }, [teksten.visie.naarDeApp]),
+            el("button", { class: "knop-klein", onclick: () => toonS24Wish() }, [teksten.visie.klaarNaarDoel]),
+        ]),
+    ]);
+}
+/** Leesscherm + toegang tot herschrijven, bereikbaar via Terugkijken. */
+function toonVisieBekijken() {
+    if (!data.visie) {
+        render([
+            el("div", { class: "scherm" }, [
+                el("p", { class: "vraag" }, [teksten.visie.bekijkGeenVisie]),
+                el("button", { class: "knop", onclick: () => toonVisiePeriode() }, [teksten.visie.bekijkSchrijf]),
+                el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, [teksten.visie.terug]),
+            ]),
+        ]);
+        return;
+    }
+    const visie = data.visie;
+    const regels = [visie.wieIkBen, visie.watIkHeb, visie.waarIkSta].filter((r) => r.trim().length > 0);
+    render([
+        el("div", { class: "scherm" }, [
+            el("p", { class: "vraag" }, [`${teksten.visie.introKop} — ${periodeLabel(visie.periode)}`]),
+            el("div", { class: "herkomst" }, regels.map((r) => el("p", { class: "herkomst-regel" }, [r]))),
+            el("button", {
+                class: "knop",
+                onclick: () => toonVisieDeel(visie.periode, 0, {
+                    wieIkBen: visie.wieIkBen,
+                    watIkHeb: visie.watIkHeb,
+                    waarIkSta: visie.waarIkSta,
+                }),
+            }, [teksten.visie.herschrijven]),
+            el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, [teksten.visie.terug]),
+        ]),
+    ]);
 }
 function navBalk(actief) {
     const item = (tab, label, actie) => el("button", { class: `nav-item${actief === tab ? " actief" : ""}`, onclick: actie }, [label]);
@@ -1092,18 +1341,24 @@ function voerSuggestieUit(s) {
 // ── Het startscherm ───────────────────────────────────────────────────
 function toonThuis() {
     const nu = new Date();
+    const dagdeel = dagdeelVan(nu);
     const suggesties = suggestiesVoorNu(data, nu);
     // "Het is laat" is geen actie maar een opmerking — die krijgt geen knop.
     const eersteActie = suggesties.find((s) => s.soort !== "rust") ?? null;
     const opmerking = suggesties.find((s) => s.soort === "rust") ?? null;
     const verder = suggesties.filter((s) => s !== eersteActie && s.soort !== "rust");
+    // v22: het lichte visie-fragment, alleen ochtend/middag (de avond krijgt
+    // het volledige leesblok in toonS23AvondSluiten) en alleen als de
+    // bijhorende toggle aan staat.
+    const fragment = data.visie && visieFragmentZichtbaar(data, dagdeel) ? visieFragment(data.visie, nu) : null;
     render([
         el("div", { class: "scherm scherm-app" }, [
             el("header", { class: "thuis-kop" }, [
-                el("h1", { class: "thuis-groet" }, [begroeting(dagdeelVan(nu))]),
+                el("h1", { class: "thuis-groet" }, [begroeting(dagdeel)]),
                 el("p", { class: "thuis-datum" }, [datumregel(nu)]),
             ]),
             opmerking ? el("p", { class: "opmerking" }, [`${opmerking.titel}. ${opmerking.waaromNu}`]) : null,
+            fragment ? el("p", { class: "opmerking" }, [`${fragment.label}: ${fragment.tekst}`]) : null,
             eersteActie ? kaartPrimair(eersteActie) : null,
             verder.length ? el("p", { class: "sectie-kop" }, ["Past nu ook"]) : null,
             ...verder.map(kaartKlein),
@@ -1197,6 +1452,7 @@ function toonTerugkijken() {
             weekmomentBeschikbaar(data)
                 ? rijKnop("De spiegel van de week", "Beeld, obstakel, plan. 10 min.", () => toonS14Intro())
                 : null,
+            rijKnop("Mijn visie", data.visie ? "Herlezen of herschrijven." : "Waar je naartoe leeft, in het nu geschreven.", () => toonVisieBekijken()),
             rijKnop("Wie ik word", "Je eigen zin, wanneer je hem wil bijstellen.", () => toonS20WieIkWord()),
             rijKnop("Verlangen van deze periode", "De kwaliteit waar je nu op mikt.", () => toonS21Kwaliteiten()),
             perfectionismeCheckBeschikbaar(data)
@@ -1276,7 +1532,7 @@ function toonOefening(bewegingId, opties) {
 // ── Dhikr-lezer ───────────────────────────────────────────────────────
 // adhkar.md, ontwerpregel: de app toont de tekst en de betekenis, nooit een
 // aantal — ook niet wanneer het aantal letterlijk in de bron staat.
-function toonDhikr(id, opTerug) {
+function toonDhikr(id, opTerug, opKlaar = toonKlaar) {
     const d = dhikrById(id);
     if (!d)
         return toonThuis();
@@ -1290,7 +1546,7 @@ function toonDhikr(id, opTerug) {
                 el("p", { class: "arabisch", dir: "rtl", lang: "ar" }, [d.arabisch]),
                 el("p", { class: "translit" }, [d.transliteratie]),
                 el("p", { class: "vertaling" }, [d.vertaling]),
-                el("button", { class: "knop", onclick: () => toonKlaar() }, ["Klaar"]),
+                el("button", { class: "knop", onclick: opKlaar }, ["Klaar"]),
                 el("button", {
                     class: "knop-klein",
                     onclick: () => {
@@ -1334,20 +1590,17 @@ function toonS24Richting() {
 function toonS24Wish() {
     const veld = el("textarea", { placeholder: teksten.doelen.wishPlaceholder });
     veld.value = data.doel?.wish ?? "";
+    const knop = el("button", {
+        class: "knop",
+        onclick: () => toonS24Outcome(veld.value.trim()),
+    }, [teksten.doelen.klaar]);
+    koppelDisabled(veld, knop);
     render([
         el("div", { class: "scherm" }, [
             el("p", { class: "vraag" }, [teksten.doelen.wishVraag]),
             el("p", { class: "zacht" }, [teksten.doelen.wishOnderschrift]),
             veld,
-            el("button", {
-                class: "knop",
-                onclick: () => {
-                    const wish = veld.value.trim();
-                    if (!wish)
-                        return;
-                    toonS24Outcome(wish);
-                },
-            }, [teksten.doelen.klaar]),
+            knop,
             el("button", { class: "knop-klein", onclick: () => toonDoen() }, [teksten.doelen.terug]),
         ]),
     ]);
@@ -1355,20 +1608,17 @@ function toonS24Wish() {
 function toonS24Outcome(wish) {
     const veld = el("textarea", { placeholder: teksten.doelen.outcomePlaceholder });
     veld.value = data.doel?.outcome ?? "";
+    const knop = el("button", {
+        class: "knop",
+        onclick: () => toonS24Verbeelding(wish, veld.value.trim()),
+    }, [teksten.doelen.klaar]);
+    koppelDisabled(veld, knop);
     render([
         el("div", { class: "scherm" }, [
             el("p", { class: "vraag" }, [teksten.doelen.outcomeVraag]),
             el("p", { class: "zacht" }, [teksten.doelen.outcomeOnderschrift]),
             veld,
-            el("button", {
-                class: "knop",
-                onclick: () => {
-                    const outcome = veld.value.trim();
-                    if (!outcome)
-                        return;
-                    toonS24Verbeelding(wish, outcome);
-                },
-            }, [teksten.doelen.klaar]),
+            knop,
             el("button", { class: "knop-klein", onclick: () => toonS24Wish() }, [teksten.doelen.terug]),
         ]),
     ]);
@@ -1385,20 +1635,17 @@ function toonS24Verbeelding(wish, outcome) {
 function toonS24Obstacle(wish, outcome) {
     const veld = el("textarea", { placeholder: teksten.doelen.obstaclePlaceholder });
     veld.value = data.doel?.obstacleTekst ?? "";
+    const knop = el("button", {
+        class: "knop",
+        onclick: () => toonS24Plan(wish, outcome, veld.value.trim()),
+    }, [teksten.doelen.klaar]);
+    koppelDisabled(veld, knop);
     render([
         el("div", { class: "scherm" }, [
             el("p", { class: "vraag" }, [teksten.doelen.obstacleVraag]),
             el("p", { class: "zacht" }, [teksten.doelen.obstacleOnderschrift]),
             veld,
-            el("button", {
-                class: "knop",
-                onclick: () => {
-                    const obstacle = veld.value.trim();
-                    if (!obstacle)
-                        return;
-                    toonS24Plan(wish, outcome, obstacle);
-                },
-            }, [teksten.doelen.klaar]),
+            knop,
             el("button", { class: "knop-klein", onclick: () => toonS24Outcome(wish) }, [teksten.doelen.terug]),
         ]),
     ]);
@@ -1408,6 +1655,26 @@ function toonS24Plan(wish, outcome, obstacle) {
     const danVeld = el("input", { type: "text", placeholder: teksten.doelen.planDanPlaceholder });
     danVeld.value = data.doel?.planDan ?? "";
     const melding = el("p", { class: "zacht" }, [""]);
+    const knop = el("button", {
+        class: "knop",
+        onclick: () => {
+            const dan = danVeld.value.trim();
+            if (!dan)
+                return;
+            data.doel = {
+                wish,
+                outcome,
+                obstacleTekst: obstacle,
+                planAls: obstacle,
+                planDan: dan,
+                sinds: new Date().toISOString(),
+            };
+            void bewaren();
+            melding.textContent = teksten.doelen.bewaard;
+            setTimeout(() => toonDoen(), 900);
+        },
+    }, [teksten.doelen.bewaren]);
+    koppelDisabled(danVeld, knop);
     render([
         el("div", { class: "scherm" }, [
             el("p", { class: "vraag" }, [teksten.doelen.planVraag]),
@@ -1415,25 +1682,7 @@ function toonS24Plan(wish, outcome, obstacle) {
             alsVeld,
             el("p", { class: "zacht" }, [teksten.doelen.planDanLabel]),
             danVeld,
-            el("button", {
-                class: "knop",
-                onclick: () => {
-                    const dan = danVeld.value.trim();
-                    if (!dan)
-                        return;
-                    data.doel = {
-                        wish,
-                        outcome,
-                        obstacleTekst: obstacle,
-                        planAls: obstacle,
-                        planDan: dan,
-                        sinds: new Date().toISOString(),
-                    };
-                    void bewaren();
-                    melding.textContent = teksten.doelen.bewaard;
-                    setTimeout(() => toonDoen(), 900);
-                },
-            }, [teksten.doelen.bewaren]),
+            knop,
             melding,
             el("button", { class: "knop-klein", onclick: () => toonS24Obstacle(wish, outcome) }, [teksten.doelen.terug]),
         ]),
@@ -1488,6 +1737,20 @@ export function toonS10() {
             }),
             switchRij(teksten.instellingen.weekmoment.label, teksten.instellingen.weekmoment.onderschrift, data.instellingen.weekmomentAan, async (v) => {
                 data.instellingen.weekmomentAan = v;
+                await bewaren();
+            }),
+            el("p", { class: "sectie-kop" }, [teksten.instellingen.visieMomentenKop]),
+            el("p", { class: "zacht" }, [teksten.instellingen.visieMomentenOnderschrift]),
+            switchRij(teksten.instellingen.visieOchtend.label, teksten.instellingen.visieOchtend.onderschrift, visieCheckInsVoor(data).ochtend, async (v) => {
+                data.instellingen.visieCheckIns = { ...visieCheckInsVoor(data), ochtend: v };
+                await bewaren();
+            }),
+            switchRij(teksten.instellingen.visieMiddag.label, teksten.instellingen.visieMiddag.onderschrift, visieCheckInsVoor(data).middag, async (v) => {
+                data.instellingen.visieCheckIns = { ...visieCheckInsVoor(data), middag: v };
+                await bewaren();
+            }),
+            switchRij(teksten.instellingen.visieAvond.label, teksten.instellingen.visieAvond.onderschrift, visieCheckInsVoor(data).avond, async (v) => {
+                data.instellingen.visieCheckIns = { ...visieCheckInsVoor(data), avond: v };
                 await bewaren();
             }),
             el("button", {
