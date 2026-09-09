@@ -4,7 +4,7 @@
 import { laadBestand, bewaarBestand, wisBestand, exporteerBestand, parseGeimporteerdBestand } from "./lib/db.js";
 import { el, render, dimEnDan } from "./lib/dom.js";
 import { tekenSchijf, tekenHemel, tekenSterrenbeeldModus, tekenVerschil, nauwelijksVerschoven, } from "./lib/canvas.js";
-import { woordenNabij, zetEigenWoorden, zoekWoorden } from "./data/woorden.js";
+import { woordenNabij, woordById, zetEigenWoorden, zoekWoorden } from "./data/woorden.js";
 import { bewegingById, bewegingen } from "./data/bewegingen.js";
 import { teksten } from "./data/teksten.js";
 import { bepaalZone, bepaalDeuren, registreerOnderdrukking } from "./lib/selection.js";
@@ -14,6 +14,10 @@ import { weekmomentBeschikbaar, schrijfWeekmoment } from "./lib/weekmoment.js";
 import { perfectionismeCheckBeschikbaar, registreerPerfectionismeCheck, frictieBeschikbaar, registreerFrictieAangeboden, } from "./lib/meer.js";
 import { kwaliteiten, kwaliteitById } from "./data/kwaliteiten.js";
 import { huidigeDagSleutel, ochtendVandaagGedaan, avondVandaagGedaan } from "./lib/ritme.js";
+import { dhikrById } from "./data/adhkar.js";
+import { themas, themaById } from "./data/themas.js";
+import { begroeting, dagdeelVan, datumregel, suggestiesVoorNu } from "./lib/nu.js";
+import { alleWoorden } from "./data/woorden.js";
 let data;
 // state voor het moment dat nu wordt opgebouwd
 let huidigeTikPositie = null;
@@ -55,7 +59,9 @@ export async function startApp() {
         toonS0();
     }
     else {
-        toonS1();
+        // v21: de app opent op het startscherm dat zelf zegt wat er nu past,
+        // niet meer op een lege schijf zonder uitleg.
+        toonThuis();
     }
 }
 // ── S0 — Ethische ondergrens ──────────────────────────────────────────
@@ -69,7 +75,7 @@ function toonS0() {
                     data.aangemaaktOp = new Date().toISOString();
                     data.instellingen.ethischeOndergrensGezien = true;
                     await bewaren();
-                    toonS1();
+                    toonThuis();
                 },
             }, [teksten.eerstOpening.knop]),
             el("button", { class: "knop-klein", onclick: () => toonS11() }, ["Ik heb al een bestand"]),
@@ -94,7 +100,7 @@ function toonS1(beginPositie = null) {
         el("p", { class: "vraag" }, [teksten.eerstOpening.vraag]),
         canvas,
         el("button", { class: "knop-klein", onclick: () => toonS15Onderbreker() }, [teksten.onderbreker.toegangKnoptekst]),
-        el("button", { class: "knop-klein", onclick: () => toonS16Meer() }, ["meer"]),
+        el("button", { class: "knop-klein", onclick: () => toonThuis() }, ["terug naar start"]),
     ]);
     render([scherm]);
     tekenSchijf(canvas, (energie, toon) => {
@@ -109,14 +115,30 @@ function toonS1(beginPositie = null) {
 }
 // ── S2 — Woordkeuze ────────────────────────────────────────────────────
 function toonS2() {
-    const positie = huidigeTikPositie ?? { energie: 0, toon: 0 };
-    const nabij = woordenNabij(positie.energie, positie.toon, 10);
+    // v21: kom je hier zonder schijfpositie (de gewone weg sinds het
+    // startscherm), dan toont dit scherm de hele woordenlijst en wordt je
+    // plek op het kompas afgeleid uit de woorden die je kiest -- die hebben
+    // elk hun eigen energie/toon in woorden.ts. Wie het preciezer wil
+    // aangeven, opent alsnog de schijf via S1.
+    const viaSchijf = huidigeTikPositie !== null;
+    const tikPositie = huidigeTikPositie ?? { energie: 0, toon: 0 };
+    const nabij = viaSchijf ? woordenNabij(tikPositie.energie, tikPositie.toon, 10) : alleWoorden();
     const gekozen = new Set();
     let eigenWoordTekst = "";
     function verder() {
         if (gekozen.size === 0 && !eigenWoordTekst.trim())
             return;
         const woordIds = [...gekozen];
+        // Zonder schijf: het gemiddelde van de gekozen woorden is je positie.
+        const gekozenWoorden = woordIds
+            .map((wid) => woordById(wid))
+            .filter((w) => Boolean(w));
+        const positie = viaSchijf || gekozenWoorden.length === 0
+            ? tikPositie
+            : {
+                energie: gekozenWoorden.reduce((t, w) => t + w.energie, 0) / gekozenWoorden.length,
+                toon: gekozenWoorden.reduce((t, w) => t + w.toon, 0) / gekozenWoorden.length,
+            };
         const getypt = eigenWoordTekst.trim();
         // Een eigen woord ontstaat alleen als je niets uit de lijst koos én je
         // tekst niet gewoon een van de bestaande woorden is. Anders zou zoeken
@@ -184,6 +206,9 @@ function toonS2() {
             grid,
             zoekInvoer,
             el("button", { class: "knop", onclick: verder }, ["Verder"]),
+            viaSchijf
+                ? null
+                : el("button", { class: "knop-klein", onclick: () => toonS1(tikPositie) }, ["nauwkeuriger aangeven met de cirkel"]),
         ]),
     ]);
 }
@@ -207,7 +232,7 @@ function toonS3() {
 // ── S4 — De Drie Deuren ───────────────────────────────────────────────
 function toonS4() {
     if (!huidigMoment)
-        return toonS1();
+        return toonThuis();
     const zone = huidigMoment.zone;
     const deuren = bepaalDeuren(zone, huidigMoment.tijdBeschikbaar, data, data.instellingen.islamitischeLaag, huidigMoment.woorden);
     function kiesDeur(id) {
@@ -287,25 +312,12 @@ function toonS5(bewegingId) {
     const beweging = bewegingById(bewegingId);
     if (!beweging)
         return toonS7();
-    render([
-        el("div", { class: "scherm" }, [
-            el("p", { class: "vraag" }, [beweging.script]),
-            el("p", { class: "zacht" }, [`Kort kan ook: ${beweging.minimumversie}`]),
-            timerVisual(bewegingId),
-            // De belofte uit S0 waargemaakt: per label één eigen regel, nooit
-            // samengevoegd. Hier en niet op S4, want daar moeten de drie deuren
-            // gelijk ogen (selectie.yaml → niets_doen.ontwerpregel).
-            el("div", { class: "herkomst" }, beweging.herkomst.map((h) => el("p", { class: "herkomst-regel" }, [h.regel]))),
-            // v1.2, veiligheid.md §4 "koude blootstelling": een medische grens
-            // staat vast onder het script, elke keer — geen apart
-            // waarschuwingsscherm, geen eenmalige acceptatieklik. Zelfde
-            // typografie als de herkomstregels hierboven.
-            beweging.medischeGrens
-                ? el("div", { class: "herkomst" }, beweging.medischeGrens.map((regel) => el("p", { class: "herkomst-regel" }, [regel])))
-                : null,
-            el("button", { class: "knop", onclick: () => toonS6(beweging.streek) }, ["Klaar"]),
-        ]),
-    ]);
+    // v21: dezelfde inhoud als voorheen, maar stap voor stap in plaats van
+    // als een muur tekst -- en met de onderbouwing ingeklapt (toonOefening).
+    toonOefening(bewegingId, {
+        opKlaar: () => toonS6(beweging.streek),
+        opTerug: () => toonS4(),
+    });
 }
 // ── S6 — Verankeren ───────────────────────────────────────────────────
 function toonS6(streek) {
@@ -386,7 +398,7 @@ function toonS8(netGetekend = null) {
         render([
             el("div", { class: "scherm" }, [
                 el("p", { class: "regel" }, [teksten.deHemel.legeHemel]),
-                el("button", { class: "knop-klein", onclick: () => toonS16Meer() }, ["Terug"]),
+                el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, ["Terug"]),
             ]),
         ]);
         return;
@@ -396,7 +408,7 @@ function toonS8(netGetekend = null) {
     const aanbodStreek = netGetekend ? null : aanbodVoorStreek(data);
     const onderkant = el("div", { class: "hemel-onder" }, [
         zinRegel,
-        el("button", { class: "knop-klein", onclick: () => toonS16Meer() }, ["Terug"]),
+        el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, ["Terug"]),
     ]);
     render([el("div", { class: "scherm" }, [canvas, onderkant])]);
     const stop = tekenHemel(canvas, data.sterren, (ster) => {
@@ -538,7 +550,7 @@ function toonS13() {
             el("div", { class: "brieven-lijst" }, brieven.map((brief) => el("button", { class: "brief-regel", onclick: () => toonS12(brief, true) }, [
                 briefOpschrift(brief, brieven),
             ]))),
-            el("button", { class: "knop-klein", onclick: () => toonS16Meer() }, ["Terug"]),
+            el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, ["Terug"]),
         ]),
     ]);
 }
@@ -555,7 +567,7 @@ function toonS14Intro() {
             el("p", { class: "vraag" }, [teksten.weekmoment.intro.uitleg]),
             el("div", { class: "herkomst" }, [teksten.weekmoment.herkomst.W, teksten.weekmoment.herkomst.P].map((regel) => el("p", { class: "herkomst-regel" }, [regel]))),
             el("button", { class: "knop", onclick: () => toonS14Beeld() }, [teksten.weekmoment.intro.begin]),
-            el("button", { class: "knop-klein", onclick: () => toonS1() }, [teksten.weekmoment.intro.nuNiet]),
+            el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, [teksten.weekmoment.intro.nuNiet]),
         ]),
     ]);
 }
@@ -883,7 +895,7 @@ function toonS20WieIkWord() {
             }, [teksten.wieIkWord.bewaren]),
             melding,
             el("button", { class: "knop-klein", onclick: () => toonS8() }, [teksten.wieIkWord.bewijslijst]),
-            el("button", { class: "knop-klein", onclick: () => toonS16Meer() }, [teksten.wieIkWord.terug]),
+            el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, [teksten.wieIkWord.terug]),
         ]),
     ]);
 }
@@ -912,7 +924,7 @@ function toonS21Kwaliteiten() {
             el("p", { class: "vraag" }, [teksten.kwaliteiten.vraag]),
             el("p", { class: "zacht" }, [teksten.kwaliteiten.onderschrift]),
             lijst,
-            el("button", { class: "knop-klein", onclick: () => toonS16Meer() }, [teksten.kwaliteiten.terug]),
+            el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, [teksten.kwaliteiten.terug]),
         ]),
     ]);
 }
@@ -1013,6 +1025,438 @@ function toonS23AvondSluiten() {
         positie = { energie, toon };
     }, { rustig: data.instellingen.rustigeBeelden });
 }
+function navBalk(actief) {
+    const item = (tab, label, actie) => el("button", { class: `nav-item${actief === tab ? " actief" : ""}`, onclick: actie }, [label]);
+    return el("nav", { class: "nav-balk" }, [
+        item("nu", "Nu", () => toonThuis()),
+        item("doen", "Doen", () => toonDoen()),
+        item("terugkijken", "Terugkijken", () => toonTerugkijken()),
+    ]);
+}
+function duurTekst(bewegingId) {
+    const b = bewegingById(bewegingId);
+    if (!b)
+        return "";
+    const [van, tot] = b.kosten.tijdMinuten;
+    return van === tot ? `${van} min` : `${van}–${tot} min`;
+}
+function rijKnop(titel, onder, actie) {
+    return el("button", { class: "rij-knop", onclick: actie }, [
+        el("span", { class: "rij-titel" }, [titel]),
+        el("span", { class: "rij-onder" }, [onder]),
+    ]);
+}
+function kaartPrimair(s) {
+    return el("button", { class: "kaart kaart-primair", onclick: () => voerSuggestieUit(s) }, [
+        el("span", { class: "kaart-label" }, ["Dit past nu"]),
+        el("span", { class: "kaart-titel" }, [s.titel]),
+        s.duur ? el("span", { class: "kaart-duur" }, [s.duur]) : null,
+        el("span", { class: "kaart-waarom" }, [s.waaromNu]),
+        el("span", { class: "kaart-actie" }, ["Doen →"]),
+    ]);
+}
+function kaartKlein(s) {
+    return el("button", { class: "kaart kaart-klein", onclick: () => voerSuggestieUit(s) }, [
+        el("span", { class: "kaart-titel-klein" }, [s.titel]),
+        el("span", { class: "kaart-meta" }, [s.duur ? `${s.duur} · ${s.waaromNu}` : s.waaromNu]),
+    ]);
+}
+function voerSuggestieUit(s) {
+    switch (s.soort) {
+        case "ochtend":
+            return toonS22Ochtend();
+        case "avond":
+            return toonS23AvondSluiten();
+        case "beweging":
+            if (s.id)
+                toonOefening(s.id, { opKlaar: () => toonKlaar(), opTerug: () => toonThuis() });
+            return;
+        case "dhikr":
+            if (s.id)
+                toonDhikr(s.id, () => toonThuis());
+            return;
+        case "kompas":
+            return startKompasLus();
+        case "week":
+            return toonS14Intro();
+        case "brief": {
+            const b = ongelezenBrief(data);
+            if (b)
+                toonS12(b, false);
+            return;
+        }
+        case "rust":
+            return;
+    }
+}
+// ── Het startscherm ───────────────────────────────────────────────────
+function toonThuis() {
+    const nu = new Date();
+    const suggesties = suggestiesVoorNu(data, nu);
+    // "Het is laat" is geen actie maar een opmerking — die krijgt geen knop.
+    const eersteActie = suggesties.find((s) => s.soort !== "rust") ?? null;
+    const opmerking = suggesties.find((s) => s.soort === "rust") ?? null;
+    const verder = suggesties.filter((s) => s !== eersteActie && s.soort !== "rust");
+    render([
+        el("div", { class: "scherm scherm-app" }, [
+            el("header", { class: "thuis-kop" }, [
+                el("h1", { class: "thuis-groet" }, [begroeting(dagdeelVan(nu))]),
+                el("p", { class: "thuis-datum" }, [datumregel(nu)]),
+            ]),
+            opmerking ? el("p", { class: "opmerking" }, [`${opmerking.titel}. ${opmerking.waaromNu}`]) : null,
+            eersteActie ? kaartPrimair(eersteActie) : null,
+            verder.length ? el("p", { class: "sectie-kop" }, ["Past nu ook"]) : null,
+            ...verder.map(kaartKlein),
+            el("p", { class: "sectie-kop" }, ["Of begin hier"]),
+            rijKnop("Hoe voel je je?", "Een woord kiezen, dan drie opties. 2 min.", () => startKompasLus()),
+            rijKnop("Ik ben eruit gevallen", "Terug beginnen zonder het groot te maken.", () => toonS19Normaliseren()),
+            rijKnop("Ik zit vast in mijn telefoon", "Onderbreken zonder jezelf iets te verbieden.", () => toonS15Onderbreker()),
+            navBalk("nu"),
+        ]),
+    ]);
+}
+// ── Doen — de bibliotheek, per thema ──────────────────────────────────
+function toonDoen() {
+    const islamAan = data.instellingen.islamitischeLaag;
+    render([
+        el("div", { class: "scherm scherm-app" }, [
+            el("h1", { class: "tab-kop" }, ["Doen"]),
+            el("p", { class: "zacht" }, ["Kies waar je nu iets aan hebt."]),
+            ...themas
+                .filter((t) => !t.islamitisch || islamAan)
+                .map((t) => el("button", {
+                class: "kaart kaart-klein",
+                onclick: () => (t.bewegingIds.length === 0 && !t.dhikrIds ? toonS24Richting() : toonThema(t.id)),
+            }, [
+                el("span", { class: "kaart-titel-klein" }, [t.titel]),
+                el("span", { class: "kaart-meta" }, [t.onderschrift]),
+            ])),
+            navBalk("doen"),
+        ]),
+    ]);
+}
+function toonThema(id) {
+    const t = themaById(id);
+    if (!t)
+        return toonDoen();
+    // Wat nú past wordt binnen het thema gemarkeerd — hetzelfde oordeel als op
+    // het startscherm, zodat de timing overal doorwerkt en niet alleen op "Nu".
+    const nuIds = new Set(suggestiesVoorNu(data)
+        .map((s) => s.id)
+        .filter((x) => Boolean(x)));
+    const islamAan = data.instellingen.islamitischeLaag;
+    const items = [];
+    for (const bid of t.bewegingIds) {
+        const b = bewegingById(bid);
+        if (!b)
+            continue;
+        const past = nuIds.has(bid);
+        items.push(el("button", {
+            class: `kaart kaart-klein${past ? " past-nu" : ""}`,
+            onclick: () => toonOefening(bid, { opKlaar: () => toonKlaar(), opTerug: () => toonThema(id) }),
+        }, [
+            el("span", { class: "kaart-titel-klein" }, [b.titel]),
+            el("span", { class: "kaart-meta" }, [past ? `${duurTekst(bid)} · past nu` : duurTekst(bid)]),
+        ]));
+    }
+    if (islamAan && t.dhikrIds) {
+        for (const did of t.dhikrIds) {
+            const d = dhikrById(did);
+            if (!d)
+                continue;
+            const past = nuIds.has(did);
+            items.push(el("button", { class: `kaart kaart-klein${past ? " past-nu" : ""}`, onclick: () => toonDhikr(did, () => toonThema(id)) }, [
+                el("span", { class: "kaart-titel-klein" }, [d.titel]),
+                el("span", { class: "kaart-meta" }, [past ? `${d.wanneer} · past nu` : d.wanneer]),
+            ]));
+        }
+    }
+    render([
+        el("div", { class: "scherm scherm-app" }, [
+            el("button", { class: "terug-knop", onclick: () => toonDoen() }, ["← Doen"]),
+            el("h1", { class: "tab-kop" }, [t.titel]),
+            el("p", { class: "zacht" }, [t.onderschrift]),
+            ...items,
+            navBalk("doen"),
+        ]),
+    ]);
+}
+// ── Terugkijken ───────────────────────────────────────────────────────
+function toonTerugkijken() {
+    const brief = ongelezenBrief(data);
+    const heeftBrieven = (data.brieven ?? []).length > 0;
+    render([
+        el("div", { class: "scherm scherm-app" }, [
+            el("h1", { class: "tab-kop" }, ["Terugkijken"]),
+            rijKnop("Wat je al deed", "De sterren die je onderweg verzamelde.", () => toonS8()),
+            brief
+                ? rijKnop("Er ligt een brief", "Je eigen zinnen van vorige maand.", () => toonS12(brief, false))
+                : heeftBrieven
+                    ? rijKnop("Je brieven", "Alles wat je al eerder las.", () => toonS13())
+                    : null,
+            weekmomentBeschikbaar(data)
+                ? rijKnop("De spiegel van de week", "Beeld, obstakel, plan. 10 min.", () => toonS14Intro())
+                : null,
+            rijKnop("Wie ik word", "Je eigen zin, wanneer je hem wil bijstellen.", () => toonS20WieIkWord()),
+            rijKnop("Verlangen van deze periode", "De kwaliteit waar je nu op mikt.", () => toonS21Kwaliteiten()),
+            perfectionismeCheckBeschikbaar(data)
+                ? rijKnop("Voelt dit nog als hulp?", "Eén vraag, hooguit één keer per maand.", () => toonS17PerfectionismeCheck())
+                : null,
+            frictieBeschikbaar(data)
+                ? rijKnop("Frictie buiten de app", "Vier manieren om minder te scrollen.", () => toonS18Frictie())
+                : null,
+            rijKnop("Instellingen", "De islamitische laag, rustige beelden, export.", () => toonS10()),
+            navBalk("terugkijken"),
+        ]),
+    ]);
+}
+function stappenVan(script) {
+    const delen = script
+        .split(/(?<=[.!?])\s+/)
+        .map((d) => d.trim())
+        .filter(Boolean);
+    const stappen = [];
+    for (const deel of delen) {
+        const vorige = stappen[stappen.length - 1];
+        // Losse flarden ("Twee minuten, niet langer.") plakken aan de vorige stap
+        // vast; een stap moet een handeling zijn, geen halve zin.
+        if (vorige && vorige.length < 32)
+            stappen[stappen.length - 1] = `${vorige} ${deel}`;
+        else
+            stappen.push(deel);
+    }
+    return stappen.length > 0 ? stappen : [script];
+}
+function toonOefening(bewegingId, opties) {
+    const beweging = bewegingById(bewegingId);
+    if (!beweging)
+        return opties.opKlaar();
+    const stappen = stappenVan(beweging.script);
+    let index = 0;
+    let waaromOpen = false;
+    function teken() {
+        const laatste = index === stappen.length - 1;
+        render([
+            el("div", { class: "scherm scherm-app" }, [
+                el("button", { class: "terug-knop", onclick: () => (opties.opTerug ?? toonThuis)() }, ["← terug"]),
+                el("p", { class: "oefening-titel" }, [beweging.titel]),
+                el("div", { class: "stip-rij" }, stappen.map((_, i) => el("span", { class: `stip${i <= index ? " vol" : ""}` }))),
+                el("p", { class: "vraag" }, [stappen[index]]),
+                laatste ? timerVisual(bewegingId) : null,
+                el("p", { class: "zacht" }, [`Kort kan ook: ${beweging.minimumversie}`]),
+                // veiligheid.md §4: een medische grens staat er elke keer bij, op elke
+                // stap — niet weggeklapt achter "waarom dit werkt".
+                beweging.medischeGrens
+                    ? el("div", { class: "herkomst" }, beweging.medischeGrens.map((regel) => el("p", { class: "herkomst-regel" }, [regel])))
+                    : null,
+                el("button", {
+                    class: "knop",
+                    onclick: () => {
+                        if (laatste)
+                            return opties.opKlaar();
+                        index += 1;
+                        teken();
+                    },
+                }, [laatste ? (opties.klaarTekst ?? "Klaar") : "Volgende"]),
+                el("button", {
+                    class: "knop-klein",
+                    onclick: () => {
+                        waaromOpen = !waaromOpen;
+                        teken();
+                    },
+                }, [waaromOpen ? "waarom dit werkt −" : "waarom dit werkt +"]),
+                waaromOpen
+                    ? el("div", { class: "herkomst" }, beweging.herkomst.map((h) => el("p", { class: "herkomst-regel" }, [h.regel])))
+                    : null,
+            ]),
+        ]);
+    }
+    teken();
+}
+// ── Dhikr-lezer ───────────────────────────────────────────────────────
+// adhkar.md, ontwerpregel: de app toont de tekst en de betekenis, nooit een
+// aantal — ook niet wanneer het aantal letterlijk in de bron staat.
+function toonDhikr(id, opTerug) {
+    const d = dhikrById(id);
+    if (!d)
+        return toonThuis();
+    let bronOpen = false;
+    function teken() {
+        render([
+            el("div", { class: "scherm scherm-app" }, [
+                el("button", { class: "terug-knop", onclick: opTerug }, ["← terug"]),
+                el("p", { class: "oefening-titel" }, [d.titel]),
+                el("p", { class: "zacht" }, [d.wanneer]),
+                el("p", { class: "arabisch", dir: "rtl", lang: "ar" }, [d.arabisch]),
+                el("p", { class: "translit" }, [d.transliteratie]),
+                el("p", { class: "vertaling" }, [d.vertaling]),
+                el("button", { class: "knop", onclick: () => toonKlaar() }, ["Klaar"]),
+                el("button", {
+                    class: "knop-klein",
+                    onclick: () => {
+                        bronOpen = !bronOpen;
+                        teken();
+                    },
+                }, [bronOpen ? "waar dit vandaan komt −" : "waar dit vandaan komt +"]),
+                bronOpen ? el("div", { class: "herkomst" }, [el("p", { class: "herkomst-regel" }, [d.bron])]) : null,
+            ]),
+        ]);
+    }
+    teken();
+}
+// ── Afsluiten met een keuze ───────────────────────────────────────────
+// Wet 3 ("elk moment eindigt buiten de app") blijft de eerste optie: sluiten
+// dimt het scherm en laat je gaan. Maar wie nog even bezig is, hoeft daar
+// niet uitgegooid te worden — dat was in v20 de enige uitgang.
+// ── S24 — Richting en doelen (de WOOP-flow) ────────────────────────────
+// v21, spoor W6 (Onderzoek-W6-Doelen-en-Verbeelding.md). Vier vragen --
+// Wish, Outcome, Obstacle, Plan -- mental contrasting draagt het grootste
+// deel van het bewijs; de Obstacle-stap wordt daarom nooit overgeslagen,
+// ook niet als knop "verder zonder". De verbeeldingsstap ertussenin is wel
+// vrijblijvend: lezen en verdergaan, niets in te vullen.
+function toonS24Richting() {
+    const bestaand = data.doel;
+    if (!bestaand)
+        return toonS24Wish();
+    render([
+        el("div", { class: "scherm" }, [
+            el("p", { class: "vraag" }, [teksten.doelen.bekijkKop]),
+            el("div", { class: "herkomst" }, [
+                el("p", { class: "herkomst-regel" }, [bestaand.wish]),
+                el("p", { class: "herkomst-regel" }, [bestaand.outcome]),
+                el("p", { class: "herkomst-regel" }, [`Als ${bestaand.obstacleTekst}, dan ${bestaand.planDan}.`]),
+            ]),
+            el("button", { class: "knop", onclick: () => toonS24Wish() }, [teksten.doelen.opnieuw]),
+            el("button", { class: "knop-klein", onclick: () => toonDoen() }, [teksten.doelen.terug]),
+        ]),
+    ]);
+}
+function toonS24Wish() {
+    const veld = el("textarea", { placeholder: teksten.doelen.wishPlaceholder });
+    veld.value = data.doel?.wish ?? "";
+    render([
+        el("div", { class: "scherm" }, [
+            el("p", { class: "vraag" }, [teksten.doelen.wishVraag]),
+            el("p", { class: "zacht" }, [teksten.doelen.wishOnderschrift]),
+            veld,
+            el("button", {
+                class: "knop",
+                onclick: () => {
+                    const wish = veld.value.trim();
+                    if (!wish)
+                        return;
+                    toonS24Outcome(wish);
+                },
+            }, [teksten.doelen.klaar]),
+            el("button", { class: "knop-klein", onclick: () => toonDoen() }, [teksten.doelen.terug]),
+        ]),
+    ]);
+}
+function toonS24Outcome(wish) {
+    const veld = el("textarea", { placeholder: teksten.doelen.outcomePlaceholder });
+    veld.value = data.doel?.outcome ?? "";
+    render([
+        el("div", { class: "scherm" }, [
+            el("p", { class: "vraag" }, [teksten.doelen.outcomeVraag]),
+            el("p", { class: "zacht" }, [teksten.doelen.outcomeOnderschrift]),
+            veld,
+            el("button", {
+                class: "knop",
+                onclick: () => {
+                    const outcome = veld.value.trim();
+                    if (!outcome)
+                        return;
+                    toonS24Verbeelding(wish, outcome);
+                },
+            }, [teksten.doelen.klaar]),
+            el("button", { class: "knop-klein", onclick: () => toonS24Wish() }, [teksten.doelen.terug]),
+        ]),
+    ]);
+}
+function toonS24Verbeelding(wish, outcome) {
+    render([
+        el("div", { class: "scherm" }, [
+            el("p", { class: "vraag" }, [teksten.doelen.verbeeldingKop]),
+            el("p", { class: "regel" }, [teksten.doelen.verbeeldingTekst]),
+            el("button", { class: "knop", onclick: () => toonS24Obstacle(wish, outcome) }, [teksten.doelen.klaar]),
+        ]),
+    ]);
+}
+function toonS24Obstacle(wish, outcome) {
+    const veld = el("textarea", { placeholder: teksten.doelen.obstaclePlaceholder });
+    veld.value = data.doel?.obstacleTekst ?? "";
+    render([
+        el("div", { class: "scherm" }, [
+            el("p", { class: "vraag" }, [teksten.doelen.obstacleVraag]),
+            el("p", { class: "zacht" }, [teksten.doelen.obstacleOnderschrift]),
+            veld,
+            el("button", {
+                class: "knop",
+                onclick: () => {
+                    const obstacle = veld.value.trim();
+                    if (!obstacle)
+                        return;
+                    toonS24Plan(wish, outcome, obstacle);
+                },
+            }, [teksten.doelen.klaar]),
+            el("button", { class: "knop-klein", onclick: () => toonS24Outcome(wish) }, [teksten.doelen.terug]),
+        ]),
+    ]);
+}
+function toonS24Plan(wish, outcome, obstacle) {
+    const alsVeld = el("input", { type: "text", value: obstacle, readonly: true });
+    const danVeld = el("input", { type: "text", placeholder: teksten.doelen.planDanPlaceholder });
+    danVeld.value = data.doel?.planDan ?? "";
+    const melding = el("p", { class: "zacht" }, [""]);
+    render([
+        el("div", { class: "scherm" }, [
+            el("p", { class: "vraag" }, [teksten.doelen.planVraag]),
+            el("p", { class: "zacht" }, [teksten.doelen.planAlsLabel]),
+            alsVeld,
+            el("p", { class: "zacht" }, [teksten.doelen.planDanLabel]),
+            danVeld,
+            el("button", {
+                class: "knop",
+                onclick: () => {
+                    const dan = danVeld.value.trim();
+                    if (!dan)
+                        return;
+                    data.doel = {
+                        wish,
+                        outcome,
+                        obstacleTekst: obstacle,
+                        planAls: obstacle,
+                        planDan: dan,
+                        sinds: new Date().toISOString(),
+                    };
+                    void bewaren();
+                    melding.textContent = teksten.doelen.bewaard;
+                    setTimeout(() => toonDoen(), 900);
+                },
+            }, [teksten.doelen.bewaren]),
+            melding,
+            el("button", { class: "knop-klein", onclick: () => toonS24Obstacle(wish, outcome) }, [teksten.doelen.terug]),
+        ]),
+    ]);
+}
+function toonKlaar() {
+    render([
+        el("div", { class: "scherm scherm-app" }, [
+            el("p", { class: "vraag" }, ["Klaar."]),
+            el("button", { class: "knop", onclick: () => toonS7() }, ["Sluiten"]),
+            el("button", { class: "knop-klein", onclick: () => toonThuis() }, ["Terug naar start"]),
+        ]),
+    ]);
+}
+// ── De kompaslus, nu met woorden eerst ────────────────────────────────
+// Tot v20 begon deze lus op de schijf: een lege cirkel zonder assen of
+// uitleg. Vanaf v21 begin je bij de woorden (twee tikken) en is de schijf
+// een optie voor wie het preciezer wil aangeven.
+function startKompasLus() {
+    huidigeTikPositie = null;
+    huidigMoment = null;
+    toonS2();
+}
 // ── S10 — Instellingen ────────────────────────────────────────────────
 export function toonS10() {
     function switchRij(label, onderschrift, waarde, onchange) {
@@ -1063,7 +1507,7 @@ export function toonS10() {
                     toonS0();
                 },
             }, [teksten.instellingen.allesMeenemenEnStoppen.label]),
-            el("button", { class: "knop-klein", onclick: () => toonS1() }, ["Terug"]),
+            el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, ["Terug"]),
         ]),
     ]);
 }
@@ -1083,7 +1527,7 @@ function toonS11() {
         }
         data = geimporteerd;
         await bewaren();
-        toonS1();
+        toonThuis();
     });
     render([
         el("div", { class: "scherm" }, [

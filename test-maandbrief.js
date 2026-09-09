@@ -170,9 +170,9 @@ function check(naam, waar, extra) {
   check('Géén brief voor de lopende maand', !maanden.includes(lopend));
 
   // ── 2. De aankondiging staat op S1 ────────────────────────────────
-  // v1.1-meer.md (6 sept 2026): de aankondiging zit niet meer los op S1,
-  // maar achter het stille "meer"-toegangspunt (S16).
-  await page.click('text=meer');
+  // v21: de aankondiging staat niet meer los op S1, maar op het
+  // startscherm en in de Terugkijken-tab.
+  await page.click('.nav-item >> text=Terugkijken');
   await page.waitForTimeout(300);
   check('S1 kondigt aan dat er een brief ligt', await page.$('text=er ligt een brief'));
 
@@ -224,7 +224,7 @@ function check(naam, waar, extra) {
   // en opent hem opnieuw. In de test is dat een herlaad.
   await page.reload();
   await page.waitForTimeout(600);
-  await page.click('text=meer');
+  await page.click('.nav-item >> text=Terugkijken');
   await page.waitForTimeout(300);
   await page.screenshot({ path: '/tmp/mb/03-s1-na-lezen.png' });
   const nogSteedsAankondiging = await page.$('text=er ligt een brief');
@@ -251,14 +251,14 @@ function check(naam, waar, extra) {
   // en opent hem opnieuw. In de test is dat een herlaad.
   await page.reload();
   await page.waitForTimeout(600);
-  await page.click('text=meer');
+  await page.click('.nav-item >> text=Terugkijken');
   await page.waitForTimeout(300);
 
   check('Aankondiging is weg als alles gelezen is', !(await page.$('text=er ligt een brief')));
-  check('Het archief is nu bereikbaar', await page.$('text=de brieven'));
+  check('Het archief is nu bereikbaar', await page.$('text=Je brieven'));
 
   // ── 7. Het archief ────────────────────────────────────────────────
-  await page.click('text=de brieven');
+  await page.click('text=Je brieven');
   await page.waitForTimeout(400);
   await page.screenshot({ path: '/tmp/mb/05-archief.png' });
   const regels = await page.$$eval('.brief-regel', (ns) => ns.map((n) => n.textContent));

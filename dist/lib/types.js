@@ -23,5 +23,6 @@ export function leegBestand() {
         verlangenVanDePeriode: null,
         ochtendMomenten: [],
         dagsluitingen: [],
+        doel: null,
     };
 }

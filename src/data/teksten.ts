@@ -269,4 +269,36 @@ export const teksten = {
     zinPlaceholder: "mag leeg blijven",
     klaar: "Klaar",
   },
+  // v21, spoor W6 (Onderzoek-W6-Doelen-en-Verbeelding.md, content/doelen.md).
+  // De WOOP-flow: Wish, Outcome, Obstacle, Plan. Mental contrasting (de
+  // eerste drie stappen samen) draagt het grootste deel van het effect --
+  // de Obstacle-stap mag daarom nooit worden overgeslagen. Net als
+  // wieIkWord is dit altijd overschrijfbaar, geen geschiedenis (Wet 4).
+  doelen: {
+    toegangTitel: "Richting en doelen",
+    toegangOnderschrift: "Als je iets wil bereiken en niet weet waar te beginnen.",
+    wishVraag: "Waar wil je nu naartoe?",
+    wishOnderschrift: "Eén ding, klein genoeg dat het deze maand al kan.",
+    wishPlaceholder: "bijvoorbeeld: elke ochtend een halfuur eerder beginnen",
+    outcomeVraag: "Als dit lukt, wat verandert er dan echt voor jou?",
+    outcomeOnderschrift: "Wat zie, hoor of voel je op dat moment?",
+    outcomePlaceholder: "maak het concreet, niet alleen 'goed voelen'",
+    verbeeldingKop: "Stel het je even voor",
+    verbeeldingTekst:
+      "Neem even de tijd. Stel je het moment voor dat dit al gelukt is -- niet vaag, maar concreet. Waar ben je? Wat zie je om je heen? Is er een geluid dat erbij hoort? Voel je iets in je lichaam -- lichter, rustiger, iets anders? Wat kun je nu doen dat je daarvoor niet kon? Blijf daar even, met alle details die opkomen.",
+    obstacleVraag: "Wat zit er nu meestal tussen jou en dit in?",
+    obstacleOnderschrift: "Niet iemand anders -- iets in jouzelf of je dag.",
+    obstaclePlaceholder: "wat er meestal misgaat, eerlijk gezegd",
+    planVraag: "Als dat obstakel zich voordoet, wat doe je dan in plaats daarvan?",
+    planAlsLabel: "Als",
+    planAlsPlaceholder: "het obstakel van hierboven",
+    planDanLabel: "dan",
+    planDanPlaceholder: "wat je in plaats daarvan doet",
+    bewaren: "Bewaren",
+    bewaard: "Bewaard.",
+    bekijkKop: "Waar je nu naartoe werkt",
+    opnieuw: "Opnieuw doordenken",
+    terug: "Terug",
+    klaar: "Klaar",
+  },
 };

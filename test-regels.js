@@ -62,6 +62,17 @@ function leegBestand(extra = {}) {
   );
 }
 
+/** v21: na "Beginnen"/reload land je op het startscherm, niet meer op de
+ * schijf. Deze helper loopt naar de schijf via "Hoe voel je je?" -> de
+ * "nauwkeuriger aangeven"-link op de woordenlijst, zodat de rest van deze
+ * testsuite (die met een exacte tik-positie werkt) ongewijzigd kan blijven. */
+async function naarSchijf(page) {
+  await page.click('text=Hoe voel je je?');
+  await page.waitForTimeout(250);
+  await page.click('text=nauwkeuriger aangeven met de cirkel');
+  await page.waitForTimeout(250);
+}
+
 /** Loopt S1 → S2 → S3 door met één gekozen woord, en geeft de deurtitels terug. */
 async function totDeDeuren(page, woord, tijd = 'tien minuten') {
   const canvas = await page.$('canvas.schijf-canvas');
@@ -106,6 +117,7 @@ async function totDeDeuren(page, woord, tijd = 'tien minuten') {
   await page.evaluate(schrijfNaarIndexedDb, leegBestand());
   await page.reload();
   await page.waitForTimeout(500);
+  await naarSchijf(page);
 
   // ── 1. Het zoekveld doorzoekt de veertig woorden ──────────────────
   const canvas0 = await page.$('canvas.schijf-canvas');
@@ -122,6 +134,7 @@ async function totDeDeuren(page, woord, tijd = 'tien minuten') {
   // ── 2. past_niet_bij wordt gerespecteerd ──────────────────────────
   await page.reload();
   await page.waitForTimeout(500);
+  await naarSchijf(page);
   const deurenUitgeput = await totDeDeuren(page, 'uitgeput');
   check(
     '"uitgeput" krijgt géén tien minuten wandelen aangeboden (past_niet_bij)',
@@ -132,9 +145,13 @@ async function totDeDeuren(page, woord, tijd = 'tien minuten') {
   check('"Niets doen" staat er altijd bij', deurenUitgeput.some((d) => d.includes('Niets doen')));
 
   // ── 3. Het herkomstlabel op S5 ────────────────────────────────────
+  // v21: S5 is nu de stap-voor-stap-oefening (toonOefening) -- de
+  // herkomst zit ingeklapt achter "waarom dit werkt".
   const eersteDeur = (await page.$$('.deur button'))[0];
   await eersteDeur.click();
   await page.waitForTimeout(400);
+  await page.click('text=waarom dit werkt');
+  await page.waitForTimeout(200);
   const labels = await page.$$eval('.herkomst-regel', (ns) => ns.map((n) => n.textContent.trim()));
   check('S5 zegt waar de beweging vandaan komt', labels.length >= 1, labels.join(' | '));
   check(
@@ -145,7 +162,15 @@ async function totDeDeuren(page, woord, tijd = 'tien minuten') {
   await page.screenshot({ path: '/tmp/rg/01-herkomst.png' });
 
   // ── 4. Het Verschil ───────────────────────────────────────────────
-  await page.click('text=Klaar');
+  // Loop door de resterende stappen tot de laatste ("Klaar" i.p.v. "Volgende").
+  for (let i = 0; i < 8; i += 1) {
+    const klaarKnop = await page.$('button.knop:has-text("Klaar")');
+    if (klaarKnop) { await klaarKnop.click(); break; }
+    const volgende = await page.$('button.knop:has-text("Volgende")');
+    if (!volgende) break;
+    await volgende.click();
+    await page.waitForTimeout(200);
+  }
   await page.waitForTimeout(400);
   const canvas2 = await page.$('canvas.schijf-canvas');
   const box2 = await canvas2.boundingBox();
@@ -174,6 +199,7 @@ async function totDeDeuren(page, woord, tijd = 'tien minuten') {
   await page.evaluate(schrijfNaarIndexedDb, leegBestand());
   await page.reload();
   await page.waitForTimeout(500);
+  await naarSchijf(page);
   const deurenSchuldig = await totDeDeuren(page, 'schuldig', 'twee minuten');
   check(
     'Bij "schuldig" komt zelfcompassie, ook met de islamitische laag aan',
@@ -207,6 +233,7 @@ async function totDeDeuren(page, woord, tijd = 'tien minuten') {
   );
   await page.reload();
   await page.waitForTimeout(500);
+  await naarSchijf(page);
   const deurenD = await totDeDeuren(page, 'vredig', 'twee minuten');
   check(
     'Shukr is bereikbaar als de vorige D-keuze dankbaarheid was',
@@ -235,6 +262,7 @@ async function totDeDeuren(page, woord, tijd = 'tien minuten') {
   );
   await page.reload();
   await page.waitForTimeout(500);
+  await naarSchijf(page);
   const deurenDuit = await totDeDeuren(page, 'vredig', 'twee minuten');
   check(
     'Met de islamitische laag uit verschijnt shukr niet',
@@ -246,6 +274,7 @@ async function totDeDeuren(page, woord, tijd = 'tien minuten') {
   await page.evaluate(schrijfNaarIndexedDb, leegBestand());
   await page.reload();
   await page.waitForTimeout(500);
+  await naarSchijf(page);
   const canvas3 = await page.$('canvas.schijf-canvas');
   const box3 = await canvas3.boundingBox();
   await page.mouse.click(box3.x + box3.width * 0.4, box3.y + box3.height * 0.6);
@@ -264,6 +293,7 @@ async function totDeDeuren(page, woord, tijd = 'tien minuten') {
 
   await page.reload();
   await page.waitForTimeout(500);
+  await naarSchijf(page);
   const canvas4 = await page.$('canvas.schijf-canvas');
   const box4 = await canvas4.boundingBox();
   await page.mouse.click(box4.x + box4.width * 0.4, box4.y + box4.height * 0.6);

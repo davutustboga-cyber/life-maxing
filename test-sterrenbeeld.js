@@ -109,13 +109,12 @@ function check(naam, waar, extra) {
   await page.evaluate(schrijfNaarIndexedDb, zaadBestand());
   await page.reload();
   await page.waitForTimeout(400);
-  // v1.1-meer.md (6 sept 2026): De Hemel zit niet meer los op S1, maar
-  // achter het stille "meer"-toegangspunt (S16).
-  await page.click('text=meer');
+  // v21: De Hemel zit niet meer los op S1, maar in de Terugkijken-tab.
+  await page.click('.nav-item >> text=Terugkijken');
   await page.waitForTimeout(300);
 
   // ── 2. De Hemel openen, aanbod moet er zijn ───────────────────────
-  await page.click('text=laat me zien wat ik al gedaan heb');
+  await page.click('text=Wat je al deed');
   await page.waitForTimeout(500);
   await page.screenshot({ path: '/tmp/sb/01-aanbod.png' });
 
@@ -213,7 +212,7 @@ function check(naam, waar, extra) {
 
   await page.click('text=Terug');
   await page.waitForTimeout(300);
-  await page.click('text=laat me zien wat ik al gedaan heb');
+  await page.click('text=Wat je al deed');
   await page.waitForTimeout(500);
   const aanbodHerbezoek = await page.$('text=Wil je er lijnen tussen trekken');
   check('Aanbod blijft weg bij een volgend bezoek aan De Hemel', !aanbodHerbezoek);
@@ -235,9 +234,9 @@ function check(naam, waar, extra) {
   await page.evaluate(schrijfNaarIndexedDb, doc2);
   await page.reload();
   await page.waitForTimeout(400);
-  await page.click('text=meer');
+  await page.click('.nav-item >> text=Terugkijken');
   await page.waitForTimeout(300);
-  await page.click('text=laat me zien wat ik al gedaan heb');
+  await page.click('text=Wat je al deed');
   await page.waitForTimeout(500);
   check('Aanbod verschijnt opnieuw na verse data', await page.$('text=Wil je er lijnen tussen trekken'));
 
@@ -249,7 +248,7 @@ function check(naam, waar, extra) {
 
   await page.click('text=Terug');
   await page.waitForTimeout(300);
-  await page.click('text=laat me zien wat ik al gedaan heb');
+  await page.click('text=Wat je al deed');
   await page.waitForTimeout(500);
   const aanbodNaNee = await page.$('text=Wil je er lijnen tussen trekken');
   const bestandNaNee = await page.evaluate(leesUitIndexedDb);

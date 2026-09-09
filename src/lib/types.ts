@@ -187,6 +187,21 @@ export interface LifeMaxingData {
   ochtendMomenten: OchtendMoment[];
   /** S23, Avond — Dag sluiten (v2.md §9.1 punt 7, v2.3 §2.5 "De Grond"). */
   dagsluitingen: DagSluiting[];
+  /**
+   * v21, spoor W6 -- de WOOP-flow (Wish/Outcome/Obstacle/Plan). Net als
+   * wieIkWord altijd overschrijfbaar, geen geschiedenis (Wet 4): dit is
+   * waar je nu naartoe werkt, niet een logboek van eerdere doelen.
+   */
+  doel: Doel | null;
+}
+
+export interface Doel {
+  wish: string;
+  outcome: string;
+  obstacleTekst: string;
+  planAls: string;
+  planDan: string;
+  sinds: string;
 }
 
 export interface OchtendMoment {
@@ -229,5 +244,6 @@ export function leegBestand(): LifeMaxingData {
     verlangenVanDePeriode: null,
     ochtendMomenten: [],
     dagsluitingen: [],
+    doel: null,
   };
 }

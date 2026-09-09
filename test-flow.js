@@ -12,14 +12,13 @@ const { chromium } = require('/home/claude/.npm-global/lib/node_modules/playwrig
   await page.screenshot({ path: '/tmp/shots2/01-s0.png' });
 
   await page.click('text=Beginnen');
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: '/tmp/shots2/01b-thuis.png' });
 
-  // tap on the schijf canvas near bottom-left (laag + zwaar -> B_activeren) to
-  // exercise the path that used to trigger the crisis check
-  const canvas = await page.$('canvas.schijf-canvas');
-  const box = await canvas.boundingBox();
-  await page.mouse.click(box.x + box.width * 0.25, box.y + box.height * 0.75);
-  await page.waitForTimeout(500);
+  // v21: het startscherm heeft geen schijf meer -- de weg naar het kompas
+  // loopt via "Hoe voel je je?", en toont eerst de hele woordenlijst.
+  await page.click('text=Hoe voel je je?');
+  await page.waitForTimeout(300);
   await page.screenshot({ path: '/tmp/shots2/02-s2.png' });
 
   const woordKnop = await page.$('.woord-knop');
@@ -33,7 +32,15 @@ const { chromium } = require('/home/claude/.npm-global/lib/node_modules/playwrig
   const deurKnoppen = await page.$$('.deur button');
   await deurKnoppen[0].click();
   await page.waitForTimeout(300);
-  await page.click('text=Klaar');
+  // v21: de oefening is nu stap voor stap (toonOefening) -- op elke stap kan
+  // "Volgende" of, op de laatste stap, "Klaar" staan.
+  for (let i = 0; i < 6; i += 1) {
+    const klaar = await page.$('button:has-text("Klaar")');
+    if (klaar) { await klaar.click(); break; }
+    const volgende = await page.$('button:has-text("Volgende")');
+    if (volgende) { await volgende.click(); await page.waitForTimeout(200); continue; }
+    break;
+  }
   await page.waitForTimeout(300);
 
   const canvas2 = await page.$('canvas.schijf-canvas');
@@ -42,7 +49,7 @@ const { chromium } = require('/home/claude/.npm-global/lib/node_modules/playwrig
   // Het Verschil verschijnt ~600 ms na het loslaten
   await page.waitForTimeout(900);
   await page.screenshot({ path: '/tmp/shots2/04-het-verschil.png' });
-  await page.fill('textarea', 'Test na verwijderen crisiskaart.');
+  await page.fill('textarea', 'Test na v21-herbouw.');
   await page.click('text=Verder');
   await page.waitForTimeout(500);
   await page.screenshot({ path: '/tmp/shots2/05-s7.png' });
@@ -50,12 +57,12 @@ const { chromium } = require('/home/claude/.npm-global/lib/node_modules/playwrig
   // S7 heeft geen klikvlak meer terug naar het begin (Wet 3): opnieuw openen.
   await page.reload();
   await page.waitForTimeout(600);
+  await page.screenshot({ path: '/tmp/shots2/05b-thuis-na-reload.png' });
 
-  // v1.1-meer.md (6 sept 2026): "instellingen" zit niet meer los op S1,
-  // maar achter het stille "meer"-toegangspunt (S16).
-  await page.click('text=meer');
+  // v21: instellingen zit onder de "Terugkijken"-tab, niet meer achter "meer".
+  await page.click('.nav-item >> text=Terugkijken');
   await page.waitForTimeout(300);
-  await page.click('text=instellingen');
+  await page.click('text=Instellingen');
   await page.waitForTimeout(300);
   await page.screenshot({ path: '/tmp/shots2/05-s10-instellingen.png' });
 
