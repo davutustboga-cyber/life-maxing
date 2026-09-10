@@ -26,7 +26,15 @@ export const themas: Thema[] = [
     id: "rust",
     titel: "Rust vinden",
     onderschrift: "Als je gespannen, gejaagd of overprikkeld bent.",
-    bewegingIds: ["adem-lange-uitademing", "benoemen-en-parkeren", "afstand-nemen-van-jezelf", "tawakkul-route"],
+    bewegingIds: [
+      "adem-lange-uitademing",
+      "fysiologische-zucht",
+      "box-ademhaling",
+      "2-3-4-5-ademhaling",
+      "benoemen-en-parkeren",
+      "afstand-nemen-van-jezelf",
+      "tawakkul-route",
+    ],
   },
   {
     id: "lichaam",
@@ -44,7 +52,16 @@ export const themas: Thema[] = [
     id: "hoofd",
     titel: "Hoofd leegmaken",
     onderschrift: "Als het maalt, piekert of te vol zit.",
-    bewegingIds: ["uitschrijven-zonder-filter", "benoemen-en-parkeren", "aanname-omdraaien", "afstand-nemen-van-jezelf"],
+    bewegingIds: [
+      "uitschrijven-zonder-filter",
+      "benoemen-en-parkeren",
+      "aanname-omdraaien",
+      "afstand-nemen-van-jezelf",
+      "gedachte-in-woorden",
+      "gedachte-een-vorm-geven",
+      "vijf-zintuigen-grounding",
+      "voeten-op-de-grond",
+    ],
   },
   {
     id: "verbinding",
@@ -87,6 +104,12 @@ export const themas: Thema[] = [
     titel: "Richting en doelen",
     onderschrift: "Als je iets wil bereiken en niet weet waar te beginnen.",
     bewegingIds: [],
+  },
+  {
+    id: "reset",
+    titel: "Prikkels resetten",
+    onderschrift: "Als je hoofd overprikkeld is van schermen en stilzitten niet meer lukt.",
+    bewegingIds: ["prikkels-loslaten", "vijf-zintuigen-grounding"],
   },
 ];
 

@@ -460,7 +460,7 @@ function toonS5(bewegingId) {
         return toonS7();
     // v21: dezelfde inhoud als voorheen, maar stap voor stap in plaats van
     // als een muur tekst -- en met de onderbouwing ingeklapt (toonOefening).
-    toonOefening(bewegingId, {
+    toonBeweging(bewegingId, {
         opKlaar: () => toonS6(beweging.streek),
         opTerug: () => toonS4(),
     });
@@ -881,7 +881,7 @@ function toonS15Beweging(bewegingId) {
     // en de medische grens tegelijk: precies de muur tekst die v21 op S5 al
     // had opgeruimd, alleen niet hier. Nu dezelfde stap-voor-stap-lezer als
     // overal elders. Blijft stateless (Wet 8): geen moment, geen ster.
-    toonOefening(bewegingId, {
+    toonBeweging(bewegingId, {
         opKlaar: () => toonS7(),
         opTerug: () => toonS15AndersDoen(),
     });
@@ -985,7 +985,7 @@ function toonS19Beweging(bewegingId) {
     // v25 — zelfde reparatie als bij De Onderbreker: stap voor stap in plaats
     // van alles tegelijk. Blijft stateless (Wet 4, geen teller van hoe vaak je
     // "eruit valt").
-    toonOefening(bewegingId, {
+    toonBeweging(bewegingId, {
         opKlaar: () => toonS19Verder(),
         opTerug: () => toonS19KleinsteStap(),
     });
@@ -1534,7 +1534,7 @@ function voerSuggestieUit(s) {
             return toonS23AvondSluiten();
         case "beweging":
             if (s.id)
-                toonOefening(s.id, { opKlaar: () => toonVrijeAfronding(s.id), opTerug: () => toonThuis() });
+                toonBeweging(s.id, { opKlaar: () => toonVrijeAfronding(s.id), opTerug: () => toonThuis() });
             return;
         case "dhikr":
             if (s.id)
@@ -1648,7 +1648,7 @@ function toonThema(id) {
         const past = nuIds.has(bid);
         items.push(el("button", {
             class: `kaart kaart-klein${past ? " past-nu" : ""}`,
-            onclick: () => toonOefening(bid, { opKlaar: () => toonVrijeAfronding(bid), opTerug: () => toonThema(id) }),
+            onclick: () => toonBeweging(bid, { opKlaar: () => toonVrijeAfronding(bid), opTerug: () => toonThema(id) }),
         }, [
             el("span", { class: "kaart-titel-klein" }, [b.titel]),
             el("span", { class: "kaart-meta" }, [past ? `${duurTekst(bid)} · past nu` : duurTekst(bid)]),
@@ -1722,6 +1722,202 @@ function stappenVan(script) {
             stappen.push(deel);
     }
     return stappen.length > 0 ? stappen : [script];
+}
+const GETIMEDE_ADEMHALING = {
+    "box-ademhaling": [
+        { label: "Adem in", seconden: 4 },
+        { label: "Houd vast", seconden: 4 },
+        { label: "Adem uit", seconden: 4 },
+        { label: "Houd vast", seconden: 4 },
+    ],
+    "fysiologische-zucht": [
+        { label: "Adem in", seconden: 2 },
+        { label: "Nog een klein beetje in", seconden: 1 },
+        { label: "Adem lang uit", seconden: 6 },
+    ],
+    "2-3-4-5-ademhaling": [
+        { label: "Adem in", seconden: 2 },
+        { label: "Houd vast", seconden: 3 },
+        { label: "Adem uit", seconden: 4 },
+        { label: "Houd vast", seconden: 5 },
+    ],
+};
+const ADEM_RONDES = 5;
+function ademRichting(label) {
+    const l = label.toLowerCase();
+    if (l.includes("in"))
+        return "in";
+    if (l.includes("uit"))
+        return "uit";
+    return "vast";
+}
+/**
+ * Eén render() bij het openen van het scherm; daarna alleen nog directe
+ * DOM-updates op dezelfde elementen (tekst, inline transform) in plaats van
+ * een nieuwe render() per seconde. Een nieuwe render() zou de cirkel elke
+ * seconde opnieuw aanmaken, en daarmee elke lopende CSS-transitie afbreken
+ * — precies het soepele, doorlopende groeien/krimpen dat het punt is.
+ */
+function toonAdemPacer(bewegingId, patroon, opties) {
+    const beweging = bewegingById(bewegingId);
+    if (!beweging)
+        return opties.opKlaar();
+    const rustig = data.instellingen.rustigeBeelden;
+    let faseIndex = 0;
+    let ronde = 1;
+    let gestopt = false;
+    let secondeTimer;
+    let faseTimer;
+    function stop() {
+        gestopt = true;
+        if (secondeTimer !== undefined)
+            window.clearInterval(secondeTimer);
+        if (faseTimer !== undefined)
+            window.clearTimeout(faseTimer);
+    }
+    const cirkelEl = el("div", { class: `adem-pacer-cirkel${rustig ? " rustig" : ""}` });
+    const labelEl = el("p", { class: "vraag" }, [""]);
+    const cijferEl = el("p", { class: "adem-pacer-getal" }, [""]);
+    const rondeEl = el("p", { class: "zacht" }, [""]);
+    function startFase() {
+        if (gestopt)
+            return;
+        const fase = patroon[faseIndex];
+        let resterend = fase.seconden;
+        labelEl.textContent = fase.label;
+        rondeEl.textContent = `Ronde ${ronde} van ${ADEM_RONDES}`;
+        cijferEl.textContent = String(resterend);
+        const richting = ademRichting(fase.label);
+        cirkelEl.style.transitionDuration = `${fase.seconden}s`;
+        if (richting === "in")
+            cirkelEl.style.transform = "scale(1.25)";
+        else if (richting === "uit")
+            cirkelEl.style.transform = "scale(0.8)";
+        // "vast" (houd vast): bewust geen wijziging -- de cirkel behoudt precies
+        // de omvang van de fase ervoor.
+        if (secondeTimer !== undefined)
+            window.clearInterval(secondeTimer);
+        secondeTimer = window.setInterval(() => {
+            resterend--;
+            if (resterend > 0)
+                cijferEl.textContent = String(resterend);
+        }, 1000);
+        if (faseTimer !== undefined)
+            window.clearTimeout(faseTimer);
+        faseTimer = window.setTimeout(() => {
+            faseIndex++;
+            if (faseIndex >= patroon.length) {
+                faseIndex = 0;
+                ronde++;
+                if (ronde > ADEM_RONDES) {
+                    stop();
+                    opties.opKlaar();
+                    return;
+                }
+            }
+            startFase();
+        }, fase.seconden * 1000);
+    }
+    render([
+        el("div", { class: "scherm" }, [
+            terugKnop(() => {
+                stop();
+                (opties.opTerug ?? toonThuis)();
+            }),
+            el("p", { class: "oefening-titel" }, [beweging.titel]),
+            rondeEl,
+            cirkelEl,
+            labelEl,
+            cijferEl,
+            el("button", {
+                class: "knop",
+                onclick: () => {
+                    stop();
+                    opties.opKlaar();
+                },
+            }, [opties.klaarTekst ?? "Klaar"]),
+        ]),
+    ]);
+    startFase();
+}
+/** "Even helemaal niets" — een zelfgekozen duur, dan alleen een aftellend
+ * getal. Geen stappen, geen tekst onderweg: het scherm zelf mag ook stil
+ * zijn. Stateless zoals De Onderbreker (Wet 4/8): er wordt niets bewaard
+ * over hoe vaak of hoe lang. */
+function toonPrikkelsLoslaten(opties) {
+    const beweging = bewegingById("prikkels-loslaten");
+    if (!beweging)
+        return opties.opKlaar();
+    let waaromOpen = false;
+    function kiesScherm() {
+        render([
+            el("div", { class: "scherm" }, [
+                terugKnop(() => (opties.opTerug ?? toonThuis)()),
+                el("p", { class: "oefening-titel" }, [beweging.titel]),
+                el("p", { class: "vraag" }, ["Hoe lang?"]),
+                el("p", { class: "zacht" }, [beweging.script]),
+                el("div", { class: "tijd-opties" }, [5, 10, 15].map((minuten) => el("button", { class: "knop", onclick: () => telAf(minuten) }, [`${minuten} minuten`]))),
+                el("button", { class: "knop-klein", onclick: () => { waaromOpen = !waaromOpen; kiesScherm(); } }, [waaromOpen ? "waarom dit werkt −" : "waarom dit werkt +"]),
+                waaromOpen
+                    ? el("div", { class: "herkomst" }, beweging.herkomst.map((h) => el("p", { class: "herkomst-regel" }, [h.regel])))
+                    : null,
+            ]),
+        ]);
+    }
+    function telAf(minuten) {
+        let resterend = minuten * 60;
+        const cijferEl = el("p", { class: "adem-pacer-getal" }, [""]);
+        let timerId;
+        function stop() {
+            if (timerId !== undefined)
+                window.clearInterval(timerId);
+        }
+        function bijwerken() {
+            const m = Math.floor(resterend / 60);
+            const s = resterend % 60;
+            cijferEl.textContent = `${m}:${String(s).padStart(2, "0")}`;
+        }
+        render([
+            el("div", { class: "scherm" }, [
+                terugKnop(() => {
+                    stop();
+                    kiesScherm();
+                }),
+                el("p", { class: "oefening-titel" }, [beweging.titel]),
+                el("p", { class: "vraag" }, ["Niets hoeft."]),
+                cijferEl,
+                el("button", {
+                    class: "knop",
+                    onclick: () => {
+                        stop();
+                        opties.opKlaar();
+                    },
+                }, [opties.klaarTekst ?? "Klaar"]),
+            ]),
+        ]);
+        bijwerken();
+        timerId = window.setInterval(() => {
+            resterend--;
+            if (resterend <= 0) {
+                stop();
+                opties.opKlaar();
+                return;
+            }
+            bijwerken();
+        }, 1000);
+    }
+    kiesScherm();
+}
+/** Eén ingang voor elke beweging: kiest zelf de juiste weergave (getimede
+ * ademhaling, de stille aftel-oefening, of anders de gewone stap-voor-stap-
+ * lezer) in plaats van dat elke aanroeper dat zelf moet weten. */
+function toonBeweging(bewegingId, opties) {
+    if (bewegingId === "prikkels-loslaten")
+        return toonPrikkelsLoslaten(opties);
+    const patroon = GETIMEDE_ADEMHALING[bewegingId];
+    if (patroon)
+        return toonAdemPacer(bewegingId, patroon, opties);
+    return toonOefening(bewegingId, opties);
 }
 function toonOefening(bewegingId, opties) {
     const beweging = bewegingById(bewegingId);
@@ -2140,62 +2336,74 @@ export function toonS10() {
         ]);
     }
     const meldingTekst = el("p", { class: "zacht" }, [""]);
-    // v25 — dagelijkse melding, ook als de app dicht staat. Leunt op een
+    // v25 — een melding per dagdeel, ook als de app dicht staat. Leunt op een
     // losse, minimale server (lib/meldingen.ts legt uit waarom dat voor web
     // push niet anders kan) -- de enige netwerkaanroep die deze app ooit doet,
     // en alleen wanneer je dit hier zelf aanzet.
-    const meldingenAan = !!data.instellingen.meldingenTijd;
-    const meldingenFout = el("p", { class: laatsteMeldingenFout ? "zacht zacht--fout" : "zacht" }, [laatsteMeldingenFout ?? ""]);
-    const meldingenSectie = [
-        el("p", { class: "sectie-kop" }, ["Meldingen"]),
-        switchRij("Dagelijkse melding", "Ook als de app gesloten is. Vraagt eenmalig toestemming van je toestel.", meldingenAan, async (v) => {
-            if (v) {
-                const tijd = data.instellingen.meldingenTijd ?? "21:00";
-                const resultaat = await zetMeldingenAan(tijd);
-                if (resultaat.ok) {
-                    data.instellingen.meldingenTijd = tijd;
+    function meldingenUitleg(reden) {
+        return reden === "geweigerd"
+            ? "Je toestel weigerde toestemming. Zet dit aan bij de meldingeninstellingen van je toestel of browser voor deze app, en probeer het hier opnieuw."
+            : reden === "niet_ondersteund"
+                ? "Meldingen worden niet ondersteund in deze browser."
+                : "Dit lukte nu niet. Probeer het later opnieuw.";
+    }
+    function meldingDagdeelRijen(dagdeel, label, standaardTijd) {
+        const huidigeTijd = data.instellingen.meldingenTijden[dagdeel];
+        return [
+            switchRij(label, "Ook als de app gesloten is.", !!huidigeTijd, async (v) => {
+                const nieuw = { ...data.instellingen.meldingenTijden, [dagdeel]: v ? standaardTijd : null };
+                const alleUit = !nieuw.ochtend && !nieuw.middag && !nieuw.avond;
+                if (alleUit) {
+                    await zetMeldingenUit();
+                    data.instellingen.meldingenTijden = nieuw;
                     await bewaren();
                     laatsteMeldingenFout = null;
                 }
                 else {
-                    laatsteMeldingenFout =
-                        resultaat.reden === "geweigerd"
-                            ? "Je toestel weigerde toestemming. Zet dit aan bij de meldingeninstellingen van je toestel of browser voor deze app, en probeer het hier opnieuw."
-                            : resultaat.reden === "niet_ondersteund"
-                                ? "Meldingen worden niet ondersteund in deze browser."
-                                : "Dit lukte nu niet. Probeer het later opnieuw.";
+                    const resultaat = await zetMeldingenAan(nieuw);
+                    if (resultaat.ok) {
+                        data.instellingen.meldingenTijden = nieuw;
+                        await bewaren();
+                        laatsteMeldingenFout = null;
+                    }
+                    else {
+                        laatsteMeldingenFout = meldingenUitleg(resultaat.reden);
+                    }
                 }
-            }
-            else {
-                await zetMeldingenUit();
-                data.instellingen.meldingenTijd = null;
-                await bewaren();
-                laatsteMeldingenFout = null;
-            }
-            toonS10();
-        }),
-        meldingenAan
-            ? el("div", { class: "toggle-rij" }, [
-                el("div", { class: "toggle-tekst" }, [
-                    el("span", {}, ["Tijdstip"]),
-                    el("span", { class: "zacht" }, ["Wanneer je de melding wil krijgen."]),
-                ]),
-                el("input", {
-                    type: "time",
-                    value: data.instellingen.meldingenTijd,
-                    onchange: async (e) => {
-                        const nieuweTijd = e.target.value;
-                        if (!nieuweTijd)
-                            return;
-                        const resultaat = await zetMeldingenAan(nieuweTijd);
-                        if (resultaat.ok) {
-                            data.instellingen.meldingenTijd = nieuweTijd;
-                            await bewaren();
-                        }
-                    },
-                }),
-            ])
-            : null,
+                toonS10();
+            }),
+            huidigeTijd
+                ? el("div", { class: "toggle-rij" }, [
+                    el("div", { class: "toggle-tekst" }, [
+                        el("span", {}, ["Tijdstip"]),
+                        el("span", { class: "zacht" }, ["Wanneer je deze melding wil krijgen."]),
+                    ]),
+                    el("input", {
+                        type: "time",
+                        value: huidigeTijd,
+                        onchange: async (e) => {
+                            const nieuweTijd = e.target.value;
+                            if (!nieuweTijd)
+                                return;
+                            const nieuw = { ...data.instellingen.meldingenTijden, [dagdeel]: nieuweTijd };
+                            const resultaat = await zetMeldingenAan(nieuw);
+                            if (resultaat.ok) {
+                                data.instellingen.meldingenTijden = nieuw;
+                                await bewaren();
+                            }
+                        },
+                    }),
+                ])
+                : null,
+        ];
+    }
+    const meldingenFout = el("p", { class: laatsteMeldingenFout ? "zacht zacht--fout" : "zacht" }, [laatsteMeldingenFout ?? ""]);
+    const meldingenSectie = [
+        el("p", { class: "sectie-kop" }, ["Meldingen"]),
+        el("p", { class: "zacht" }, ["Een rustige melding per dagdeel, ook als de app dicht staat."]),
+        ...meldingDagdeelRijen("ochtend", "Ochtend", "08:00"),
+        ...meldingDagdeelRijen("middag", "Middag", "13:00"),
+        ...meldingDagdeelRijen("avond", "Avond", "20:00"),
         meldingenFout,
     ];
     render([

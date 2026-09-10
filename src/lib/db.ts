@@ -23,6 +23,21 @@ function openDb(): Promise<IDBDatabase> {
   });
 }
 
+/**
+ * v25 — een bestand dat vóór een schemawijziging is aangemaakt, mist de
+ * daarna toegevoegde velden gewoonweg (IndexedDB bewaart precies wat er ooit
+ * in is gezet, niet wat het huidige `leegBestand()` zou opleveren). Zonder
+ * deze aanvulling crashte elk scherm dat zo'n nieuw veld direct uitlas —
+ * ontdekt bij `instellingen.meldingenTijden`, maar het zou bij elk later
+ * toegevoegd veld opnieuw gebeuren. Dezelfde aanvulling als
+ * `parseGeimporteerdBestand` al deed voor geïmporteerde bestanden, nu ook
+ * voor het gewone laden.
+ */
+function aangevuld(bestand: LifeMaxingData): LifeMaxingData {
+  const leeg = leegBestand();
+  return { ...leeg, ...bestand, instellingen: { ...leeg.instellingen, ...bestand.instellingen } };
+}
+
 export async function laadBestand(): Promise<LifeMaxingData> {
   try {
     const db = await openDb();
@@ -31,7 +46,8 @@ export async function laadBestand(): Promise<LifeMaxingData> {
       const store = tx.objectStore(STORE_NAAM);
       const req = store.get(DOC_KEY);
       req.onsuccess = () => {
-        resolve((req.result as LifeMaxingData) ?? leegBestand());
+        const resultaat = req.result as LifeMaxingData | undefined;
+        resolve(resultaat ? aangevuld(resultaat) : leegBestand());
       };
       req.onerror = () => reject(req.error);
     });

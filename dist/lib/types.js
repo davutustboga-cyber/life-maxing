@@ -10,7 +10,7 @@ export function leegBestand() {
             weekmomentAan: true,
             visieCheckIns: { ochtend: true, middag: true, avond: true },
             visieIntroAangeboden: false,
-            meldingenTijd: null,
+            meldingenTijden: { ochtend: null, middag: null, avond: null },
         },
         woordenUitbreiding: [],
         momenten: [],

@@ -1,12 +1,13 @@
-// meldingen.ts — dagelijkse melding, ook als de app dicht staat.
+// meldingen.ts — een melding per dagdeel (ochtend/middag/avond), ook als de
+// app dicht staat.
 //
 // Web Push kan nergens ter wereld afgeleverd worden zonder iets buiten het
 // toestel: de browser stuurt het bericht pas door als iets, op het juiste
 // moment, de pushdienst aanroept. Dat "iets" is hier een minimale, losse
 // server (Supabase, gratis laag) — niet de app zelf. Die server kent precies
 // twee dingen per toestel: een technisch push-adres (geen naam, geen account)
-// en het tijdstip. Nooit iets uit het bestand in db.ts — geen sterren, geen
-// visie, geen enkele tekst die je opschreef.
+// en de gekozen tijdstippen. Nooit iets uit het bestand in db.ts — geen
+// sterren, geen visie, geen enkele tekst die je opschreef.
 //
 // `zetMeldingenAan`/`zetMeldingenUit` zijn de enige twee aanroepen naar
 // buiten die deze app ooit doet (v1.0 §11.4 gold tot nu toe als "nul
@@ -29,10 +30,24 @@ function urlBase64NaarUint8Array(base64Url) {
         bytes[i] = ruw.charCodeAt(i);
     return bytes;
 }
-/** Vraagt toestemming, abonneert op push, en registreert tijdstip + adres
- * bij de server. Geeft bij weigering of falen een reden terug, nooit een
- * uitzondering die de rest van het scherm zou breken. */
-export async function zetMeldingenAan(tijd) {
+/** {ochtend:"08:00", middag:null, avond:"21:00"} -> {ochtend:"08:00", avond:"21:00"}
+ * — de server slaat alleen de dagdelen op die je echt aanzette. */
+function naarServerFormaat(tijden) {
+    const resultaat = {};
+    if (tijden.ochtend)
+        resultaat.ochtend = tijden.ochtend;
+    if (tijden.middag)
+        resultaat.middag = tijden.middag;
+    if (tijden.avond)
+        resultaat.avond = tijden.avond;
+    return resultaat;
+}
+/** Vraagt toestemming, abonneert op push, en registreert de gekozen
+ * tijdstippen + adres bij de server (dit vervangt steeds de volledige set
+ * voor dit toestel — stuur dus altijd alle drie dagdelen mee, niet alleen
+ * het dagdeel dat net veranderde). Geeft bij weigering of falen een reden
+ * terug, nooit een uitzondering die de rest van het scherm zou breken. */
+export async function zetMeldingenAan(tijden) {
     if (!meldingenOndersteund())
         return { ok: false, reden: "niet_ondersteund" };
     try {
@@ -51,7 +66,7 @@ export async function zetMeldingenAan(tijd) {
         const res = await fetch(ABONNEER_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ subscription: subscription.toJSON(), tijden: [tijd], tijdzone }),
+            body: JSON.stringify({ subscription: subscription.toJSON(), tijden: naarServerFormaat(tijden), tijdzone }),
         });
         if (!res.ok)
             return { ok: false, reden: "server" };
@@ -61,9 +76,9 @@ export async function zetMeldingenAan(tijd) {
         return { ok: false, reden: "onbekend" };
     }
 }
-/** Meldt af bij de server én lokaal — beide, zodat er ook op de server
- * meteen niets meer geregistreerd staat in plaats van pas na een mislukte
- * verzendpoging. */
+/** Meldt volledig af bij de server én lokaal — voor wanneer alle drie
+ * dagdelen uit staan. Beide kanten, zodat er ook op de server meteen niets
+ * meer geregistreerd staat in plaats van pas na een mislukte verzendpoging. */
 export async function zetMeldingenUit() {
     if (!meldingenOndersteund())
         return;
@@ -75,7 +90,7 @@ export async function zetMeldingenUit() {
         await fetch(ABONNEER_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ subscription: subscription.toJSON(), tijden: [] }),
+            body: JSON.stringify({ subscription: subscription.toJSON(), tijden: {} }),
         }).catch(() => undefined);
         await subscription.unsubscribe();
     }

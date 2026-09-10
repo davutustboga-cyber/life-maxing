@@ -858,6 +858,32 @@ textarea:focus {
   color: var(--voorgrond);
 }
 
+/* v25 — de getimede ademhalingen (box-ademhaling, de fysiologische zucht,
+   2-3-4-5): de cirkel groeit/krimpt op de inline `transform`/`transition-
+   duration` die toonAdemPacer() per fase zet, niet op een keyframe-lus zoals
+   .ademvorm. ".rustig" (dezelfde instelling als elders) zet de overgang uit
+   -- de cirkel springt dan gewoon meteen naar zijn nieuwe maat. */
+.adem-pacer-cirkel {
+  width: min(55vw, 220px);
+  height: min(55vw, 220px);
+  margin: var(--ruimte-5) auto 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(212, 161, 58, 0.32), rgba(212, 161, 58, 0.06) 70%);
+  box-shadow: 0 0 40px -8px rgba(212, 161, 58, 0.35), inset 0 0 30px rgba(212, 161, 58, 0.15);
+  transform: scale(0.85);
+  transition-property: transform;
+  transition-timing-function: linear;
+}
+.adem-pacer-cirkel.rustig {
+  transition: none !important;
+}
+.adem-pacer-getal {
+  font-family: var(--serif);
+  font-size: 2.6rem;
+  font-weight: 400;
+  margin: var(--ruimte-4) 0 0;
+}
+
 /* v2.3 §2.8 / schermenoverzicht.md S5: de vorm draagt de instructie. */
 .timer-visual {
   width: min(52vw, 220px);

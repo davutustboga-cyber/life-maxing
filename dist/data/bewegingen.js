@@ -526,6 +526,174 @@ export const bewegingen = [
         pastNietBij: [],
         nooitAanbiedenAls: [],
     },
+    // ──────────────────────────────────────────────────────────────────────────────
+    // v25 (10 sept 2026): drie getimede ademhalingen naast de bestaande "Ademen
+    // met lange uitademing" (die blijft ongewijzigd staan) -- toonBeweging() in
+    // app.ts herkent deze drie id's en toont er een echte, seconde-voor-seconde
+    // meelopende cirkel bij in plaats van de gewone stap-lezer.
+    // ──────────────────────────────────────────────────────────────────────────────
+    {
+        id: "box-ademhaling",
+        titel: "Box-ademhaling (4-4-4-4)",
+        soort: "nu",
+        streek: "lichaam",
+        domeinLabel: "algemeen — kalmerend, op een vaste tel",
+        kosten: { tijdMinuten: [2, 4], energie: "laag", drempel: "klein" },
+        minimumversie: "Twee rondes is al genoeg om te voelen wat het doet.",
+        script: "Vier tellen in, vier tellen vasthouden, vier tellen uit, vier tellen vasthouden. Het scherm telt vanzelf mee.",
+        herkomst: [
+            {
+                label: "W",
+                regel: "Ademen op een vast, gelijkmatig ritme met korte pauzes na in- en uitademen wordt veel gebruikt om snel te kalmeren onder druk, onder meer in training voor hulpverleners. Het bouwt voort op hetzelfde effect als rustiger, trager ademen in het algemeen — hard bewijs voor precies déze 4-4-4-4-verhouding is dunner dan voor een langere uitademing alleen (zie 'Ademen met lange uitademing').",
+            },
+        ],
+        pastBij: ["gespannen", "gejaagd", "overprikkeld", "paniekerig", "onrustig", "rusteloos"],
+        pastNietBij: [],
+        nooitAanbiedenAls: [],
+    },
+    {
+        id: "fysiologische-zucht",
+        titel: "De fysiologische zucht",
+        soort: "nu",
+        streek: "lichaam",
+        domeinLabel: "algemeen — snel kalmerend",
+        kosten: { tijdMinuten: [1, 3], energie: "laag", drempel: "klein" },
+        minimumversie: "Eén keer is al genoeg om te voelen wat het doet.",
+        script: "Twee keer achter elkaar inademen door je neus — een gewone teug, en daarbovenop nog een klein slokje lucht. Dan lang en langzaam uitademen door je mond.",
+        herkomst: [
+            {
+                label: "W",
+                regel: "Twee korte inademingen na elkaar, gevolgd door een lange, langzame uitademing, verlaagde in een gecontroleerd onderzoek de spanning sneller dan gewoon rustig ademen of mindfulness — al bij één keer, en het effect was sterker naarmate mensen het vaker herhaalden over een paar weken.",
+            },
+        ],
+        pastBij: ["gespannen", "gejaagd", "overprikkeld", "paniekerig", "onrustig", "rusteloos", "machteloos"],
+        pastNietBij: [],
+        nooitAanbiedenAls: [],
+    },
+    {
+        id: "2-3-4-5-ademhaling",
+        titel: "2-3-4-5-ademhaling",
+        soort: "nu",
+        streek: "lichaam",
+        domeinLabel: "algemeen — kalmerend, op een vaste tel",
+        kosten: { tijdMinuten: [2, 5], energie: "laag", drempel: "klein" },
+        minimumversie: "Twee of drie rondes is al genoeg.",
+        script: "Twee tellen in, drie tellen vasthouden, vier tellen uit, vijf tellen vasthouden.",
+        herkomst: [
+            {
+                label: "P",
+                regel: "Bouwt voort op hetzelfde effect als een langere uitademing (zie 'Ademen met lange uitademing'), met een oplopende telling die voor sommigen makkelijker vast te houden is dan vrij ademen. Dit precieze ritme zelf is niet apart onderzocht.",
+            },
+        ],
+        pastBij: ["gespannen", "gejaagd", "onrustig", "rusteloos", "piekerend"],
+        pastNietBij: [],
+        nooitAanbiedenAls: [],
+    },
+    // ──────────────────────────────────────────────────────────────────────────────
+    // v25: grounding (uit een overweldigd gevoel stappen via je zintuigen/lichaam)
+    // en cognitieve defusie (anders naar een vastzittende gedachte kijken, uit de
+    // ACT-traditie) — twee losse categorieën die er nog niet waren.
+    // ──────────────────────────────────────────────────────────────────────────────
+    {
+        id: "vijf-zintuigen-grounding",
+        titel: "Vijf, vier, drie, twee, één",
+        soort: "nu",
+        streek: "geest",
+        domeinLabel: "prikkels en aandacht",
+        kosten: { tijdMinuten: [2, 5], energie: "laag", drempel: "klein" },
+        minimumversie: "Al bij twee of drie zintuigen kan het genoeg zijn.",
+        script: "Noem, hardop of in je hoofd: vijf dingen die je ziet. Vier dingen die je voelt — je kleren, de stoel, de lucht. Drie dingen die je hoort. Twee dingen die je ruikt. Eén ding dat je proeft.",
+        herkomst: [
+            {
+                label: "W",
+                regel: "Aandacht sturen naar wat je nu concreet waarneemt via je zintuigen is een veelgebruikte, goed verdraagbare manier om uit piekeren of een overweldigd gevoel te stappen — het onderbreekt de aandacht die anders bij de gedachte zelf zou blijven hangen.",
+            },
+        ],
+        pastBij: ["paniekerig", "overprikkeld", "verward", "piekerend", "malend", "gejaagd"],
+        pastNietBij: [],
+        nooitAanbiedenAls: [],
+    },
+    {
+        id: "voeten-op-de-grond",
+        titel: "Voeten op de grond",
+        soort: "nu",
+        streek: "lichaam",
+        domeinLabel: "prikkels en aandacht",
+        kosten: { tijdMinuten: [1, 2], energie: "laag", drempel: "klein" },
+        minimumversie: "Dertig seconden is genoeg.",
+        script: "Ga zitten of staan. Voel je voeten echt op de grond — het gewicht, de temperatuur, de druk. Duw ze een paar tellen tegen de vloer. Adem gewoon door.",
+        herkomst: [
+            {
+                label: "W",
+                regel: "Aandacht bewust naar lichamelijke waarneming verplaatsen — het contact met de grond — is een basisvorm van grounding die snel uitvoerbaar is en breed gebruikt wordt bij een overweldigd gevoel, vooral in combinatie met de zintuigenoefening hierboven.",
+            },
+        ],
+        pastBij: ["paniekerig", "overprikkeld", "verward", "gejaagd", "onrustig"],
+        pastNietBij: [],
+        nooitAanbiedenAls: [],
+    },
+    {
+        id: "gedachte-in-woorden",
+        titel: "Ik heb de gedachte dat...",
+        soort: "nu",
+        streek: "geest",
+        domeinLabel: "hoofd leegmaken",
+        kosten: { tijdMinuten: [1, 3], energie: "laag", drempel: "klein" },
+        minimumversie: "Eén keer hardop of opschrijven is genoeg.",
+        script: "Neem de gedachte die blijft hangen. Zeg of schrijf hem opnieuw, maar begin met: 'Ik heb de gedachte dat...'. Dan nog een keer: 'Ik merk dat ik de gedachte heb dat...'. Niets aan de gedachte zelf veranderen — alleen hoe je ernaar kijkt.",
+        herkomst: [
+            {
+                label: "W",
+                regel: "Een gedachte herformuleren als iets dat je opmerkt, in plaats van als een feit, vermindert aantoonbaar hoe geloofwaardig en onaangenaam die gedachte aanvoelt — zonder de inhoud ervan te bestrijden of weg te duwen.",
+            },
+        ],
+        pastBij: ["piekerend", "malend", "zelfkritisch", "onzeker", "verward", "wantrouwend"],
+        pastNietBij: [],
+        nooitAanbiedenAls: [],
+    },
+    {
+        id: "gedachte-een-vorm-geven",
+        titel: "Geef de gedachte een vorm",
+        soort: "nu",
+        streek: "geest",
+        domeinLabel: "hoofd leegmaken",
+        kosten: { tijdMinuten: [2, 4], energie: "laag", drempel: "klein" },
+        minimumversie: "Eén zin is genoeg: 'Dit is mijn gedachte, niet ik.'",
+        script: "Stel je de gedachte voor als iets buiten jezelf — een wolk die voorbijdrijft, een blaadje op water, een zin op een lopende band. Je hoeft hem niet te geloven of te bestrijden, alleen te zien voorbijgaan.",
+        herkomst: [
+            {
+                label: "W",
+                regel: "Een gedachte visueel voorstellen als iets dat langsdrijft, in plaats van iets dat je bent, is een kernoefening uit cognitieve-defusietraining en vermindert hoe vast gedachten blijven zitten — werkt het best als losse oefening op een rustig moment, niet als noodgreep midden in een crisis.",
+            },
+        ],
+        pastBij: ["piekerend", "malend", "verward", "onzeker", "besluiteloos"],
+        pastNietBij: [],
+        nooitAanbiedenAls: [],
+    },
+    // ──────────────────────────────────────────────────────────────────────────────
+    // v25: een bewuste dopamine-reset. Geen les-in-verveling-toon, gewoon een
+    // eerlijk aftellend scherm — toonBeweging() herkent dit id en laat eerst een
+    // duur kiezen (5/10/15 min) voor de aftelling begint.
+    // ──────────────────────────────────────────────────────────────────────────────
+    {
+        id: "prikkels-loslaten",
+        titel: "Even helemaal niets",
+        soort: "nu",
+        streek: "geest",
+        domeinLabel: "prikkels en aandacht",
+        kosten: { tijdMinuten: [5, 15], energie: "laag", drempel: "midden" },
+        minimumversie: "Vijf minuten is genoeg om te beginnen.",
+        script: "Zet een tijd. Doe niets: geen telefoon, geen muziek, geen lezen. Kijk naar iets stils — een muur, het plafond, buiten. Verveling die opkomt hoeft niet weg.",
+        herkomst: [
+            {
+                label: "W",
+                regel: "Aanhoudende korte prikkels, vooral van een scherm, maken langzame, rustige aandacht lastiger vast te houden. Jezelf bewust en herhaald blootstellen aan verveling zonder een prikkel te pakken, hangt samen met minder verlangen naar diezelfde snelle prikkels en meer verdragen van niets-doen. Het is ongemakkelijk vóór het went — dat ongemak is het punt, niet een teken dat het niet werkt.",
+            },
+        ],
+        pastBij: ["leeg", "lusteloos", "rusteloos", "overprikkeld", "niets", "op"],
+        pastNietBij: [],
+        nooitAanbiedenAls: [],
+    },
 ];
 export function bewegingById(id) {
     return bewegingen.find((b) => b.id === id);
