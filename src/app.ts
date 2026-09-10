@@ -2,7 +2,17 @@
 // Eén bestand, geen router-library: de dagelijkse lus is toch al lineair
 // (S1 → S2 → S3 → S4 → (S5 → S6) → S7).
 
-import type { LifeMaxingData, Maandbrief, Moment, Streek, Tijd, VisiePeriode, Zone } from "./lib/types.js";
+import type {
+  ConceptDagsluiting,
+  ConceptDoel,
+  LifeMaxingData,
+  Maandbrief,
+  Moment,
+  Streek,
+  Tijd,
+  VisiePeriode,
+  Zone,
+} from "./lib/types.js";
 import { laadBestand, bewaarBestand, wisBestand, exporteerBestand, parseGeimporteerdBestand } from "./lib/db.js";
 import { el, render, dimEnDan } from "./lib/dom.js";
 import {
@@ -1302,8 +1312,32 @@ function avondVisieBlok(): ReturnType<typeof el> | null {
   return el("div", { class: "herkomst" }, visieRegels.map((r) => el("p", { class: "herkomst-regel" }, [r])));
 }
 
+/** Schrijft de tussentijdse "Dag sluiten"-invoer weg zodat niets verloren
+ * gaat als de app hier wordt gesloten — zie ConceptDagsluiting in types.ts. */
+function bewaarConceptDagsluiting(state: AvondState): void {
+  data.conceptDagsluiting = {
+    positie: state.positie,
+    chips: [...state.chips],
+    dankbaarheid: state.dankbaarheid,
+    zin: state.zin,
+    voorMorgen: state.voorMorgen,
+  };
+  void bewaren();
+}
+
 function toonS23AvondSluiten(): void {
-  toonS23Stap1Kompas({ positie: null, chips: new Set<string>(), dankbaarheid: "", zin: "", voorMorgen: "" });
+  const concept = data.conceptDagsluiting;
+  toonS23Stap1Kompas(
+    concept
+      ? {
+          positie: concept.positie,
+          chips: new Set(concept.chips),
+          dankbaarheid: concept.dankbaarheid,
+          zin: concept.zin,
+          voorMorgen: concept.voorMorgen,
+        }
+      : { positie: null, chips: new Set<string>(), dankbaarheid: "", zin: "", voorMorgen: "" }
+  );
 }
 
 function toonS23Stap1Kompas(state: AvondState): void {
@@ -1318,7 +1352,10 @@ function toonS23Stap1Kompas(state: AvondState): void {
       el("p", { class: "vraag" }, [teksten.avondSluiten.kompasVraag]),
       el("p", { class: "zacht" }, [teksten.kompas.schijfUitleg]),
       kompasVeld(canvas),
-      el("button", { class: "knop", onclick: () => toonS23Stap2Chips(state) }, ["Volgende"]),
+      el("button", {
+        class: "knop",
+        onclick: () => { bewaarConceptDagsluiting(state); toonS23Stap2Chips(state); },
+      }, ["Volgende"]),
     ]),
   ]);
 
@@ -1361,7 +1398,10 @@ function toonS23Stap2Chips(state: AvondState): void {
       ...stapKop(teksten.avondSluiten.kop, 2, 5),
       el("p", { class: "vraag" }, [teksten.avondSluiten.chipsVraag]),
       chipsGrid,
-      el("button", { class: "knop", onclick: () => toonS23Stap3Dank(state) }, ["Volgende"]),
+      el("button", {
+        class: "knop",
+        onclick: () => { bewaarConceptDagsluiting(state); toonS23Stap3Dank(state); },
+      }, ["Volgende"]),
     ]),
   ]);
 }
@@ -1382,7 +1422,14 @@ function toonS23Stap3Dank(state: AvondState): void {
       veld,
       el(
         "button",
-        { class: "knop", onclick: () => { state.dankbaarheid = veld.value; toonS23Stap4Zin(state); } },
+        {
+          class: "knop",
+          onclick: () => {
+            state.dankbaarheid = veld.value;
+            bewaarConceptDagsluiting(state);
+            toonS23Stap4Zin(state);
+          },
+        },
         ["Volgende"]
       ),
     ]),
@@ -1405,7 +1452,14 @@ function toonS23Stap4Zin(state: AvondState): void {
       veld,
       el(
         "button",
-        { class: "knop", onclick: () => { state.zin = veld.value; toonS23Stap5VoorMorgen(state); } },
+        {
+          class: "knop",
+          onclick: () => {
+            state.zin = veld.value;
+            bewaarConceptDagsluiting(state);
+            toonS23Stap5VoorMorgen(state);
+          },
+        },
         ["Volgende"]
       ),
     ]),
@@ -1428,6 +1482,7 @@ function toonS23Stap5VoorMorgen(state: AvondState): void {
       zin: state.zin.trim() || null,
       voorMorgen: state.voorMorgen.trim() || null,
     });
+    data.conceptDagsluiting = null;
     void bewaren();
     // Ayat al-Kursi hoort vlak voor het slapen, als allerlaatste — dus na
     // het sluiten van de dag, niet ernaast als los alternatief (adhkar.ts:
@@ -1699,9 +1754,22 @@ function toonVisieBekijken(): void {
 
 type Tab = "nu" | "doen" | "terugkijken";
 
+// Kleine, consistente lijnstijl-iconen (24×24, currentColor) — geen los
+// icon-pakket nodig voor drie tekens. "Nu" = een puls (nadruk op dit moment),
+// "Doen" = een play-vorm (actie), "Terugkijken" = een terugdraaiende pijl.
+const NAV_ICOON: Record<Tab, string> = {
+  nu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>',
+  doen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M8 5.5v13l11-6.5z"/></svg>',
+  terugkijken:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 9a8 8 0 1 1 1.1 9.1"/><path d="M4.5 4v5.2h5.2"/></svg>',
+};
+
 function navBalk(actief: Tab): ReturnType<typeof el> {
   const item = (tab: Tab, label: string, actie: () => void) =>
-    el("button", { class: `nav-item${actief === tab ? " actief" : ""}`, onclick: actie }, [label]);
+    el("button", { class: `nav-item${actief === tab ? " actief" : ""}`, onclick: actie }, [
+      el("span", { class: "nav-icoon", html: NAV_ICOON[tab] }, []),
+      el("span", { class: "nav-label" }, [label]),
+    ]);
   return el("nav", { class: "nav-balk" }, [
     item("nu", "Nu", () => toonThuis()),
     item("doen", "Doen", () => toonDoen()),
@@ -1718,14 +1786,20 @@ function duurTekst(bewegingId: string): string {
 
 function rijKnop(titel: string, onder: string, actie: () => void): ReturnType<typeof el> {
   return el("button", { class: "rij-knop", onclick: actie }, [
-    el("span", { class: "rij-titel" }, [titel]),
-    el("span", { class: "rij-onder" }, [onder]),
+    el("span", { class: "rij-tekst" }, [
+      el("span", { class: "rij-titel" }, [titel]),
+      el("span", { class: "rij-onder" }, [onder]),
+    ]),
+    el("span", { class: "rij-chevron", "aria-hidden": "true" }, ["›"]),
   ]);
 }
 
 function kaartPrimair(s: Suggestie): ReturnType<typeof el> {
   return el("button", { class: "kaart kaart-primair", onclick: () => voerSuggestieUit(s) }, [
-    el("span", { class: "kaart-label" }, ["Dit past nu"]),
+    el("span", { class: "kaart-label-rij" }, [
+      el("span", { class: "kaart-label" }, ["Dit past nu"]),
+      el("span", { class: "eq-meter", "aria-hidden": "true", html: "<span></span><span></span><span></span><span></span>" }, []),
+    ]),
     el("span", { class: "kaart-titel" }, [s.titel]),
     s.duur ? el("span", { class: "kaart-duur" }, [s.duur]) : null,
     el("span", { class: "kaart-waarom" }, [s.waaromNu]),
@@ -1783,6 +1857,7 @@ function toonThuis(): void {
   render([
     el("div", { class: "scherm scherm-app" }, [
       el("header", { class: "thuis-kop" }, [
+        el("p", { class: "merk-kicker" }, ["Life Maxing"]),
         el("h1", { class: "thuis-groet" }, [begroeting(dagdeel)]),
         el("p", { class: "thuis-datum" }, [datumregel(nu)]),
       ]),
@@ -2079,12 +2154,24 @@ function toonS24Richting(): void {
   ]);
 }
 
+/** Schrijft de tussentijdse WOOP-invoer weg zodat niets verloren gaat als de
+ * app hier wordt gesloten — zie ConceptDoel in types.ts. */
+function bewaarConceptDoel(veld: Partial<ConceptDoel>): void {
+  data.conceptDoel = { wish: "", outcome: "", obstacleTekst: "", planDan: "", ...data.conceptDoel, ...veld };
+  void bewaren();
+}
+
 function toonS24Wish(): void {
+  const concept = data.conceptDoel;
   const veld = el("textarea", { placeholder: teksten.doelen.wishPlaceholder }) as HTMLTextAreaElement;
-  veld.value = data.doel?.wish ?? "";
+  veld.value = concept?.wish ?? data.doel?.wish ?? "";
   const knop = el("button", {
     class: "knop",
-    onclick: () => toonS24Outcome(veld.value.trim()),
+    onclick: () => {
+      const wish = veld.value.trim();
+      bewaarConceptDoel({ wish });
+      toonS24Outcome(wish);
+    },
   }, [teksten.doelen.klaar]) as HTMLButtonElement;
   koppelDisabled(veld, knop);
 
@@ -2102,10 +2189,14 @@ function toonS24Wish(): void {
 
 function toonS24Outcome(wish: string): void {
   const veld = el("textarea", { placeholder: teksten.doelen.outcomePlaceholder }) as HTMLTextAreaElement;
-  veld.value = data.doel?.outcome ?? "";
+  veld.value = data.conceptDoel?.outcome ?? data.doel?.outcome ?? "";
   const knop = el("button", {
     class: "knop",
-    onclick: () => toonS24Verbeelding(wish, veld.value.trim()),
+    onclick: () => {
+      const outcome = veld.value.trim();
+      bewaarConceptDoel({ outcome });
+      toonS24Verbeelding(wish, outcome);
+    },
   }, [teksten.doelen.klaar]) as HTMLButtonElement;
   koppelDisabled(veld, knop);
 
@@ -2135,10 +2226,14 @@ function toonS24Verbeelding(wish: string, outcome: string): void {
 
 function toonS24Obstacle(wish: string, outcome: string): void {
   const veld = el("textarea", { placeholder: teksten.doelen.obstaclePlaceholder }) as HTMLTextAreaElement;
-  veld.value = data.doel?.obstacleTekst ?? "";
+  veld.value = data.conceptDoel?.obstacleTekst ?? data.doel?.obstacleTekst ?? "";
   const knop = el("button", {
     class: "knop",
-    onclick: () => toonS24Plan(wish, outcome, veld.value.trim()),
+    onclick: () => {
+      const obstacle = veld.value.trim();
+      bewaarConceptDoel({ obstacleTekst: obstacle });
+      toonS24Plan(wish, outcome, obstacle);
+    },
   }, [teksten.doelen.klaar]) as HTMLButtonElement;
   koppelDisabled(veld, knop);
 
@@ -2157,7 +2252,8 @@ function toonS24Obstacle(wish: string, outcome: string): void {
 function toonS24Plan(wish: string, outcome: string, obstacle: string): void {
   const alsVeld = el("input", { type: "text", value: obstacle, readonly: true });
   const danVeld = el("input", { type: "text", placeholder: teksten.doelen.planDanPlaceholder }) as HTMLInputElement;
-  danVeld.value = data.doel?.planDan ?? "";
+  danVeld.value = data.conceptDoel?.planDan ?? data.doel?.planDan ?? "";
+  danVeld.addEventListener("input", () => bewaarConceptDoel({ planDan: danVeld.value }));
   const melding = el("p", { class: "zacht" }, [""]);
   const knop = el("button", {
     class: "knop",
@@ -2172,6 +2268,7 @@ function toonS24Plan(wish: string, outcome: string, obstacle: string): void {
         planDan: dan,
         sinds: new Date().toISOString(),
       };
+      data.conceptDoel = null;
       void bewaren();
       melding.textContent = teksten.doelen.bewaard;
       setTimeout(() => toonDoen(), 900);

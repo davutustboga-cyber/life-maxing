@@ -208,6 +208,34 @@ export interface LifeMaxingData {
   doel: Doel | null;
   /** v22 — De Visie, zie de interface hierboven. */
   visie: Visie | null;
+  /**
+   * v24 — tussentijdse voortgang van de WOOP-flow (S24) en Dag sluiten
+   * (S23). Beide flows lopen over meerdere schermen; tot v23 stond alles
+   * alleen in een JS-object in het geheugen en werd pas op de allerlaatste
+   * stap bewaard — de app of het toestel sluiten halverwege verloor dan
+   * alles wat je al had ingevuld. Nu wordt na elke stap dit concept
+   * bijgewerkt én bewaard, en bij het opnieuw openen van de flow vooringe-
+   * vuld teruggegeven. Bij een succesvol afgeronde flow wordt het concept
+   * meteen weer op `null` gezet — dit is nooit een tweede geschiedenis,
+   * alleen een vangnet tegen dataverlies onderweg.
+   */
+  conceptDoel: ConceptDoel | null;
+  conceptDagsluiting: ConceptDagsluiting | null;
+}
+
+export interface ConceptDoel {
+  wish: string;
+  outcome: string;
+  obstacleTekst: string;
+  planDan: string;
+}
+
+export interface ConceptDagsluiting {
+  positie: { energie: number; toon: number } | null;
+  chips: string[];
+  dankbaarheid: string;
+  zin: string;
+  voorMorgen: string;
 }
 
 export interface Doel {
@@ -289,5 +317,7 @@ export function leegBestand(): LifeMaxingData {
     dagsluitingen: [],
     doel: null,
     visie: null,
+    conceptDoel: null,
+    conceptDagsluiting: null,
   };
 }

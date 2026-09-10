@@ -17,57 +17,41 @@
 // je intypte: dat zou een ongeteste combinatie-claim zijn (v2.2 §11, spoor
 // W19, nog niet onderzocht). De keuze blijft van jou; de app biedt alleen de
 // bibliotheek aan.
-
-                                                             
-
 /**
  * ISO-weeksleutel, "2026-W36". Nooit als los getal getoond — alleen gebruikt
  * om te bepalen of je deze week al bij de spiegel bent geweest.
  */
-export function weekSleutel(nu = new Date())         {
-  const datum = new Date(Date.UTC(nu.getFullYear(), nu.getMonth(), nu.getDate()));
-  const dagNr = (datum.getUTCDay() + 6) % 7; // maandag = 0
-  datum.setUTCDate(datum.getUTCDate() - dagNr + 3); // donderdag van deze week
-  const eersteDonderdag = new Date(Date.UTC(datum.getUTCFullYear(), 0, 4));
-  const weekNr =
-    1 +
-    Math.round(
-      ((datum.getTime() - eersteDonderdag.getTime()) / 86400000 -
-        3 +
-        ((eersteDonderdag.getUTCDay() + 6) % 7)) /
-        7
-    );
-  return `${datum.getUTCFullYear()}-W${String(weekNr).padStart(2, "0")}`;
+export function weekSleutel(nu = new Date()) {
+    const datum = new Date(Date.UTC(nu.getFullYear(), nu.getMonth(), nu.getDate()));
+    const dagNr = (datum.getUTCDay() + 6) % 7; // maandag = 0
+    datum.setUTCDate(datum.getUTCDate() - dagNr + 3); // donderdag van deze week
+    const eersteDonderdag = new Date(Date.UTC(datum.getUTCFullYear(), 0, 4));
+    const weekNr = 1 +
+        Math.round(((datum.getTime() - eersteDonderdag.getTime()) / 86400000 -
+            3 +
+            ((eersteDonderdag.getUTCDay() + 6) % 7)) /
+            7);
+    return `${datum.getUTCFullYear()}-W${String(weekNr).padStart(2, "0")}`;
 }
-
 /**
  * Beschikbaar als het weekmoment aan staat en er nog geen bevroren
  * weekmoment voor de huidige week staat. Geen drempel op aantal momenten
  * die week — v2.2 §11 zegt "één keer per week", niet "als je genoeg deed".
  */
-export function weekmomentBeschikbaar(data                , nu = new Date())          {
-  if (!data.instellingen.weekmomentAan) return false;
-  const sleutel = weekSleutel(nu);
-  return !(data.weekmomenten ?? []).some((w) => w.week === sleutel);
+export function weekmomentBeschikbaar(data, nu = new Date()) {
+    if (!data.instellingen.weekmomentAan)
+        return false;
+    const sleutel = weekSleutel(nu);
+    return !(data.weekmomenten ?? []).some((w) => w.week === sleutel);
 }
-
-export function schrijfWeekmoment(
-  beeld        ,
-  werkelijkheid        ,
-  plan        ,
-  gekozenBewegingId        ,
-  nu = new Date()
-)             {
-  return {
-    id: `wk-${weekSleutel(nu)}-${Date.now().toString(36)}`,
-    week: weekSleutel(nu),
-    aangemaaktOp: nu.toISOString(),
-    beeld: beeld.trim(),
-    werkelijkheid: werkelijkheid.trim(),
-    plan: plan.trim(),
-    gekozenBewegingId,
-  };
+export function schrijfWeekmoment(beeld, werkelijkheid, plan, gekozenBewegingId, nu = new Date()) {
+    return {
+        id: `wk-${weekSleutel(nu)}-${Date.now().toString(36)}`,
+        week: weekSleutel(nu),
+        aangemaaktOp: nu.toISOString(),
+        beeld: beeld.trim(),
+        werkelijkheid: werkelijkheid.trim(),
+        plan: plan.trim(),
+        gekozenBewegingId,
+    };
 }
-
-
-//# sourceURL=src/lib/weekmoment.ts
