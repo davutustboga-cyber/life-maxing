@@ -52,10 +52,28 @@ if ("serviceWorker" in navigator) {
     window.location.reload();
   });
 
+  let registratie: ServiceWorkerRegistration | null = null;
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js").catch(() => {
-      // best effort — de app werkt ook zonder offline-cache, alleen dan
-      // niet zonder netwerk bij een herbezoek
-    });
+    navigator.serviceWorker
+      .register("./service-worker.js")
+      .then((reg) => {
+        registratie = reg;
+      })
+      .catch(() => {
+        // best effort — de app werkt ook zonder offline-cache, alleen dan
+        // niet zonder netwerk bij een herbezoek
+      });
+  });
+
+  // Als thuisschermapp geeft iOS een heropend, geschorst tabblad terug in
+  // plaats van een echte nieuwe paginalading — "load" hierboven vuurt dan
+  // niet opnieuw, en zonder deze aanroep controleert Safari zelf soms
+  // dagenlang niet of er een nieuwe service-worker.js klaarstaat. Elke keer
+  // dat het scherm weer zichtbaar wordt, dwingen we die controle zelf af.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") registratie?.update().catch(() => {});
+  });
+  window.addEventListener("pageshow", () => {
+    registratie?.update().catch(() => {});
   });
 }
