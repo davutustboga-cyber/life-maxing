@@ -24,9 +24,13 @@ function toonIntro() {
         el.remove();
         return;
     }
+    // v25 — stond eerst op 1550ms, voelde te snel voorbij ("dat moet wel
+    // blijven pakken"). Het merkmoment mag nu echt even blijven staan voor het
+    // wegvaagt. Reduced motion blijft bewust korter (geen animatie om naar te
+    // kijken, dan is langer wachten alleen maar een wachttijd).
     const rustig = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const uitNa = rustig ? 550 : 1550;
-    const wegNa = rustig ? 850 : 1950;
+    const uitNa = rustig ? 900 : 5000;
+    const wegNa = rustig ? 1200 : 5550;
     setTimeout(() => el.classList.add("intro--uit"), uitNa);
     setTimeout(() => el.remove(), wegNa);
 }
