@@ -506,6 +506,37 @@ function tekenSter(ctx, p, metZin, helderheid) {
     ctx.fillStyle = `rgba(245, 238, 220, ${helderheid})`;
     ctx.fill();
     ctx.restore();
+    // Een dunne vierpuntsflonker, alleen op sterren die een zin dragen — het
+    // onderscheid dat "dit is een van jouw echte momenten" ook zonder tikken
+    // al voelbaar maakt, zoals een sterfilter op een lens.
+    if (metZin) {
+        const lengte = r * 4.2;
+        ctx.save();
+        ctx.strokeStyle = `rgba(245, 238, 220, ${helderheid * 0.55})`;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(p.x - lengte, p.y);
+        ctx.lineTo(p.x + lengte, p.y);
+        ctx.moveTo(p.x, p.y - lengte);
+        ctx.lineTo(p.x, p.y + lengte);
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+const STERKLEUREN = [
+    [0.82, "237, 233, 222"], // wit — de meerderheid
+    [0.1, "212, 161, 58"], // flauw messing
+    [0.08, "139, 155, 192"], // flauw dusk-blauw
+];
+function kiesSterkleur(random) {
+    const r = random();
+    let cumulatief = 0;
+    for (const [aandeel, rgb] of STERKLEUREN) {
+        cumulatief += aandeel;
+        if (r <= cumulatief)
+            return rgb;
+    }
+    return STERKLEUREN[0][1];
 }
 /**
  * Decoratieve achtergrondsterren voor De Hemel — puur sfeer, geen data.
@@ -520,15 +551,19 @@ function genereerAchtergrondSterren(breedte, hoogte) {
     if (breedte <= 0 || hoogte <= 0)
         return [];
     const random = seededRandom(`achtergrond-${Math.round(breedte)}x${Math.round(hoogte)}`);
-    const aantal = Math.round((breedte * hoogte) / 2600);
+    // v26 — was 2600, dichter voor het edge-to-edge scherm (v26): het volledige
+    // scherm is nu vaak groter dan de vorige 60vh-canvas binnen de gecentreerde
+    // kolom, en een even dichte strooiing daarop oogt kaler dan voorheen.
+    const aantal = Math.round((breedte * hoogte) / 1500);
     const sterren = [];
     for (let i = 0; i < aantal; i++) {
         sterren.push({
             x: random() * breedte,
             y: random() * hoogte,
             r: 0.6 + random() * random() * 1.6,
-            basisAlpha: 0.22 + random() * 0.4,
+            basisAlpha: 0.18 + random() * 0.42,
             twinkel: random() * Math.PI * 2,
+            kleur: kiesSterkleur(random),
         });
     }
     return sterren;
@@ -538,8 +573,120 @@ function tekenAchtergrondSterren(ctx, sterren, fase, rustig) {
         const twinkel = rustig ? 1 : 0.7 + 0.3 * Math.sin(fase * 0.4 + s.twinkel);
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(237, 233, 222, ${s.basisAlpha * twinkel})`;
+        ctx.fillStyle = `rgba(${s.kleur}, ${s.basisAlpha * twinkel})`;
         ctx.fill();
+    }
+}
+/**
+ * De atmosfeer: een verticale ondergrond (nét iets lichter naar onderen, als
+ * een verre horizon-gloed in plaats van een vlak zwart) plus twee heel trage,
+ * nauwelijks zichtbare gloedvlekken die rondzweven. Puur sfeer — dezelfde
+ * reden als de achtergrondsterren, maar dan als kleurwolk in plaats van
+ * puntjes. `rustig`: de vlekken staan stil in plaats van te zweven, maar
+ * blijven verder gewoon zichtbaar (dit is geen animatie om naar te kijken,
+ * dus geen reden om 'm uit te zetten).
+ */
+function tekenAtmosfeer(ctx, breedte, hoogte, tNu, rustig) {
+    const grond = ctx.createLinearGradient(0, 0, 0, hoogte);
+    grond.addColorStop(0, "#05060b");
+    grond.addColorStop(0.6, "#080a15");
+    grond.addColorStop(1, "#0d1220");
+    ctx.fillStyle = grond;
+    ctx.fillRect(0, 0, breedte, hoogte);
+    const t = rustig ? 0 : tNu;
+    const vlekken = [
+        { kleur: "139, 155, 192", x0: 0.26, y0: 0.2, r: 0.55, snelheid: 0.00006, fase0: 0 },
+        { kleur: "212, 161, 58", x0: 0.76, y0: 0.7, r: 0.4, snelheid: 0.00004, fase0: 2.4 },
+    ];
+    for (const v of vlekken) {
+        const dx = Math.sin(t * v.snelheid + v.fase0) * 0.05;
+        const dy = Math.cos(t * v.snelheid * 0.8 + v.fase0) * 0.04;
+        const cx = (v.x0 + dx) * breedte;
+        const cy = (v.y0 + dy) * hoogte;
+        const straal = v.r * Math.max(breedte, hoogte);
+        const gloed = ctx.createRadialGradient(cx, cy, 0, cx, cy, straal);
+        gloed.addColorStop(0, `rgba(${v.kleur}, 0.05)`);
+        gloed.addColorStop(1, `rgba(${v.kleur}, 0)`);
+        ctx.fillStyle = gloed;
+        ctx.fillRect(0, 0, breedte, hoogte);
+    }
+}
+/**
+ * Eén vaste, zachte band diagonaal over de hemel — een melkwegstrook. Geen
+ * afzonderlijke sterren, gewoon een heel flauwe lichtverdikking; samen met de
+ * dichtere achtergrondstrooiing erbovenop oogt dit als een echte nachthemel
+ * in plaats van willekeurig gestrooide stippen.
+ */
+function tekenMelkweg(ctx, breedte, hoogte) {
+    const diagonaal = Math.max(breedte, hoogte) * 1.7;
+    ctx.save();
+    ctx.translate(breedte * 0.5, hoogte * 0.4);
+    ctx.rotate(-0.36);
+    const dikte = Math.max(breedte, hoogte) * 0.55;
+    const band = ctx.createLinearGradient(0, -dikte / 2, 0, dikte / 2);
+    band.addColorStop(0, "rgba(205, 213, 232, 0)");
+    band.addColorStop(0.5, "rgba(205, 213, 232, 0.05)");
+    band.addColorStop(1, "rgba(205, 213, 232, 0)");
+    ctx.fillStyle = band;
+    ctx.fillRect(-diagonaal / 2, -dikte / 2, diagonaal, dikte);
+    ctx.restore();
+}
+/**
+ * Een enkele vallende ster, zeldzaam en kort — de ene decoratie die wél een
+ * verrassing mag zijn in plaats van een voorspelbare lus. `rustig` zet 'm
+ * volledig uit: dit is precies het soort onverwachte beweging die
+ * `rustigeBeelden`/`prefers-reduced-motion` bedoelt te vermijden.
+ */
+function volgendeValMoment(nu) {
+    return nu + 16000 + Math.random() * 22000;
+}
+function spawnVallendeSter(breedte, hoogte, nu) {
+    const linksNaarRechts = Math.random() < 0.5;
+    const y0 = hoogte * (0.05 + Math.random() * 0.35);
+    const lengte = Math.max(breedte, hoogte) * (0.35 + Math.random() * 0.25);
+    const hoek = (linksNaarRechts ? 1 : -1) * (0.35 + Math.random() * 0.25);
+    const x0 = linksNaarRechts ? breedte * -0.05 : breedte * 1.05;
+    return {
+        x0,
+        y0,
+        x1: x0 + Math.cos(hoek) * lengte * (linksNaarRechts ? 1 : -1),
+        y1: y0 + Math.sin(Math.abs(hoek)) * lengte,
+        begonnenOp: nu,
+        duurMs: 900 + Math.random() * 400,
+    };
+}
+function tekenVallendeSterren(ctx, sterren, nu) {
+    for (const v of sterren) {
+        const t = (nu - v.begonnenOp) / v.duurMs;
+        if (t < 0 || t > 1)
+            continue;
+        const alpha = t < 0.2 ? t / 0.2 : t > 0.75 ? (1 - t) / 0.25 : 1;
+        const x = v.x0 + (v.x1 - v.x0) * t;
+        const y = v.y0 + (v.y1 - v.y0) * t;
+        const staartLengte = 42;
+        const dx = v.x1 - v.x0;
+        const dy = v.y1 - v.y0;
+        const norm = Math.hypot(dx, dy) || 1;
+        const tx = x - (dx / norm) * staartLengte;
+        const ty = y - (dy / norm) * staartLengte;
+        const staart = ctx.createLinearGradient(x, y, tx, ty);
+        staart.addColorStop(0, `rgba(255, 255, 255, ${0.85 * alpha})`);
+        staart.addColorStop(1, "rgba(255, 255, 255, 0)");
+        ctx.strokeStyle = staart;
+        ctx.lineWidth = 1.4;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(tx, ty);
+        ctx.stroke();
+        ctx.save();
+        ctx.shadowColor = `rgba(255, 255, 255, ${alpha})`;
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.arc(x, y, 1.4, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.fill();
+        ctx.restore();
     }
 }
 export function tekenHemel(canvas, sterren, onTikSter, opties = {}) {
@@ -552,32 +699,96 @@ export function tekenHemel(canvas, sterren, onTikSter, opties = {}) {
     let fase = 0;
     const begonnenOp = performance.now();
     const DRAW_ON_MS = 700;
+    // Eén zeldzame vallende ster af en toe — uitgezet bij rustige beelden.
+    let vallendeSterren = [];
+    let volgendeVal = rustig ? Infinity : volgendeValMoment(begonnenOp);
+    // De korte lichtpuls onder je vinger bij het tikken op een ster.
+    let tikPuls = null;
+    const TIK_PULS_MS = 650;
+    // Eén zachte flits over het hele beeld zodra een nieuw sterrenbeeld klaar
+    // is met opkomen — de "beloning" voor het net getekende sterrenbeeld,
+    // eenmalig, nooit herhaald (net als de draw-on zelf).
+    let voltooiGepulst = false;
+    let voltooiPulsBegonnenOp = 0;
+    const VOLTOOI_PULS_MS = 900;
     function herteken() {
+        const nu = performance.now();
         ctx.clearRect(0, 0, rect.width, rect.height);
         fase += 0.02;
-        const verstreken = performance.now() - begonnenOp;
+        const verstreken = nu - begonnenOp;
         const drawOn = rustig ? 1 : Math.min(1, verstreken / DRAW_ON_MS);
+        tekenAtmosfeer(ctx, rect.width, rect.height, nu, rustig);
+        tekenMelkweg(ctx, rect.width, rect.height);
         tekenAchtergrondSterren(ctx, achtergrond, fase, rustig);
+        if (!rustig) {
+            if (nu >= volgendeVal) {
+                vallendeSterren.push(spawnVallendeSter(rect.width, rect.height, nu));
+                volgendeVal = volgendeValMoment(nu);
+            }
+            vallendeSterren = vallendeSterren.filter((v) => nu - v.begonnenOp < v.duurMs);
+            tekenVallendeSterren(ctx, vallendeSterren, nu);
+        }
         for (const sb of sterrenbeelden) {
             const isNieuw = sb.id === nieuwSterrenbeeldId;
             tekenLijnen(ctx, posities, sb.sterIds, isNieuw ? drawOn : 1, 0.5);
             // De naam komt pas als de lijnen er helemaal staan.
             tekenNaam(ctx, posities, sb, isNieuw ? Math.max(0, (drawOn - 0.8) * 5) * 0.45 : 0.45);
+            if (isNieuw && drawOn >= 1 && !voltooiGepulst && !rustig) {
+                voltooiGepulst = true;
+                voltooiPulsBegonnenOp = nu;
+            }
         }
         for (const s of sterren) {
             const p = posities.get(s.id);
             if (!p)
                 continue;
             const twinkel = rustig ? 0.85 : 0.6 + 0.4 * Math.sin(fase + p.twinkel);
-            tekenSter(ctx, p, Boolean(s.zin), 0.4 + 0.5 * twinkel);
+            let helderheid = 0.4 + 0.5 * twinkel;
+            if (voltooiGepulst) {
+                const isVanNieuw = sterrenbeelden
+                    .find((sb) => sb.id === nieuwSterrenbeeldId)
+                    ?.sterIds.includes(s.id);
+                if (isVanNieuw) {
+                    const tv = (nu - voltooiPulsBegonnenOp) / VOLTOOI_PULS_MS;
+                    if (tv >= 0 && tv <= 1)
+                        helderheid += (1 - tv) * 0.6;
+                }
+            }
+            if (tikPuls) {
+                const dichtbij = Math.hypot(p.x - tikPuls.x, p.y - tikPuls.y) < 1;
+                if (dichtbij) {
+                    const tt = (nu - tikPuls.begonnenOp) / TIK_PULS_MS;
+                    if (tt >= 0 && tt <= 1)
+                        helderheid += (1 - tt) * 0.5;
+                }
+            }
+            tekenSter(ctx, p, Boolean(s.zin), Math.min(1, helderheid));
+        }
+        if (tikPuls) {
+            const tt = (nu - tikPuls.begonnenOp) / TIK_PULS_MS;
+            if (tt > 1) {
+                tikPuls = null;
+            }
+            else {
+                const straal = 6 + tt * 18;
+                ctx.beginPath();
+                ctx.arc(tikPuls.x, tikPuls.y, straal, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(${MESSING}, ${(1 - tt) * 0.6})`;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
         }
         raf = requestAnimationFrame(herteken);
     }
     function clickHandler(e) {
         const r = canvas.getBoundingClientRect();
         const ster = sterOnderTik(sterren, posities, e.clientX - r.left, e.clientY - r.top);
-        if (ster)
+        if (ster) {
             onTikSter(ster);
+            const p = posities.get(ster.id);
+            if (p)
+                tikPuls = { x: p.x, y: p.y, begonnenOp: performance.now() };
+        }
     }
     canvas.addEventListener("click", clickHandler);
     function resize() {
@@ -612,6 +823,8 @@ export function tekenSterrenbeeldModus(canvas, sterren, streek, onVerandering, r
     function herteken() {
         ctx.clearRect(0, 0, rect.width, rect.height);
         fase += 0.02;
+        tekenAtmosfeer(ctx, rect.width, rect.height, performance.now(), rustig);
+        tekenMelkweg(ctx, rect.width, rect.height);
         tekenAchtergrondSterren(ctx, achtergrond, fase, rustig);
         tekenLijnen(ctx, posities, pad, 1, 0.6);
         for (const s of sterren) {

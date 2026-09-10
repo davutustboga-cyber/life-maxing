@@ -670,24 +670,40 @@ function toonS7(): void {
 // ── S8 — De Hemel ─────────────────────────────────────────────────────
 // `netGetekend` laat het zojuist gemaakte sterrenbeeld één keer opkomen
 // (v2.4 §11: draw-on van ±700 ms, daarna nooit meer animatie).
+function tellingRegelTekst(): string {
+  const nSterren = data.sterren.length;
+  const nBeelden = data.sterrenbeelden.length;
+  const sterWoord = nSterren === 1 ? "ster" : "sterren";
+  if (nBeelden === 0) return `${nSterren} ${sterWoord}`;
+  const beeldWoord = nBeelden === 1 ? "sterrenbeeld" : "sterrenbeelden";
+  return `${nSterren} ${sterWoord} · ${nBeelden} ${beeldWoord}`;
+}
+
 function toonS8(netGetekend: string | null = null): void {
+  const canvas = el("canvas", { class: "hemel-canvas" });
+
   if (data.sterren.length === 0) {
     render([
-      el("div", { class: "scherm" }, [
+      el("div", { class: "scherm scherm-hemel" }, [
         terugKnop(() => toonTerugkijken()),
-        el("p", { class: "regel" }, [teksten.deHemel.legeHemel]),
+        canvas,
+        el("div", { class: "hemel-onder" }, [el("p", { class: "regel" }, [teksten.deHemel.legeHemel])]),
       ]),
     ]);
+    // Ook een lege hemel krijgt de sfeer — atmosfeer en achtergrondsterren,
+    // gewoon zonder eigen sterren en zonder tik-interactie. Wat komen gaat
+    // vast krijgen, in plaats van een zwart vlak met tekst erop.
+    tekenHemel(canvas, [], () => {}, { rustig: data.instellingen.rustigeBeelden });
     return;
   }
 
-  const canvas = el("canvas", { class: "hemel-canvas" });
   const zinRegel = el("p", { class: "zacht" }, [""]);
+  const tellingRegel = el("p", { class: "hemel-telling" }, [tellingRegelTekst()]);
   const aanbodStreek = netGetekend ? null : aanbodVoorStreek(data);
 
-  const onderkant = el("div", { class: "hemel-onder" }, [zinRegel]);
+  const onderkant = el("div", { class: "hemel-onder" }, [tellingRegel, zinRegel]);
 
-  render([el("div", { class: "scherm" }, [terugKnop(() => toonTerugkijken()), canvas, onderkant])]);
+  render([el("div", { class: "scherm scherm-hemel" }, [terugKnop(() => toonTerugkijken()), canvas, onderkant])]);
 
   const stop = tekenHemel(
     canvas,
@@ -753,7 +769,7 @@ function toonS8Tekenmodus(streek: Streek): void {
 
   const knoppen = el("div", { class: "aanbod-knoppen" }, [ongedaanKnop, klaarKnop, stoppenKnop]);
 
-  render([el("div", { class: "scherm" }, [canvas, el("div", { class: "hemel-onder" }, [uitleg, knoppen])])]);
+  render([el("div", { class: "scherm scherm-hemel" }, [canvas, el("div", { class: "hemel-onder" }, [uitleg, knoppen])])]);
 
   const modus = tekenSterrenbeeldModus(
     canvas,

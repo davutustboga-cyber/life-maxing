@@ -616,11 +616,6 @@ textarea:focus {
   color: var(--voorgrond-zwak);
 }
 
-.hemel-canvas {
-  width: 100%;
-  height: 60vh;
-  touch-action: manipulation;
-}
 
 .tijd-opties {
   display: flex;
@@ -761,14 +756,73 @@ textarea:focus {
    (zie de toelichting bij render()); deze regels hadden daarna niets meer om
    op te maken. De zachte intrede per scherm zit in @keyframes scherm-in. */
 
+/* De Hemel — volledig scherm (v26). Was een canvas van 60vh binnen de
+   gewone, gecentreerde .scherm-indeling (max-width 460px, ruime padding
+   eromheen) — precies genoeg voor de interactie, maar oogde als "een grafiek
+   op een pagina" in plaats van een hemel. #app krijgt hier, net als bij
+   .scherm-app, een eigen override: nul padding, canvas edge-to-edge, met de
+   terugknop (al absoluut gepositioneerd door de bestaande
+   .scherm:not(.scherm-app) > .terug-knop-regel) en de onderkant als
+   zwevende lagen erbovenop. */
+#app:has(.scherm-hemel) {
+  padding: 0;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.scherm-hemel {
+  max-width: none;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  gap: 0;
+  animation: none; /* de hemel zelf tekent haar eigen intrede (sterren + draw-on) */
+}
+
+.scherm-hemel > .terug-knop {
+  top: calc(env(safe-area-inset-top) + 1rem);
+  left: calc(env(safe-area-inset-left) + 1rem);
+  background: rgba(10, 13, 22, 0.55);
+  backdrop-filter: blur(6px);
+}
+
+.hemel-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: manipulation;
+}
+
 /* De Hemel — onderkant, aanbod en tekenmodus (v1.1) */
 .hemel-onder {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--ruimte-3);
   width: 100%;
   min-height: 6.5rem;
+  padding: var(--ruimte-7) var(--ruimte-5) calc(var(--ruimte-5) + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(10, 13, 22, 0.94) 0%, rgba(10, 13, 22, 0.7) 55%, rgba(10, 13, 22, 0) 100%);
+  pointer-events: none;
+}
+.hemel-onder > * {
+  pointer-events: auto;
+}
+
+.hemel-telling {
+  font-size: var(--tekst-onderschrift);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--voorgrond-zwak);
 }
 
 .aanbod {
