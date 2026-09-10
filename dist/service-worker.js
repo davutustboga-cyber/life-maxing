@@ -14,6 +14,11 @@
 // verbinding val je terug op wat al gecachet is. Nul netwerkverzoeken naar
 // buiten blijft staan (v1.0 §11.4) — dit is en blijft alleen verkeer met de
 // eigen server.
+//
+// v25 — twee handlers voor de dagelijkse melding (lib/meldingen.ts, aan te
+// zetten in Instellingen). De aflevering zelf komt van een losse, minimale
+// server (die kent alleen een push-adres en een tijdstip, nooit iets uit
+// het bestand in db.ts); deze service worker toont 'm alleen.
 
 const CACHE_NAAM = "life-maxing-shell-v1";
 
@@ -78,5 +83,33 @@ self.addEventListener("fetch", (event) => {
         return response;
       })
       .catch(() => caches.match(event.request).then((match) => match || geenVerbinding()))
+  );
+});
+
+self.addEventListener("push", (event) => {
+  let data = { titel: "Life Maxing", tekst: "Een moment voor jezelf, als je wil." };
+  try {
+    if (event.data) data = { ...data, ...event.data.json() };
+  } catch {
+    /* val terug op de standaardtekst */
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.titel, {
+      body: data.tekst,
+      icon: "./icons/icon-192.png",
+      badge: "./icons/icon-192.png",
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((vensters) => {
+      for (const venster of vensters) {
+        if ("focus" in venster) return venster.focus();
+      }
+      return self.clients.openWindow("./");
+    })
   );
 });

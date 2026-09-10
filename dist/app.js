@@ -2,6 +2,7 @@
 // Eén bestand, geen router-library: de dagelijkse lus is toch al lineair
 // (S1 → S2 → S3 → S4 → (S5 → S6) → S7).
 import { laadBestand, bewaarBestand, wisBestand, exporteerBestand, parseGeimporteerdBestand } from "./lib/db.js";
+import { zetMeldingenAan, zetMeldingenUit } from "./lib/meldingen.js";
 import { el, render, dimEnDan } from "./lib/dom.js";
 import { tekenSchijf, tekenHemel, tekenSterrenbeeldModus, tekenVerschil, nauwelijksVerschoven, } from "./lib/canvas.js";
 import { woordenNabij, woordById, zetEigenWoorden, zoekWoorden } from "./data/woorden.js";
@@ -31,6 +32,16 @@ let data;
  * plaatsmaakt voor de volgende die past.
  */
 let laatstGekozenSuggestie = null;
+/**
+ * v25 — toonS10() zet bij een mislukte aanmelding voor meldingen een
+ * boodschap op een tekst-element en roept daarna toonS10() opnieuw aan om
+ * de knop terug te zetten. render() vervangt daarbij de hele boom, dus dat
+ * element (en de net gezette tekst) verdwijnt meteen weer mee. Deze
+ * variabele overleeft de her-render wel: toonS10() leest 'm bij elke
+ * opbouw opnieuw uit, in plaats van een tekst te zetten op een element dat
+ * al niet meer bestaat.
+ */
+let laatsteMeldingenFout = null;
 // state voor het moment dat nu wordt opgebouwd
 let huidigeTikPositie = null;
 let huidigMoment = null;
@@ -2129,6 +2140,64 @@ export function toonS10() {
         ]);
     }
     const meldingTekst = el("p", { class: "zacht" }, [""]);
+    // v25 — dagelijkse melding, ook als de app dicht staat. Leunt op een
+    // losse, minimale server (lib/meldingen.ts legt uit waarom dat voor web
+    // push niet anders kan) -- de enige netwerkaanroep die deze app ooit doet,
+    // en alleen wanneer je dit hier zelf aanzet.
+    const meldingenAan = !!data.instellingen.meldingenTijd;
+    const meldingenFout = el("p", { class: laatsteMeldingenFout ? "zacht zacht--fout" : "zacht" }, [laatsteMeldingenFout ?? ""]);
+    const meldingenSectie = [
+        el("p", { class: "sectie-kop" }, ["Meldingen"]),
+        switchRij("Dagelijkse melding", "Ook als de app gesloten is. Vraagt eenmalig toestemming van je toestel.", meldingenAan, async (v) => {
+            if (v) {
+                const tijd = data.instellingen.meldingenTijd ?? "21:00";
+                const resultaat = await zetMeldingenAan(tijd);
+                if (resultaat.ok) {
+                    data.instellingen.meldingenTijd = tijd;
+                    await bewaren();
+                    laatsteMeldingenFout = null;
+                }
+                else {
+                    laatsteMeldingenFout =
+                        resultaat.reden === "geweigerd"
+                            ? "Je toestel weigerde toestemming. Zet dit aan bij de meldingeninstellingen van je toestel of browser voor deze app, en probeer het hier opnieuw."
+                            : resultaat.reden === "niet_ondersteund"
+                                ? "Meldingen worden niet ondersteund in deze browser."
+                                : "Dit lukte nu niet. Probeer het later opnieuw.";
+                }
+            }
+            else {
+                await zetMeldingenUit();
+                data.instellingen.meldingenTijd = null;
+                await bewaren();
+                laatsteMeldingenFout = null;
+            }
+            toonS10();
+        }),
+        meldingenAan
+            ? el("div", { class: "toggle-rij" }, [
+                el("div", { class: "toggle-tekst" }, [
+                    el("span", {}, ["Tijdstip"]),
+                    el("span", { class: "zacht" }, ["Wanneer je de melding wil krijgen."]),
+                ]),
+                el("input", {
+                    type: "time",
+                    value: data.instellingen.meldingenTijd,
+                    onchange: async (e) => {
+                        const nieuweTijd = e.target.value;
+                        if (!nieuweTijd)
+                            return;
+                        const resultaat = await zetMeldingenAan(nieuweTijd);
+                        if (resultaat.ok) {
+                            data.instellingen.meldingenTijd = nieuweTijd;
+                            await bewaren();
+                        }
+                    },
+                }),
+            ])
+            : null,
+        meldingenFout,
+    ];
     render([
         el("div", { class: "scherm" }, [
             terugKnop(() => toonTerugkijken()),
@@ -2158,6 +2227,7 @@ export function toonS10() {
                 data.instellingen.visieCheckIns = { ...visieCheckInsVoor(data), avond: v };
                 await bewaren();
             }),
+            ...meldingenSectie,
             el("button", {
                 class: "knop",
                 onclick: () => {

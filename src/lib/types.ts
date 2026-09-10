@@ -159,6 +159,16 @@ export interface LifeMaxingData {
      * soort aandringen dat Wet 5 verbiedt.
      */
     visieIntroAangeboden: boolean;
+    /**
+     * v25 — een dagelijkse melding, ook als de app dicht staat. `null` = uit
+     * (de standaard). Een "HH:MM"-tekst = aan, op dat tijdstip. Dit veld
+     * onthoudt alleen jouw voorkeur; de daadwerkelijke aflevering loopt via
+     * een losse, minimale server (web-push heeft dat nodig om iets te kunnen
+     * sturen terwijl de app niet open is) — zie lib/meldingen.ts. Die server
+     * kent alleen dit tijdstip en een technisch push-adres, nooit iets uit
+     * dit bestand.
+     */
+    meldingenTijd: string | null;
   };
   woordenUitbreiding: Woord[];
   momenten: Moment[];
@@ -305,6 +315,7 @@ export function leegBestand(): LifeMaxingData {
       weekmomentAan: true,
       visieCheckIns: { ochtend: true, middag: true, avond: true },
       visieIntroAangeboden: false,
+      meldingenTijd: null,
     },
     woordenUitbreiding: [],
     momenten: [],
