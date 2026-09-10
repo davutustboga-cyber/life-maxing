@@ -825,6 +825,23 @@ textarea:focus {
   color: var(--voorgrond-zwak);
 }
 
+.hemel-zin {
+  min-height: 1.4em;
+}
+.hemel-zin--in {
+  animation: hemel-zin-in 420ms var(--ease-standaard);
+}
+@keyframes hemel-zin-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .aanbod {
   max-width: 30rem;
   text-align: center;

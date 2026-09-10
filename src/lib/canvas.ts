@@ -587,6 +587,38 @@ function tekenLijnen(
 }
 
 /**
+ * Het lichtpuntje op de kop van een lijn die nog aan het tekenen is — exact
+ * dezelfde segment/fractie-wiskunde als tekenLijnen, maar dan alleen het
+ * uiterste punt, iets feller dan de lijn zelf.
+ */
+function tekenLijnKop(
+  ctx: CanvasRenderingContext2D,
+  posities: Map<string, SterPositie>,
+  sterIds: string[],
+  fractie: number
+): void {
+  const punten = sterIds.map((id) => posities.get(id)).filter(Boolean) as SterPositie[];
+  if (punten.length < 2) return;
+  const segmenten = punten.length - 1;
+  const tot = Math.max(0, Math.min(segmenten, fractie * segmenten));
+  const i = Math.min(segmenten - 1, Math.floor(tot));
+  const deel = tot - i;
+  const a = punten[i];
+  const b = punten[i + 1];
+  const x = a.x + (b.x - a.x) * deel;
+  const y = a.y + (b.y - a.y) * deel;
+
+  ctx.save();
+  ctx.shadowColor = `rgba(${MESSING}, 0.9)`;
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+  ctx.fillStyle = `rgba(245, 238, 220, 0.95)`;
+  ctx.fill();
+  ctx.restore();
+}
+
+/**
  * Het bijschrift onder een sterrenbeeld. Zonder dit zou de naam die je geeft
  * nergens meer terugkomen, en dan is benoemen een lege handeling. Eén regel
  * per sterrenbeeld, hooguit vier in de hele app, in dezelfde messingtoon als
@@ -801,6 +833,28 @@ function tekenMelkweg(ctx: CanvasRenderingContext2D, breedte: number, hoogte: nu
   ctx.restore();
 }
 
+/**
+ * Een vignet — de randen net iets donkerder dan het midden, zoals een echte
+ * lange-belichtingsfoto van de nachthemel. Dit is wat het geheel een gevoel
+ * van diepte en een lens geeft in plaats van een plat, uniform gekleurd
+ * vlak. Statisch, dus geen `rustig`-uitzondering nodig.
+ */
+function tekenVignet(ctx: CanvasRenderingContext2D, breedte: number, hoogte: number): void {
+  const straal = Math.max(breedte, hoogte);
+  const gradient = ctx.createRadialGradient(
+    breedte / 2,
+    hoogte / 2,
+    straal * 0.35,
+    breedte / 2,
+    hoogte / 2,
+    straal * 0.78
+  );
+  gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+  gradient.addColorStop(1, "rgba(2, 3, 7, 0.5)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, breedte, hoogte);
+}
+
 interface VallendeSter {
   x0: number;
   y0: number;
@@ -904,14 +958,48 @@ export function tekenHemel(
   let voltooiPulsBegonnenOp = 0;
   const VOLTOOI_PULS_MS = 900;
 
+  // Diepteparallax: alleen de achtergrond (atmosfeer, melkweg, verre sterren,
+  // vallende sterren) schuift licht mee met je vinger of muis — je eigen
+  // sterren blijven op hun exacte, tikbare plek staan. Zonder aanraking
+  // zakt dit vanzelf terug naar het midden. Uitgezet bij rustige beelden,
+  // net als elke andere beweging die niet stilstaat als je 'm niet aanraakt.
+  let parallaxDoelX = 0;
+  let parallaxDoelY = 0;
+  let parallaxX = 0;
+  let parallaxY = 0;
+  const PARALLAX_MAX = 16;
+
+  function pointerBewogen(clientX: number, clientY: number) {
+    if (rustig) return;
+    const r = canvas.getBoundingClientRect();
+    const nx = ((clientX - r.left) / r.width) * 2 - 1;
+    const ny = ((clientY - r.top) / r.height) * 2 - 1;
+    parallaxDoelX = Math.max(-1, Math.min(1, nx)) * PARALLAX_MAX;
+    parallaxDoelY = Math.max(-1, Math.min(1, ny)) * PARALLAX_MAX;
+  }
+  function pointerMoveHandler(e: PointerEvent) {
+    pointerBewogen(e.clientX, e.clientY);
+  }
+  function pointerWegHandler() {
+    parallaxDoelX = 0;
+    parallaxDoelY = 0;
+  }
+  canvas.addEventListener("pointermove", pointerMoveHandler);
+  canvas.addEventListener("pointerleave", pointerWegHandler);
+  canvas.addEventListener("pointerup", pointerWegHandler);
+
   function herteken() {
     const nu = performance.now();
     ctx.clearRect(0, 0, rect.width, rect.height);
     fase += 0.02;
+    parallaxX += (parallaxDoelX - parallaxX) * 0.05;
+    parallaxY += (parallaxDoelY - parallaxY) * 0.05;
 
     const verstreken = nu - begonnenOp;
     const drawOn = rustig ? 1 : Math.min(1, verstreken / DRAW_ON_MS);
 
+    ctx.save();
+    ctx.translate(parallaxX, parallaxY);
     tekenAtmosfeer(ctx, rect.width, rect.height, nu, rustig);
     tekenMelkweg(ctx, rect.width, rect.height);
     tekenAchtergrondSterren(ctx, achtergrond, fase, rustig);
@@ -924,10 +1012,16 @@ export function tekenHemel(
       vallendeSterren = vallendeSterren.filter((v) => nu - v.begonnenOp < v.duurMs);
       tekenVallendeSterren(ctx, vallendeSterren, nu);
     }
+    ctx.restore();
 
     for (const sb of sterrenbeelden) {
       const isNieuw = sb.id === nieuwSterrenbeeldId;
-      tekenLijnen(ctx, posities, sb.sterIds, isNieuw ? drawOn : 1, 0.5);
+      const fractie = isNieuw ? drawOn : 1;
+      tekenLijnen(ctx, posities, sb.sterIds, fractie, 0.5);
+      // Een klein lichtpuntje dat over de lijn meereist terwijl ze getekend
+      // wordt — zonder dit voelde het opkomen als een statische tekening in
+      // plaats van iets dat ontstaat.
+      if (isNieuw && fractie < 1 && !rustig) tekenLijnKop(ctx, posities, sb.sterIds, fractie);
       // De naam komt pas als de lijnen er helemaal staan.
       tekenNaam(ctx, posities, sb, isNieuw ? Math.max(0, (drawOn - 0.8) * 5) * 0.45 : 0.45);
 
@@ -942,6 +1036,15 @@ export function tekenHemel(
       if (!p) continue;
       const twinkel = rustig ? 0.85 : 0.6 + 0.4 * Math.sin(fase + p.twinkel);
       let helderheid = 0.4 + 0.5 * twinkel;
+
+      // Een zeldzame, korte opflakkering per ster — echte sterren fonkelen
+      // onregelmatig, niet als een gladde sinus. Elke ster krijgt zijn eigen,
+      // uit zijn positie afgeleide ritme, dus dit is puur een functie van de
+      // tijd — geen aparte planning of state nodig.
+      if (!rustig) {
+        const vlamFase = Math.sin(fase * 0.16 + p.twinkel * 3.7);
+        if (vlamFase > 0.965) helderheid += ((vlamFase - 0.965) / 0.035) * 0.55;
+      }
 
       if (voltooiGepulst) {
         const isVanNieuw = sterrenbeelden
@@ -978,6 +1081,8 @@ export function tekenHemel(
       }
     }
 
+    tekenVignet(ctx, rect.width, rect.height);
+
     raf = requestAnimationFrame(herteken);
   }
 
@@ -1006,6 +1111,9 @@ export function tekenHemel(
     cancelAnimationFrame(raf);
     stopMaat();
     canvas.removeEventListener("click", clickHandler);
+    canvas.removeEventListener("pointermove", pointerMoveHandler);
+    canvas.removeEventListener("pointerleave", pointerWegHandler);
+    canvas.removeEventListener("pointerup", pointerWegHandler);
   };
 }
 
@@ -1073,6 +1181,8 @@ export function tekenSterrenbeeldModus(
         ctx.stroke();
       }
     }
+
+    tekenVignet(ctx, rect.width, rect.height);
 
     raf = requestAnimationFrame(herteken);
   }

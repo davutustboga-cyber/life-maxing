@@ -697,7 +697,7 @@ function toonS8(netGetekend: string | null = null): void {
     return;
   }
 
-  const zinRegel = el("p", { class: "zacht" }, [""]);
+  const zinRegel = el("p", { class: "zacht hemel-zin" }, [""]);
   const tellingRegel = el("p", { class: "hemel-telling" }, [tellingRegelTekst()]);
   const aanbodStreek = netGetekend ? null : aanbodVoorStreek(data);
 
@@ -710,6 +710,12 @@ function toonS8(netGetekend: string | null = null): void {
     data.sterren,
     (ster) => {
       zinRegel.textContent = ster.zin ?? "";
+      // Eén korte, zachte opkomst per tik in plaats van een instant
+      // tekstwissel — klasse eraf en meteen weer aan dwingt de animatie
+      // ook te herstarten als je een volgende ster met dezelfde tekst tikt.
+      zinRegel.classList.remove("hemel-zin--in");
+      void (zinRegel as HTMLElement).offsetWidth;
+      zinRegel.classList.add("hemel-zin--in");
     },
     {
       sterrenbeelden: data.sterrenbeelden,
