@@ -42,7 +42,7 @@ function zaadBestand() {
   return {
     versie: '1.0',
     aangemaaktOp: '2026-08-01T09:00:00+02:00',
-    instellingen: { islamitischeLaag: true, rustigeBeelden: false, ethischeOndergrensGezien: true },
+    instellingen: { islamitischeLaag: true, rustigeBeelden: false, ethischeOndergrensGezien: true, visieIntroAangeboden: true },
     woordenUitbreiding: [],
     momenten,
     sterren,
@@ -210,7 +210,7 @@ function check(naam, waar, extra) {
   const aanbodNa = await page.$('text=Wil je er lijnen tussen trekken');
   check('Geen nieuw aanbod direct na het tekenen', !aanbodNa);
 
-  await page.click('text=Terug');
+  await page.click('.terug-knop');
   await page.waitForTimeout(300);
   await page.click('text=Wat je al deed');
   await page.waitForTimeout(500);
@@ -246,7 +246,7 @@ function check(naam, waar, extra) {
   check('"Nu niet" antwoordt met "Kan altijd nog."', naNee);
   await page.screenshot({ path: '/tmp/sb/07-nu-niet.png' });
 
-  await page.click('text=Terug');
+  await page.click('.terug-knop');
   await page.waitForTimeout(300);
   await page.click('text=Wat je al deed');
   await page.waitForTimeout(500);

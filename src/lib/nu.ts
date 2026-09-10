@@ -14,7 +14,7 @@
 //   nooit of je gebeden hebt (gebed-anker.md).
 
 import type { LifeMaxingData } from "./types.js";
-import { ochtendVandaagGedaan, avondVandaagGedaan } from "./ritme.js";
+import { ochtendVandaagGedaan, avondVandaagGedaan, laatsteDagsluiting } from "./ritme.js";
 import { weekmomentBeschikbaar } from "./weekmoment.js";
 import { ongelezenBrief } from "./maandbrief.js";
 import { bewegingById } from "../data/bewegingen.js";
@@ -98,7 +98,7 @@ export function suggestiesVoorNu(data: LifeMaxingData, nu: Date = new Date()): S
 
   switch (dagdeel) {
     case "vroege_ochtend":
-    case "ochtend":
+    case "ochtend": {
       if (!ochtendVandaagGedaan(data)) {
         lijst.push({
           soort: "ochtend",
@@ -107,10 +107,32 @@ export function suggestiesVoorNu(data: LifeMaxingData, nu: Date = new Date()): S
           waaromNu: "Eén zin en één kerntaak, voor de dag je meesleept.",
         });
       }
-      lijst.push(bewegingSuggestie("ochtendlicht-zien", "Licht in het eerste uur zet je dag- en slaapritme."));
+      // v25 — tot nu toe keek dit bestand alleen op de klok, terwijl je
+      // gisteravond zelf al had aangevinkt wat er meespeelde. Dat maakt het
+      // verschil tussen een generieke suggestie en een die ergens over gaat.
+      // Bewust één dag terug, en alleen in de reden-regel: geen trend, geen
+      // score, geen "drie dagen op rij" (Wet 4).
+      const gisteravond = laatsteDagsluiting(data, nu);
+      const chips = new Set(gisteravond?.chips ?? []);
+      lijst.push(
+        bewegingSuggestie(
+          "ochtendlicht-zien",
+          chips.has("slecht_geslapen")
+            ? "Je sloot gisteren af met slecht geslapen — licht in het eerste uur zet je ritme weer op zijn plek."
+            : "Licht in het eerste uur zet je dag- en slaapritme."
+        )
+      );
       if (islam) lijst.push(dhikrSuggestie("subhan-allahi-wa-bihamdihi"));
-      lijst.push(bewegingSuggestie("vijf-minuten-naar-buiten", "Kort naar buiten werkt het beste vroeg op de dag."));
+      lijst.push(
+        bewegingSuggestie(
+          "vijf-minuten-naar-buiten",
+          chips.has("niet_buiten_geweest") || chips.has("niet_bewogen")
+            ? "Gisteren kwam je er niet aan toe — vroeg op de dag is dit het makkelijkst."
+            : "Kort naar buiten werkt het beste vroeg op de dag."
+        )
+      );
       break;
+    }
 
     case "middag":
       lijst.push({
@@ -154,6 +176,9 @@ export function suggestiesVoorNu(data: LifeMaxingData, nu: Date = new Date()): S
       // de dhikr zelf het enige bedtijd-ritueel dat nog rest, en wordt die
       // wél de hoofdsuggestie.
       const avondAlGedaan = avondVandaagGedaan(data);
+      // Is de dag al gesloten, dan is de dhikr zelf het enige bedtijd-ritueel
+      // dat nog rest en staat die vooraan; anders komt Dag sluiten eerst en de
+      // dhikr eronder (hij volgt daar ook vanzelf op, zie toonS23Stap5VoorMorgen).
       if (islam && avondAlGedaan) lijst.push(dhikrSuggestie("ayat-al-kursi"));
       if (!avondAlGedaan) {
         lijst.push({
@@ -162,8 +187,8 @@ export function suggestiesVoorNu(data: LifeMaxingData, nu: Date = new Date()): S
           duur: "3 min",
           waaromNu: "Nog niet gedaan vandaag — kan ook kort.",
         });
+        if (islam) lijst.push(dhikrSuggestie("ayat-al-kursi"));
       }
-      if (islam && !avondAlGedaan) lijst.push(dhikrSuggestie("ayat-al-kursi"));
       lijst.push(bewegingSuggestie("adem-lange-uitademing", "Rustiger ademen vlak voor het slapen scheelt."));
       break;
     }

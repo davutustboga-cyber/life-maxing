@@ -649,22 +649,10 @@ textarea:focus {
   }
 }
 
-/* Cross-fade tussen schermen (zie dom.ts render()). Iets korter en rustiger
-   dan de browserdefault, en zonder de default "swoosh" die het oude scherm
-   ook laat bewegen — hier blijft alleen de fade. */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 180ms;
-  animation-timing-function: var(--ease-standaard);
-  mix-blend-mode: normal;
-}
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation: none !important;
-  }
-}
+/* v25 — hier stonden de regels voor de View Transitions-cross-fade tussen
+   schermen. Die overgang is uit dom.ts verwijderd omdat hij tikken opslokte
+   (zie de toelichting bij render()); deze regels hadden daarna niets meer om
+   op te maken. De zachte intrede per scherm zit in @keyframes scherm-in. */
 
 /* De Hemel — onderkant, aanbod en tekenmodus (v1.1) */
 .hemel-onder {
@@ -948,6 +936,31 @@ textarea:focus {
 
 .scherm-app > * + * {
   margin-top: var(--ruimte-4);
+}
+
+/* v25 — de twee kleine uitgangen onder een deur ("waarom dit werkt" en "dit
+   klopt niet") stonden onder elkaar gecentreerd, waardoor elke deurkaart twee
+   regels hoger werd en de drie deuren samen nauwelijks nog op één scherm
+   pasten. Nu op één rij. */
+.deur-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--ruimte-4);
+}
+
+/* v25 — de "doe-nu"-schermen (een oefening, de dhikr-lezer, de afronding na
+   een oefening) gebruiken dezelfde app-indeling, maar hebben géén
+   navigatiebalk en maar een paar regels inhoud. Boven uitgelijnd, met de
+   navigatiebalk-ruimte er nog onder, plakte dat alles tegen de bovenrand met
+   een half leeg scherm eronder. `margin-block: auto` centreert verticaal en
+   is — anders dan justify-content: center — veilig als de inhoud tóch langer
+   is dan het scherm: dan schuift hij gewoon naar boven en scrolt hij. */
+#app:has(.scherm-midden) {
+  padding-bottom: calc(1.6rem + env(safe-area-inset-bottom));
+}
+.scherm-midden {
+  margin-block: auto;
 }
 
 /* ── kop van het startscherm ─────────────────────────────────────── */

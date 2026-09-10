@@ -47,6 +47,40 @@ function systeemWilRust() {
         : false;
 }
 /**
+ * v25 — het canvas opmeten zodra het werkelijk in de pagina staat.
+ *
+ * Waarom dit er is: `render()` (dom.ts) wisselt sinds de View Transitions-
+ * ronde niet meer synchroon van scherm. `app.ts` roept `tekenSchijf()` /
+ * `tekenHemel()` direct ná `render()` aan, dus op dat moment hangt het
+ * canvas nog los van het document en geeft `getBoundingClientRect()` nul
+ * terug — waardoor `canvas.width` nul werd en er letterlijk niets werd
+ * getekend: De Schijf, Het Verschil, De Hemel en de tekenmodus stonden alle
+ * vier als zwart vlak op het scherm.
+ *
+ * In plaats van dat op zes plaatsen in app.ts op te lossen, kijkt het canvas
+ * hier zelf wanneer het gemeten kan worden. Een ResizeObserver vuurt één keer
+ * bij het observeren en daarna bij elke maatverandering, dus dit dekt in één
+ * beweging: het uitgestelde inhangen, een gedraaide telefoon, een fontlading
+ * die de layout verschuift, en het adresbalk-inklappen op mobiel Safari.
+ *
+ * De CSS geeft beide canvassen een vaste maat (`.schijf-canvas`,
+ * `.hemel-canvas`), dus het bijstellen van `canvas.width`/`height` — de
+ * bitmap, niet de layout — kan de observer nooit opnieuw laten vuren.
+ */
+function opMaat(canvas, resize) {
+    window.addEventListener("resize", resize);
+    let observer = null;
+    if (typeof ResizeObserver === "function") {
+        observer = new ResizeObserver(() => resize());
+        observer.observe(canvas);
+    }
+    return () => {
+        window.removeEventListener("resize", resize);
+        observer?.disconnect();
+        observer = null;
+    };
+}
+/**
  * De Schijf: een cirkel zonder assen, zonder cijfers, zonder raster, met een
  * zachte lichtvorm die je verplaatst (v2.3 §2.1). Geeft (energie, toon) terug
  * via onKies, beide in -1..1.
@@ -132,6 +166,20 @@ export function tekenSchijf(canvas, onKies, opties = {}) {
                 ctx.stroke();
             }
         }
+        // v25 — vóór de eerste aanraking stond hier niets: alleen de gloed in het
+        // midden. Het scherm zegt "sleep het lichtpunt ernaartoe", dus dat punt
+        // moet er ook zijn om te pakken. Zwakker dan na aanraking, in het midden,
+        // zodat het een greep is en geen antwoord dat al gegeven is.
+        if (!punt) {
+            ctx.save();
+            ctx.shadowColor = "rgba(237, 233, 222, 0.35)";
+            ctx.shadowBlur = 4;
+            ctx.beginPath();
+            ctx.arc(cx, cy, 4.5, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(237, 233, 222, 0.5)";
+            ctx.fill();
+            ctx.restore();
+        }
         if (punt) {
             // Terwijl je sleept groeit het puntje licht en krijgt het een dunne
             // ring — "het instrument toont zijn precisie alleen wanneer je hem
@@ -210,7 +258,7 @@ export function tekenSchijf(canvas, onKies, opties = {}) {
         if (punt)
             punt = waardenNaarPositie(waarden.energie, waarden.toon);
     }
-    window.addEventListener("resize", resize);
+    const stopMaat = opMaat(canvas, resize);
     // v2.3 §3.3: alles staat stil zodra het scherm niet zichtbaar is.
     function opZichtbaarheid() {
         cancelAnimationFrame(raf);
@@ -221,7 +269,7 @@ export function tekenSchijf(canvas, onKies, opties = {}) {
     raf = requestAnimationFrame(herteken);
     return () => {
         cancelAnimationFrame(raf);
-        window.removeEventListener("resize", resize);
+        stopMaat();
         window.removeEventListener("pointerup", pointerUp);
         document.removeEventListener("visibilitychange", opZichtbaarheid);
         canvas.removeEventListener("pointerdown", pointerDown);
@@ -297,13 +345,16 @@ export function tekenVerschil(canvas, van, naar, rustig = false) {
     function resize() {
         ctx = sizeCanvas(canvas);
         rect = canvas.getBoundingClientRect();
+        // Eén lus, ook als de observer vlak na de eerste rAF nog eens vuurt:
+        // anders lopen er twee hertekenketens door elkaar.
+        cancelAnimationFrame(raf);
         herteken();
     }
-    window.addEventListener("resize", resize);
+    const stopMaat = opMaat(canvas, resize);
     raf = requestAnimationFrame(herteken);
     return () => {
         cancelAnimationFrame(raf);
-        window.removeEventListener("resize", resize);
+        stopMaat();
     };
 }
 /**
@@ -324,7 +375,15 @@ function seededRandom(seed) {
         // alle sterren in één kolom te staan in plaats van over de streek.
         let x = h ^ (h >>> 15);
         x = Math.imul(x, 2246822507) >>> 0;
-        x ^= x >>> 13;
+        // v25 — `x ^ (x >>> 13)` is een gewone (getekende) XOR: zodra bit 31
+        // gezet is, levert dat een negatief getal op, en dus een uitkomst
+        // buiten [0, 1) — soms zelfs negatief. `berekenSterPosities` merkte dat
+        // nooit, want de uitkomst gaat daar altijd nog door `fractie()`, die elk
+        // getal terugvouwt naar [0, 1). Directe aanroepen (het achtergrond-
+        // sterrenveld) hadden dat vangnet niet: ongeveer de helft van de punten
+        // kreeg een negatieve coördinaat en viel letterlijk buiten het canvas.
+        // `>>> 0` dwingt het resultaat terug naar een ongetekend getal.
+        x = (x ^ (x >>> 13)) >>> 0;
         return x / 4294967296;
     };
     volgende();
@@ -449,16 +508,46 @@ function tekenSter(ctx, p, metZin, helderheid) {
     ctx.restore();
 }
 /**
- * De Hemel: sterren verdeeld over vier streken, met de getekende sterrenbeelden
- * als dunne messinglijnen erbij. Tikken op een ster toont de verankeringszin.
- * v2.4 §11: een sterrenbeeld tekent zich één keer op (±700 ms) en beweegt
- * daarna nooit meer.
+ * Decoratieve achtergrondsterren voor De Hemel — puur sfeer, geen data.
+ * Een hemel met alleen de paar sterren die je zelf verdiende (soms maar
+ * één of twee) oogt als een lege zwarte rechthoek in plaats van een hemel.
+ * Een stille, vaste sterrenstrooiing erachter — veel kleiner en dover dan
+ * de echte sterren — geeft ruimte, en laat jouw eigen sterren er juist
+ * helderder in staan. Geseed op de afmeting: geen ander patroon bij elke
+ * herlaad, alleen bij een echt andere schermgrootte.
  */
+function genereerAchtergrondSterren(breedte, hoogte) {
+    if (breedte <= 0 || hoogte <= 0)
+        return [];
+    const random = seededRandom(`achtergrond-${Math.round(breedte)}x${Math.round(hoogte)}`);
+    const aantal = Math.round((breedte * hoogte) / 2600);
+    const sterren = [];
+    for (let i = 0; i < aantal; i++) {
+        sterren.push({
+            x: random() * breedte,
+            y: random() * hoogte,
+            r: 0.6 + random() * random() * 1.6,
+            basisAlpha: 0.22 + random() * 0.4,
+            twinkel: random() * Math.PI * 2,
+        });
+    }
+    return sterren;
+}
+function tekenAchtergrondSterren(ctx, sterren, fase, rustig) {
+    for (const s of sterren) {
+        const twinkel = rustig ? 1 : 0.7 + 0.3 * Math.sin(fase * 0.4 + s.twinkel);
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(237, 233, 222, ${s.basisAlpha * twinkel})`;
+        ctx.fill();
+    }
+}
 export function tekenHemel(canvas, sterren, onTikSter, opties = {}) {
     const { sterrenbeelden = [], nieuwSterrenbeeldId = null, rustig = false } = opties;
     let ctx = sizeCanvas(canvas);
     let rect = canvas.getBoundingClientRect();
     let posities = berekenSterPosities(sterren, rect.width, rect.height);
+    let achtergrond = genereerAchtergrondSterren(rect.width, rect.height);
     let raf = 0;
     let fase = 0;
     const begonnenOp = performance.now();
@@ -468,6 +557,7 @@ export function tekenHemel(canvas, sterren, onTikSter, opties = {}) {
         fase += 0.02;
         const verstreken = performance.now() - begonnenOp;
         const drawOn = rustig ? 1 : Math.min(1, verstreken / DRAW_ON_MS);
+        tekenAchtergrondSterren(ctx, achtergrond, fase, rustig);
         for (const sb of sterrenbeelden) {
             const isNieuw = sb.id === nieuwSterrenbeeldId;
             tekenLijnen(ctx, posities, sb.sterIds, isNieuw ? drawOn : 1, 0.5);
@@ -494,12 +584,13 @@ export function tekenHemel(canvas, sterren, onTikSter, opties = {}) {
         ctx = sizeCanvas(canvas);
         rect = canvas.getBoundingClientRect();
         posities = berekenSterPosities(sterren, rect.width, rect.height);
+        achtergrond = genereerAchtergrondSterren(rect.width, rect.height);
     }
-    window.addEventListener("resize", resize);
+    const stopMaat = opMaat(canvas, resize);
     raf = requestAnimationFrame(herteken);
     return () => {
         cancelAnimationFrame(raf);
-        window.removeEventListener("resize", resize);
+        stopMaat();
         canvas.removeEventListener("click", clickHandler);
     };
 }
@@ -513,6 +604,7 @@ export function tekenSterrenbeeldModus(canvas, sterren, streek, onVerandering, r
     let ctx = sizeCanvas(canvas);
     let rect = canvas.getBoundingClientRect();
     let posities = berekenSterPosities(sterren, rect.width, rect.height);
+    let achtergrond = genereerAchtergrondSterren(rect.width, rect.height);
     let raf = 0;
     let fase = 0;
     const eigen = sterren.filter((s) => s.streek === streek);
@@ -520,6 +612,7 @@ export function tekenSterrenbeeldModus(canvas, sterren, streek, onVerandering, r
     function herteken() {
         ctx.clearRect(0, 0, rect.width, rect.height);
         fase += 0.02;
+        tekenAchtergrondSterren(ctx, achtergrond, fase, rustig);
         tekenLijnen(ctx, posities, pad, 1, 0.6);
         for (const s of sterren) {
             const p = posities.get(s.id);
@@ -560,8 +653,9 @@ export function tekenSterrenbeeldModus(canvas, sterren, streek, onVerandering, r
         ctx = sizeCanvas(canvas);
         rect = canvas.getBoundingClientRect();
         posities = berekenSterPosities(sterren, rect.width, rect.height);
+        achtergrond = genereerAchtergrondSterren(rect.width, rect.height);
     }
-    window.addEventListener("resize", resize);
+    const stopMaat = opMaat(canvas, resize);
     raf = requestAnimationFrame(herteken);
     return {
         pad: () => [...pad],
@@ -573,7 +667,7 @@ export function tekenSterrenbeeldModus(canvas, sterren, streek, onVerandering, r
         },
         stop() {
             cancelAnimationFrame(raf);
-            window.removeEventListener("resize", resize);
+            stopMaat();
             canvas.removeEventListener("click", clickHandler);
         },
     };

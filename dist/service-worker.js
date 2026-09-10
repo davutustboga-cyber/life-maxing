@@ -57,6 +57,16 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // v25 — een `respondWith()` die `undefined` teruggeeft laat de browser het
+  // verzoek als netwerkfout afhandelen: zonder verbinding én zonder cache-
+  // treffer kreeg je een lege, onverklaarde pagina. Nu een eerlijk, kort
+  // antwoord in plaats daarvan.
+  const geenVerbinding = () =>
+    new Response("Geen verbinding en dit deel staat nog niet in de cache. Open de app opnieuw zodra je weer online bent.", {
+      status: 503,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+
   // Netwerk-eerst voor de rest van de app. Elke lading met verbinding haalt
   // de nieuwste versie op en legt die meteen in de cache; alleen zonder
   // verbinding (of een falende fetch) valt dit terug op wat er al lag.
@@ -67,6 +77,6 @@ self.addEventListener("fetch", (event) => {
         caches.open(CACHE_NAAM).then((cache) => cache.put(event.request, kopie));
         return response;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() => caches.match(event.request).then((match) => match || geenVerbinding()))
   );
 });

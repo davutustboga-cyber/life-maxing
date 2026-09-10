@@ -27,48 +27,34 @@ export function root() {
         throw new Error("Geen #app-element gevonden.");
     return node;
 }
-/** Meerdere render()-aanroepen kunnen kort na elkaar vallen (bv. een chip die
- * meteen zichzelf opnieuw tekent). De API staat geen tweede transitie toe
- * terwijl de eerste nog loopt — dat geeft geen zichtbaar probleem, alleen een
- * afgewezen belofte, maar wel eentje die anders als onafgehandelde fout in de
- * console verschijnt. Deze ene vlag zorgt dat zo'n snelle opeenvolging gewoon
- * direct wisselt (zonder cross-fade voor die ene stap) in plaats van een
- * tweede transitie te proberen starten. */
-let lopendeTransitie = null;
 /**
- * Elke schermwissel was tot nu toe een harde, instante DOM-vervanging
- * (replaceChildren) — vooral bij het wisselen tussen Nu/Doen/Terugkijken
- * voelde dat schokkerig. De View Transitions API (breed ondersteund in
- * moderne mobiele browsers) geeft hier een zachte cross-fade tussen oud en
- * nieuw scherm, puur door de browser zelf — geen eigen animatietiming nodig
- * en geen risico op een tussentijds leeg scherm. Op een browser zonder
- * ondersteuning valt dit terug op de oude, directe vervanging.
+ * Eén schermwissel: de oude inhoud eruit, de nieuwe erin.
+ *
+ * v25 — hier stond sinds de vorige ronde een cross-fade via de View
+ * Transitions API. Die is eruit, om twee redenen die allebei gemeten zijn:
+ *
+ * 1. **Tikken raakten kwijt.** Een view transition tekent de overgang in de
+ *    top layer, en die laag doet mee aan het aanwijzen. Gemeten met
+ *    `document.elementFromPoint()` midden op De Schijf: tijdens de overgang
+ *    kwam de tik niet bij het canvas uit maar bij `<html>`. Dat betekende dat
+ *    de app een fractie van een seconde ná élke schermwissel niets deed met
+ *    je vinger. `pointer-events: none` op de overgangs-pseudo-elementen hielp
+ *    niet betrouwbaar.
+ * 2. **Alles wat gemeten moet worden, was nog niet gemeten.** De API voert de
+ *    DOM-wissel in een callback uit, dus `render()` was niet meer synchroon.
+ *    `app.ts` roept de canvas-functies vlak ná `render()` aan, en die kregen
+ *    daardoor een canvas dat nog niet in de pagina stond: breedte nul, en dus
+ *    een zwart vlak in plaats van De Schijf, Het Verschil, De Hemel en de
+ *    sterrenbeeld-tekenmodus. (`canvas.ts` vangt dat sinds v25 zelf ook op
+ *    met een ResizeObserver — dubbel beveiligd, want dat lost tegelijk het
+ *    draaien van de telefoon en het inklappen van de adresbalk op.)
+ *
+ * De zachte intrede is er nog: `.scherm` heeft in style.css al de
+ * `scherm-in`-animatie, die per nieuw scherm afspeelt, niets blokkeert en
+ * door prefers-reduced-motion netjes wordt uitgezet.
  */
 export function render(children) {
-    const app = root();
-    const wissel = () => app.replaceChildren(...children.filter(Boolean));
-    const d = document;
-    if (typeof d.startViewTransition === "function" && !lopendeTransitie) {
-        const transitie = d.startViewTransition(wissel);
-        lopendeTransitie = transitie;
-        // Alle drie de beloften van een transitie kunnen worden afgewezen zodra
-        // hij wordt overgeslagen (bv. door een snelle opeenvolgende wissel of een
-        // DOM-mutatie buiten deze callback om) — zonder deze .catch()'s duiken
-        // die als onafgehandelde consolefouten op, terwijl de wissel zelf altijd
-        // gewoon doorgaat (de callback loopt synchroon, ongeacht of de animatie
-        // zelf lukt).
-        transitie.ready.catch(() => undefined);
-        transitie.updateCallbackDone.catch(() => undefined);
-        transitie.finished
-            .catch(() => undefined)
-            .finally(() => {
-            if (lopendeTransitie === transitie)
-                lopendeTransitie = null;
-        });
-    }
-    else {
-        wissel();
-    }
+    root().replaceChildren(...children.filter(Boolean));
 }
 /** Dimt het scherm en voert dan de callback uit — voor S7 (Afsluiten). */
 export function dimEnDan(callback, ms = 1400) {

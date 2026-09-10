@@ -133,12 +133,20 @@ function verschuivingszin(momenten) {
  * Kiest hooguit vier eigen zinnen, gespreid over de maand — niet de "beste"
  * (dat zou een oordeel zijn) en niet de laatste vier (dat zou de maand tot
  * zijn staart terugbrengen).
+ *
+ * v25 — dit las tot nu toe `momenten[].verankeringszin`, en dus alleen de
+ * zinnen die je in de kompaslus (S6) schreef. Sinds v21 loopt de hoofdweg
+ * via het startscherm en de bibliotheek, en die maakten geen moment aan:
+ * elke daar geschreven regel bleef buiten de brief. Elke verankerde zin
+ * wordt hoe dan ook óók als ster bewaard (S6 doet dat al, en de vrije
+ * afronding sinds v25 ook), dus `sterren` is de volledige verzameling —
+ * dezelfde zinnen, nu zonder blinde vlek.
  */
-function eigenZinnen(momenten) {
-    const zinnen = momenten
+function eigenZinnen(sterren) {
+    const zinnen = sterren
         .slice()
-        .sort((a, b) => a.tijdstip.localeCompare(b.tijdstip))
-        .map((m) => m.verankeringszin)
+        .sort((a, b) => a.datum.localeCompare(b.datum) || a.id.localeCompare(b.id))
+        .map((s) => s.zin)
         .filter((z) => typeof z === "string" && z.trim().length > 0);
     if (zinnen.length <= 4)
         return zinnen;
@@ -148,8 +156,8 @@ function eigenZinnen(momenten) {
     }
     return [...new Set(gekozen)];
 }
-export function schrijfBrief(maand, momenten) {
-    const zinnen = eigenZinnen(momenten);
+export function schrijfBrief(maand, momenten, sterren = []) {
+    const zinnen = eigenZinnen(sterren);
     const alineas = [];
     // 1. Wat er was — jouw eigen zinnen, letterlijk, achter elkaar in één
     // alinea. Elk op een eigen regel zou een opsomming worden, en die verbiedt
@@ -181,22 +189,35 @@ export function schrijfBrief(maand, momenten) {
 export function vulBrievenAan(data, nu = new Date()) {
     const huidigeMaand = `${nu.getFullYear()}-${String(nu.getMonth() + 1).padStart(2, "0")}`;
     const bestaand = new Set((data.brieven ?? []).map((b) => b.maand));
+    const relevant = (sleutel) => sleutel < huidigeMaand && !bestaand.has(sleutel);
     const perMaand = new Map();
     for (const m of data.momenten) {
         const sleutel = maandSleutel(m.tijdstip);
-        if (sleutel >= huidigeMaand)
-            continue;
-        if (bestaand.has(sleutel))
+        if (!relevant(sleutel))
             continue;
         const lijst = perMaand.get(sleutel) ?? [];
         lijst.push(m);
         perMaand.set(sleutel, lijst);
     }
+    // v25 — ook een maand waarin je alleen vanaf "Nu" of "Doen" iets deed
+    // (dus sterren zonder moment) verdient een brief. Zonder dit zou zo'n
+    // maand stilzwijgend overgeslagen worden.
+    const sterrenPerMaand = new Map();
+    for (const s of data.sterren ?? []) {
+        const sleutel = maandSleutel(s.datum);
+        if (!relevant(sleutel))
+            continue;
+        const lijst = sterrenPerMaand.get(sleutel) ?? [];
+        lijst.push(s);
+        sterrenPerMaand.set(sleutel, lijst);
+        if (!perMaand.has(sleutel))
+            perMaand.set(sleutel, []);
+    }
     if (perMaand.size === 0)
         return false;
     const nieuwe = [...perMaand.entries()]
         .sort((a, b) => a[0].localeCompare(b[0]))
-        .map(([maand, momenten]) => schrijfBrief(maand, momenten));
+        .map(([maand, momenten]) => schrijfBrief(maand, momenten, sterrenPerMaand.get(maand) ?? []));
     data.brieven = [...(data.brieven ?? []), ...nieuwe].sort((a, b) => a.maand.localeCompare(b.maand));
     return true;
 }

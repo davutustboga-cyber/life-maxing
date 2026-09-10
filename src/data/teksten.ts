@@ -15,6 +15,9 @@ export const teksten = {
   },
   kompas: {
     openingsvraag: "Waar ben je?",
+    // v25 — de lijst laat je maximaal twee woorden kiezen, maar zei dat
+    // nergens; wie een derde aantikte zag simpelweg niets gebeuren.
+    woordenOnderschrift: "Kies één of twee woorden. Of typ je eigen woord.",
     zoekveldPlaceholder: "of typ je eigen woord",
     eigenWoordBevestiging: "Onthouden. Dit woord staat er de volgende keer ook bij.",
     tijdvraag: "Hoeveel tijd heb je nu?",
@@ -83,6 +86,9 @@ export const teksten = {
     // v2.0 §9.1 punt 8 (het weekmoment), Pijler 5 (de beeldoefening) en §5.4
     // ("de kop die jij herkent"). Nooit los van werkelijkheid en plan.
     toegangKnoptekst: "de spiegel van de week",
+    /** v25 — kort label boven de vier stappen; de introkop ("Je frequentie
+     * verhogen") is te lang voor een stap-aanduiding. */
+    stapLabel: "De spiegel",
     intro: {
       kop: "Je frequentie verhogen",
       uitleg:
@@ -229,6 +235,34 @@ export const teksten = {
     },
     exportGelukt: "Bewaard. Dit bestand is alles.",
   },
+  // v25 — de afronding van een oefening die je vanaf "Nu" of "Doen" begon.
+  // datamodel.md §5 koos optie A: elke beweging geeft een ster, ook zonder
+  // tekst. Dat gold alleen nog in de kompaslus (S6); sinds v21 loopt de
+  // hoofdweg via het startscherm en de bibliotheek, en die lieten niets
+  // achter — De Hemel bleef leeg en de Maandbrief had geen zin om over te
+  // schrijven. Eén optioneel veld, geen verplichting, geen teller.
+  vrijeAfronding: {
+    kop: "Klaar.",
+    uitleg: "Eén regel als je wil. Mag leeg blijven.",
+    placeholder: "wat deed je, of wat merkte je?",
+    sluiten: "Sluiten",
+    naarStart: "terug naar start",
+  },
+  // v25 — de drie plekken die de volledige bibliotheek als platte lijst van
+  // drieëntwintig titels toonden (De Onderbreker, de herstelroute, het
+  // weekmoment). Juist op die momenten is een lange lijst het probleem.
+  keuze: {
+    kortKop: "Wat nu past, kort:",
+    alles: "de hele bibliotheek",
+    terugNaarKort: "terug naar het korte lijstje",
+  },
+  // v25 — wat je zelf al opschreef, teruggegeven op het moment dat het
+  // ergens over gaat. Beide velden bestonden al en werden nooit gelezen.
+  nuRegels: {
+    voorMorgen: "Van gisteravond, voor vandaag",
+    kerntaak: "Je kerntaak vandaag",
+    plan: "Je plan",
+  },
   legeStaten: {
     storageVolOfGeweigerd: "Er is nu geen ruimte om dit te bewaren op je toestel. Probeer het opnieuw, of maak een export.",
     importMislukt: "Dit bestand kon niet gelezen worden. Er is niets veranderd aan wat je al had.",
@@ -347,7 +381,10 @@ export const teksten = {
     ],
     introHerkomst:
       "Zelf geschreven, in je eigen woorden werkt beter dan een kant-en-klare zin steeds herhalen.",
-    beginnen: "Beginnen",
+    // v25 — stond op "Beginnen", precies dezelfde tekst als de knop op het
+    // scherm ervóór (de ethische ondergrens). Twee schermen achter elkaar met
+    // exact dezelfde knop leest als "dit is niet doorgekomen".
+    beginnen: "Ja, schrijven",
     latereKeer: "Later misschien",
     periodeVraag: "Over welke periode denk je na?",
     periodeOnderschrift: "Dit bepaalt alleen de vraag hierna — geen deadline, geen klok.",

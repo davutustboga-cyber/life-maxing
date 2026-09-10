@@ -22,3 +22,35 @@ export function onrustScore(d) {
 export function recenteDagsluitingen(data, n = 14) {
     return [...(data.dagsluitingen ?? [])].sort((a, b) => a.datum.localeCompare(b.datum)).slice(-n);
 }
+/**
+ * v25 — de dagsluiting van gisteren (of, is die er niet, van vandaag).
+ *
+ * Waarom: `suggestiesVoorNu()` keek tot nu toe alleen op de klok, terwijl het
+ * bestand al wist wat je gisteravond zelf had aangevinkt ("slecht geslapen",
+ * "niet buiten geweest"). Dat is precies de context die een ochtendsuggestie
+ * bruikbaar maakt in plaats van generiek. Bewust hooguit één dag terug: dit
+ * is context voor nu, geen trend en geen geschiedenis (Wet 4).
+ */
+export function laatsteDagsluiting(data, nu = new Date()) {
+    const gisteren = new Date(nu.getTime() - 86400000);
+    const sleutels = new Set([huidigeDagSleutel(gisteren), huidigeDagSleutel(nu)]);
+    const gevonden = (data.dagsluitingen ?? []).filter((d) => sleutels.has(d.datum));
+    if (gevonden.length === 0)
+        return null;
+    return gevonden.sort((a, b) => a.datum.localeCompare(b.datum))[gevonden.length - 1];
+}
+/** v25 — het ochtendmoment van vandaag, om de kerntaak later op de dag terug
+ * te kunnen geven. Tot nu toe werd hij gevraagd en nooit meer getoond. */
+export function ochtendMomentVandaag(data, nu = new Date()) {
+    const vandaag = huidigeDagSleutel(nu);
+    return (data.ochtendMomenten ?? []).find((o) => o.datum === vandaag) ?? null;
+}
+/** v25 — het "iets kleins voor morgen" dat je gisteravond opschreef. Scullin
+ * e.a. 2018 is de reden dat dit veld bestaat; zonder het 's ochtends terug te
+ * geven was het een veld dat niemand ooit terugzag. */
+export function voorVandaagVanGisteren(data, nu = new Date()) {
+    const gisteren = huidigeDagSleutel(new Date(nu.getTime() - 86400000));
+    const d = (data.dagsluitingen ?? []).find((x) => x.datum === gisteren);
+    const tekst = d?.voorMorgen?.trim();
+    return tekst ? tekst : null;
+}

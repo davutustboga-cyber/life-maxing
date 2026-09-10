@@ -13,11 +13,17 @@ const { chromium } = require('/home/claude/.npm-global/lib/node_modules/playwrig
 
   await page.click('text=Beginnen');
   await page.waitForTimeout(400);
+
+  // v25 — sinds v22 komt na de ethische ondergrens eenmalig De Visie-
+  // uitnodiging. De testsuites kenden dat scherm niet en liepen daar sinds
+  // v22 stil vast; hier slaan we hem over (dat legt niets vast).
+  const later = await page.$('text=Later misschien');
+  if (later) { await later.click(); await page.waitForTimeout(400); }
   await page.screenshot({ path: '/tmp/shots2/01b-thuis.png' });
 
   // v21: het startscherm heeft geen schijf meer -- de weg naar het kompas
   // loopt via "Hoe voel je je?", en toont eerst de hele woordenlijst.
-  await page.click('text=Hoe voel je je?');
+  await page.locator('text=Hoe voel je je?').first().click();
   await page.waitForTimeout(300);
   await page.screenshot({ path: '/tmp/shots2/02-s2.png' });
 

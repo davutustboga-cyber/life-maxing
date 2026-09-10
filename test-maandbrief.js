@@ -89,7 +89,7 @@ function zaadBestand(nu) {
     bestand: {
       versie: '1.0',
       aangemaaktOp: `${volle}-01T09:00:00+02:00`,
-      instellingen: { islamitischeLaag: true, rustigeBeelden: false, ethischeOndergrensGezien: true },
+      instellingen: { islamitischeLaag: true, rustigeBeelden: false, ethischeOndergrensGezien: true, visieIntroAangeboden: true },
       woordenUitbreiding: [],
       momenten,
       sterren,
@@ -213,11 +213,24 @@ function check(naam, waar, extra) {
     !/vorige maand|meer dan|minder dan|goed bezig/i.test(briefTekst)
   );
 
-  // ── 5. Sluiten eindigt de app (S7), niet in een vervolgscherm ─────
+  // ── 5. Sluiten eindigt in het afsluitscherm, niet in een vervolgscherm ──
+  // v25 — deze controle verwachtte nog een permanent leeg scherm. Sinds
+  // 9 september dimt S7 en kom je daarna op het startscherm terug (zie
+  // Design-audit-en-herbouw-9-september-2026.md, bug 1). Wat de brief niet
+  // mag hebben, is een eigen vervólgscherm: geen "volgende brief", geen
+  // samenvatting, geen vraag erachteraan (v2.4 §9).
   await page.click('text=sluiten');
-  await page.waitForTimeout(1800);
+  await page.waitForTimeout(600);
+  const tijdensDimBrief = await page.$eval('#app', (n) => n.innerText.trim());
+  check('"sluiten" dimt de brief weg', tijdensDimBrief === '', JSON.stringify(tijdensDimBrief.slice(0, 40)));
+  await page.waitForTimeout(1400);
   const naSluiten = await page.$eval('#app', (n) => n.innerText.trim());
-  check('"sluiten" eindigt in het lege afsluitscherm', naSluiten === '', JSON.stringify(naSluiten.slice(0, 40)));
+  check(
+    'De brief heeft geen vervolgscherm — je komt op het startscherm uit',
+    !naSluiten.includes('Dit is wat er was') &&
+      (naSluiten.includes('LIFE MAXING') || naSluiten.includes('Life Maxing')),
+    JSON.stringify(naSluiten.slice(0, 40))
+  );
 
   // ── 6. Daarna staat er "de brieven" in plaats van de aankondiging ─
   // S7 heeft geen klikvlak meer terug naar het begin (Wet 3): je sluit de app
@@ -267,8 +280,11 @@ function check(naam, waar, extra) {
 
   await page.click('.brief-regel');
   await page.waitForTimeout(400);
-  check('Een brief uit het archief keert terug naar het archief', await page.$('text=de andere brieven'));
-  await page.click('text=de andere brieven');
+  // v25 — de weg terug is sinds de "consistent terug-pijltje"-ronde overal
+  // hetzelfde icoonknopje linksboven (.terug-knop) in plaats van een
+  // tekstlink onderaan; deze controle liep daarin achter.
+  check('Een brief uit het archief keert terug naar het archief', await page.$('.terug-knop'));
+  await page.click('.terug-knop');
   await page.waitForTimeout(300);
   check('Terug in het archief', (await page.$$('.brief-regel')).length === 2);
 

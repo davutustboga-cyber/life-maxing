@@ -76,7 +76,12 @@ export interface Moment {
 
 export interface Ster {
   id: string;
-  momentId: string;
+  /**
+   * v25 — `null` bij een ster uit een oefening die je vanaf "Nu" of "Doen"
+   * deed: daar is geen kompas-moment aan voorafgegaan. Niets in de app leest
+   * dit veld op; het staat er als herkomst, niet als verwijzing.
+   */
+  momentId: string | null;
   streek: Streek;
   datum: string;
   zin: string | null;

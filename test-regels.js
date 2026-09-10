@@ -49,7 +49,7 @@ function leegBestand(extra = {}) {
     {
       versie: '1.0',
       aangemaaktOp: '2026-09-01T09:00:00+02:00',
-      instellingen: { islamitischeLaag: true, rustigeBeelden: false, ethischeOndergrensGezien: true },
+      instellingen: { islamitischeLaag: true, rustigeBeelden: false, ethischeOndergrensGezien: true, visieIntroAangeboden: true },
       woordenUitbreiding: [],
       momenten: [],
       sterren: [],
@@ -67,7 +67,7 @@ function leegBestand(extra = {}) {
  * "nauwkeuriger aangeven"-link op de woordenlijst, zodat de rest van deze
  * testsuite (die met een exacte tik-positie werkt) ongewijzigd kan blijven. */
 async function naarSchijf(page) {
-  await page.click('text=Hoe voel je je?');
+  await page.locator('text=Hoe voel je je?').first().click();
   await page.waitForTimeout(250);
   await page.click('text=nauwkeuriger aangeven met de cirkel');
   await page.waitForTimeout(250);
@@ -185,15 +185,25 @@ async function totDeDeuren(page, woord, tijd = 'tien minuten') {
     verschilTekst.replace(/\n/g, ' | ').slice(0, 120)
   );
 
-  // ── 5. S7 heeft geen weg terug ────────────────────────────────────
+  // ── 5. S7: dimmen en dan het startscherm ──────────────────────────
+  // Deze twee controles verwachtten tot v25 nog het oorspronkelijke gedrag
+  // ("het scherm blijft leeg tot je de app zelf sluit", Wet 3 in het oude
+  // S1-first-ontwerp). Dat is op 9 september bewust veranderd: sinds de app
+  // een vaste navigatie heeft, voelde een permanent leeg scherm na elke
+  // afgeronde actie niet als rust maar als een vastgelopen app (zie
+  // Design-audit-en-herbouw-9-september-2026.md, bug 1). De testsuite liep
+  // daarin achter — het dimmen blijft, en daarna sta je op het startscherm.
   await page.click('text=Verder');
-  await page.waitForTimeout(2200);
-  const s7 = await page.$eval('#app', (n) => n.innerText.trim());
-  check('S7 is leeg', s7 === '', JSON.stringify(s7.slice(0, 40)));
-  await page.click('.scherm', { force: true }).catch(() => {});
-  await page.waitForTimeout(500);
-  const naKlik = await page.$eval('#app', (n) => n.innerText.trim());
-  check('Klikken op S7 brengt je niet terug naar het begin', naKlik === '', JSON.stringify(naKlik.slice(0, 40)));
+  await page.waitForTimeout(600);
+  const tijdensDim = await page.$eval('#app', (n) => n.innerText.trim());
+  check('S7 dimt op een leeg scherm', tijdensDim === '', JSON.stringify(tijdensDim.slice(0, 40)));
+  await page.waitForTimeout(1600);
+  const naDim = await page.$eval('#app', (n) => n.innerText.trim());
+  check(
+    'Na het dimmen sta je op het startscherm, niet op een leeg scherm',
+    naDim.includes('Life Maxing') || naDim.includes('LIFE MAXING'),
+    JSON.stringify(naDim.slice(0, 40))
+  );
 
   // ── 6. zelfcompassie vervangt tawakkul bij "schuldig" ─────────────
   await page.evaluate(schrijfNaarIndexedDb, leegBestand());
@@ -245,7 +255,7 @@ async function totDeDeuren(page, woord, tijd = 'tien minuten') {
   await page.evaluate(
     schrijfNaarIndexedDb,
     leegBestand({
-      instellingen: { islamitischeLaag: false, rustigeBeelden: false, ethischeOndergrensGezien: true },
+      instellingen: { islamitischeLaag: false, rustigeBeelden: false, ethischeOndergrensGezien: true, visieIntroAangeboden: true },
       momenten: [
         {
           id: 'm-d1',
