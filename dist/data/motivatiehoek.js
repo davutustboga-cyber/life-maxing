@@ -78,6 +78,41 @@ export const motivatieQuotes = [
         auteur: "Novak Djokovic",
         bron: "Interview",
     },
+    {
+        tekst: "If you know the enemy and know yourself, you need not fear the result of a hundred battles.",
+        auteur: "Sun Tzu",
+        bron: "De Kunst van het Oorlogvoeren, hoofdstuk 3",
+    },
+    {
+        tekst: "Men are disturbed not by things, but by the views which they take of them.",
+        auteur: "Epictetus",
+        bron: "Enchiridion, hoofdstuk 5",
+    },
+    {
+        tekst: "You have power over your mind – not outside events. Realize this, and you will find strength.",
+        auteur: "Marcus Aurelius",
+        bron: "Meditations (Boek 4)",
+    },
+    {
+        tekst: "The moment you give up is the moment you let someone else win.",
+        auteur: "Kobe Bryant",
+        bron: "Veelvuldig geciteerde uitspraak",
+    },
+    {
+        tekst: "There will be obstacles. There will be doubters. There will be mistakes. But with hard work, with belief, with confidence and trust in yourself and those around you, there are no limits.",
+        auteur: "Michael Phelps",
+        bron: "No Limits: The Will to Succeed",
+    },
+    {
+        tekst: "I learned that courage was not the absence of fear, but the triumph over it.",
+        auteur: "Nelson Mandela",
+        bron: "Long Walk to Freedom (1995)",
+    },
+    {
+        tekst: "I don't want to be remembered as the girl who was shot. I want to be remembered as the girl who stood up.",
+        auteur: "Malala Yousafzai",
+        bron: "Publieke uitspraken, 2013",
+    },
 ];
 // ── Profetenverhalen ─────────────────────────────────────────────────
 // Uitsluitend momenten uit het leven van een profeet (nabi/rasoel) zoals
@@ -324,6 +359,118 @@ export const profetenVerhalen = [
         bronnen: ["Qur'an 2:35-37"],
         thema: "Een fout maken en toch niet verloren zijn",
     },
+    {
+        profeet: "Muhammad ﷺ",
+        titel: "De bedoeïen in de moskee",
+        tekst: "Een bedoeïen liep de moskee van de Profeet ﷺ binnen en urineerde zomaar in een hoek. De aanwezigen sprongen op om hem hardhandig tegen te houden.\n\nDe Profeet ﷺ greep in — niet om de man harder aan te pakken, maar om hem juist met rust te laten tot hij klaar was. Pas daarna liet hij het schoonmaken. \"Jullie zijn gestuurd om het makkelijk te maken, niet om het moeilijk te maken,\" zei hij. Zachtheid, precies op het moment waarop de meeste mensen hard zouden worden.",
+        bronnen: ["Sahih al-Bukhari 6128"],
+        thema: "Geduld en zachtheid bij andermans fout",
+    },
+    {
+        profeet: "Muhammad ﷺ",
+        titel: "De afscheidsrede",
+        tekst: "Op de berg Arafat, aan het einde van zijn leven, sprak de Profeet ﷺ tot meer dan honderdduizend mensen — de grootste menigte die hij ooit had toegesproken. Hij wist, en velen om hem heen voelden het ook, dat dit zijn laatste boodschap zou worden.\n\nGeen nieuwe wetten, geen laatste geheimen — alleen het belangrijkste nog één keer, hardop, zodat niemand het kon missen: gelijkheid van mensen ongeacht afkomst, de rechten van vrouwen, het verbod op woeker, de heiligheid van andermans leven en bezit. Hij sloot af met de vraag of hij de boodschap had overgebracht, en liet honderdduizend mensen ja antwoorden — als getuigen.",
+        bronnen: ["Sahih Muslim", "Sunan Ibn Majah", "Musnad Ahmad"],
+        thema: "Het belangrijkste nog één keer zeggen voor het te laat is",
+    },
+    {
+        profeet: "Muhammad ﷺ",
+        titel: "Het verlies van zijn zoon Ibrahim",
+        tekst: "Toen zijn jonge zoon Ibrahim op sterven lag, hield de Profeet ﷺ hem in zijn armen. Zijn ogen vulden zich met tranen. Een metgezel, verbaasd dat juist hij huilde, vroeg ernaar.\n\n\"Dit is barmhartigheid,\" antwoordde hij, en huilde nog meer. \"Het oog weent, het hart is bedroefd, en we zeggen alleen wat onze Heer behaagt. Waarlijk, om jouw heengaan, Ibrahim, zijn we bedroefd.\" Verdriet voelen en het uiten was voor hem geen tegenstelling met overgave aan Allah — het een sloot het ander niet uit.",
+        bronnen: ["Sahih al-Bukhari 1303"],
+        thema: "Verdriet voelen zonder je overgave te verliezen",
+    },
+    {
+        profeet: "Muhammad ﷺ",
+        titel: "De nachtelijke reis",
+        tekst: "In het jaar na het zwaarste verlies van zijn leven — Khadija en Abu Talib in hetzelfde jaar, gevolgd door de vernedering in Ta'if — kreeg de Profeet ﷺ een nacht die niets meer met zijn omstandigheden op aarde te maken had. Hij werd in één nacht meegenomen van Mekka naar Jeruzalem, en van daar omhoog, ver voorbij wat een mens normaal kan bevatten.\n\nToen hij terugkeerde en het vertelde, geloofden velen hem niet en maakten hem belachelijk. Precies in het jaar dat zijn leven er het zwartst uitzag van buitenaf, kreeg hij van binnenuit het duidelijkste teken dat hij niet vergeten was.",
+        bronnen: ["Qur'an 17:1"],
+        thema: "Op je zwaarste moment iets onverwachts ontvangen",
+    },
+    {
+        profeet: "Ibrahim عليه السلام en Hajar عليها السلام",
+        titel: "Alleen achtergelaten in de woestijn",
+        tekst: "Ibrahim عليه السلام bracht Hajar عليها السلام en hun baby Ismail عليه السلام naar een kale vallei zonder mensen en zonder water, met alleen wat dadels en een waterzak. Toen hij wegliep, volgde ze hem en vroeg: \"Is het Allah die je dit opdraagt?\" Hij zei: \"Ja.\" Zij antwoordde: \"Dan zal Hij ons niet verloren laten gaan.\"\n\nToen het water opraakte en haar baby van dorst huilde, rende ze wanhopig zeven keer heen en weer tussen de heuvels Safa en Marwa, op zoek naar hulp of water — tot ze onder de voeten van haar kind een bron zag opborrelen. Die bron, Zamzam, stroomt tot op de dag van vandaag.",
+        bronnen: ["Sahih al-Bukhari 3364"],
+        thema: "Vertrouwen zonder te weten hoe het goed komt",
+    },
+    {
+        profeet: "Ibrahim عليه السلام",
+        titel: "Het debat met de koning",
+        tekst: "Namrud, de machtigste koning van zijn tijd, beweerde tegenover Ibrahim عليه السلام dat hij zelf leven en dood kon geven — hij liet gewoon de ene gevangene vrij en de andere doden, en noemde dat zijn bewijs.\n\nIbrahim antwoordde niet met woede, maar met één simpel verzoek: \"Allah laat de zon opkomen in het oosten. Laat jij haar dan maar eens in het westen opkomen.\" De koning, met alle macht die hij had, kon er niets tegenin brengen. Soms is de sterkste weerlegging geen felle discussie, maar één vraag die niemand kan beantwoorden.",
+        bronnen: ["Qur'an 2:258"],
+        thema: "Een tiran weerleggen zonder woede",
+    },
+    {
+        profeet: "Musa عليه السلام",
+        titel: "Recht voor Fir'aun staan",
+        tekst: "Musa عليه السلام en zijn broer Harun kregen de opdracht om naar Fir'aun te gaan — de machtigste, meest gevreesde man van hun tijd, dezelfde man in wiens paleis Musa was opgegroeid en voor wie hij ooit moest vluchten. De boodschap die ze moesten brengen was ongehoord: laat een volledig volk van slaven gaan.\n\n\"Wees niet bang,\" kreeg Musa te horen voordat hij ging, \"Ik ben met jullie, Ik hoor en Ik zie.\" Hij ging het paleis binnen met niets dan die belofte, tegenover een man die zichzelf god noemde.",
+        bronnen: ["Qur'an, Surah Ta-Ha (20), vers 47-48"],
+        thema: "De machtigste man van je tijd recht aankijken",
+    },
+    {
+        profeet: "Yusuf عليه السلام",
+        titel: "Verkocht voor bijna niets",
+        tekst: "Nadat zijn broers hem in de put hadden gegooid, kwam er een karavaan langs die water kwam halen. Ze haalden Yusuf عليه السلام omhoog en, zonder dat hij er iets over te zeggen had, verkochten zijn eigen broers hem voor een handvol munten — een schamel bedrag, alsof hij niets waard was.\n\nOp het moment dat zijn waarde door de mensen om hem heen op het laagste punt werd gezet, begon voor Yusuf feitelijk de weg die uiteindelijk naar het bestuur van heel Egypte zou leiden. Wat anderen als waardeloos bestempelden, was dat allerminst.",
+        bronnen: ["Qur'an 12:19-20"],
+        thema: "Op je laagste punt afgeschreven worden door anderen",
+    },
+    {
+        profeet: "Yusuf عليه السلام",
+        titel: "Zichzelf aanbieden voor verantwoordelijkheid",
+        tekst: "Na jaren van onterechte gevangenschap en nadat zijn onschuld eindelijk erkend was, deed Yusuf عليه السلام iets opmerkelijks: hij wachtte niet af tot hem iets werd aangeboden. Hij vroeg de koning zelf: \"Stel mij aan over de schatkamers van het land; ik ben een goede bewaarder, kundig.\"\n\nNa alles wat hem was aangedaan, koos hij ervoor zich aan te bieden voor een van de zwaarste verantwoordelijkheden van het land, met vertrouwen in zijn eigen kunnen — niet uit trots, maar omdat hij wist wat hij kon bijdragen na jaren van voorbereiding die niemand anders had gezien.",
+        bronnen: ["Qur'an 12:54-57"],
+        thema: "Verantwoordelijkheid opeisen na jaren onderdrukking",
+    },
+    {
+        profeet: "Adam عليه السلام",
+        titel: "De namen geleerd",
+        tekst: "Voordat Adam عليه السلام ook maar iets had gedaan om het te verdienen, leerde Allah hem de namen van alle dingen — kennis die zelfs de engelen niet hadden. Toen aan de engelen gevraagd werd om die namen te noemen, konden ze het niet.\n\nAdam wel. Zijn waardigheid kwam niet voort uit een prestatie die hij had geleverd, maar uit wat hem simpelweg was meegegeven bij zijn schepping. Soms is waarde iets wat je al hebt, nog voor je iets hebt bewezen.",
+        bronnen: ["Qur'an 2:31-33"],
+        thema: "Waardigheid krijgen voor je iets hebt bewezen",
+    },
+    {
+        profeet: "Isa عليه السلام",
+        titel: "De tafel uit de hemel",
+        tekst: "De discipelen van Isa عليه السلام vroegen hem om een tafel vol voedsel uit de hemel te laten neerdalen — als bevestiging, als iets om hun hart gerust te stellen. Isa bad erom, met de voorwaarde dat het een feestdag zou worden voor wie erna kwam en een teken van Allah.\n\nAllah waarschuwde er meteen bij: wie hierna nog ongelovig zou zijn, zou zwaar gestraft worden zoals niemand anders. Een teken vragen is makkelijk; het teken dat je vervolgens krijgt, brengt ook een verantwoordelijkheid met zich mee die je niet meer kunt teruggeven.",
+        bronnen: ["Qur'an 5:112-115"],
+        thema: "Vragen om een teken, en de verantwoordelijkheid die daarbij hoort",
+    },
+    {
+        profeet: "Lut عليه السلام",
+        titel: "Machteloos willen beschermen",
+        tekst: "Toen er vreemdelingen — engelen, al wist Lut عليه السلام dat niet — bij hem aankwamen in een stad vol onrecht, voelde hij meteen de dreiging voor hen aankomen. Hij zei, radeloos: \"Was ik maar sterk genoeg tegen jullie, of kon ik me maar bij een machtige steunpilaar aansluiten.\"\n\nHij kon zijn gasten niet met eigen kracht beschermen. Pas daarna werd hem verteld wie ze werkelijk waren en dat hij zich geen zorgen meer hoefde te maken. Zijn wanhoop om iemand te beschermen die hij niet kon beschermen, was op zichzelf al oprecht — ook al lag de uitkomst uiteindelijk niet in zijn handen.",
+        bronnen: ["Qur'an 11:77-80"],
+        thema: "Je verantwoordelijk voelen voor wie je niet kan beschermen",
+    },
+    {
+        profeet: "Nuh عليه السلام",
+        titel: "Uitgelachen tijdens het bouwen",
+        tekst: "Terwijl Nuh عليه السلام de ark bouwde — ver van enige zee, op droog land, op bevel van Allah — liepen de mensen van zijn volk voorbij en lachten hem uit. Een boot bouwen zonder water in de buurt moet als pure waanzin hebben geleken.\n\n\"Als jullie ons nu bespotten,\" antwoordde hij, \"zullen wij jullie ooit bespotten zoals jullie ons nu bespotten.\" Hij stopte niet met bouwen om de spot te laten ophouden. Het gelijk kwam er niet door zijn woorden, maar door gewoon door te gaan tot het klaar was.",
+        bronnen: ["Qur'an 11:38"],
+        thema: "Doorwerken terwijl mensen je uitlachen",
+    },
+    {
+        profeet: "Ayyub عليه السلام",
+        titel: "Een belofte houden zonder wreed te worden",
+        tekst: "In een moeilijk moment had Ayyub عليه السلام gezworen zijn vrouw honderd slagen te geven voor iets wat ze had gedaan — verward door zijn eigen beproeving, terwijl zij hem juist al die jaren trouw had verzorgd. Hij wilde zijn woord houden, maar wilde haar ook geen pijn doen die ze niet verdiende.\n\nAllah gaf hem een uitweg: neem een bundel van honderd dunne twijgjes samen, en sla haar daarmee één keer, zacht. De eed was gehouden, zonder dat er wreedheid nodig was. Een belofte aan jezelf hoeft je principes niet boven mededogen te zetten.",
+        bronnen: ["Qur'an 38:44"],
+        thema: "Een belofte houden zonder wreed te worden",
+    },
+    {
+        profeet: "Dawud عليه السلام",
+        titel: "Vasten om de andere dag",
+        tekst: "Ondanks zijn koningschap, zijn rijkdom en zijn stem waarmee volgens de overlevering zelfs bergen meezongen, koos Dawud عليه السلام voor een vorm van aanbidding die vol te houden was: de ene dag vasten, de andere dag niet. Geen uitputtende extremen, geen dagelijkse overbelasting.\n\n\"De meest geliefde vasten bij Allah is de vasten van Dawud,\" zei de Profeet ﷺ later over hem. Niet de zwaarste vorm van toewijding werd geprezen, maar de vorm die vol te houden was — jaar na jaar, zonder uit te doven.",
+        bronnen: ["Sahih al-Bukhari 3420"],
+        thema: "Een ritme kiezen dat je kan volhouden, niet het zwaarste",
+    },
+    {
+        profeet: "Sulaiman عليه السلام en Dawud عليه السلام",
+        titel: "Het oordeel over het kind",
+        tekst: "Twee vrouwen kwamen bij Dawud عليه السلام met een geschil: een wolf had het kind van de een meegenomen, en nu twistten ze over wie de moeder was van het kind dat overbleef. Dawud oordeelde in het voordeel van de oudste vrouw.\n\nDe zaak kwam ook bij zijn zoon Sulaiman عليه السلام terecht, die met een ander idee kwam: \"Breng een mes, dan snijden we het kind doormidden, zodat jullie allebei een helft krijgen.\" De jongste vrouw riep meteen: \"Nee, doe het niet — geef het kind maar aan haar!\" Aan die reactie alleen al herkende Sulaiman wie de echte moeder was. Soms zie je de waarheid niet door harder te oordelen, maar door te kijken wie het meeste opoffert.",
+        bronnen: ["Sahih al-Bukhari 3427"],
+        thema: "Wijsheid die verder kijkt dan het voor de hand liggende",
+    },
 ];
 // ── Reality checks ───────────────────────────────────────────────────
 // Doel is dankbaarheid en perspectief, niet "je klaagt voor niets" — zie
@@ -553,6 +700,169 @@ export const realityChecks = [
                 "Een trap oplopen",
                 "Iets optillen",
                 "Diep ademhalen",
+            ],
+        },
+    },
+    {
+        tekst: "Een groep mensen om je heen hebben die weet wie je bent, is niet overal vanzelfsprekend.",
+        interactie: {
+            soort: "open",
+            vraag: "Bij welke groep mensen voel jij je het meest jezelf?",
+            placeholder: "Bij...",
+        },
+    },
+    {
+        tekst: "Kunnen zeggen wat je denkt, hardop, zonder daar meteen problemen van te krijgen, is een vrijheid die niet overal bestaat.",
+        interactie: {
+            soort: "enkel",
+            vraag: "Waar zou je vandaag iets kunnen zeggen dat je nu inslikt?",
+            opties: [
+                "Tegen iemand thuis",
+                "Op mijn werk of school",
+                "Tegen mezelf, in mijn hoofd",
+                "Nergens — en dat is ook een antwoord",
+            ],
+        },
+    },
+    {
+        tekst: "We kijken vaak vooruit naar wat nog moet gebeuren. Maar er is ook al iets gebeurd dat de moeite waard was.",
+        interactie: {
+            soort: "open",
+            vraag: "Wat is een herinnering die je nog steeds blij maakt als je eraan denkt?",
+            placeholder: "Die keer dat...",
+        },
+    },
+    {
+        tekst: "Een moment zonder herrie in je hoofd voelt zeldzaam. Maar het is er vaker dan je denkt — je ziet het alleen niet als \"iets\".",
+        interactie: {
+            soort: "keuze",
+            vraag: "Wanneer was je hoofd voor het laatst even helemaal stil?",
+            opties: [
+                "Net voor ik in slaap viel",
+                "Tijdens iets waar ik in opging",
+                "Buiten, ergens onderweg",
+                "Ik weet het even niet, en dat mag",
+            ],
+        },
+    },
+    {
+        tekst: "We meten onszelf vaak af tegen waar we nog naartoe moeten. Maar er is ook een afstand die je al hebt afgelegd.",
+        interactie: {
+            soort: "open",
+            vraag: "Waarin ben je dit jaar al veranderd, ook al merk je het zelf amper?",
+            placeholder: "Ik ben...",
+        },
+    },
+    {
+        tekst: "Sociale media laat je vooral zien wat je nog niet hebt. Bijna nooit wat je al wel hebt.",
+        interactie: {
+            soort: "enkel",
+            vraag: "Met wie vergelijk je jezelf het meest, en wat kost dat je?",
+            opties: [
+                "Iemand die ik ken",
+                "Iemand die ik alleen online volg",
+                "Een oudere versie van mezelf",
+                "Ik doe dit eigenlijk niet zo vaak",
+            ],
+        },
+    },
+    {
+        tekst: "Niet elke fase van je leven hoeft hetzelfde te voelen als de vorige. Waar je nu in zit, mag ook gewoon zijn wat het is.",
+        interactie: {
+            soort: "open",
+            vraag: "Wat is fijn aan precies deze periode van je leven, ook al is het niet perfect?",
+            placeholder: "Op dit moment...",
+        },
+    },
+    {
+        tekst: "Iets kwijtraken doet pijn, en die pijn hoeft niet weg te gaan om verder te kunnen. Maar er is vaak ook iets dat is gebleven.",
+        interactie: {
+            soort: "open",
+            vraag: "Wat heeft iemand of iets dat je kwijt bent je toch achtergelaten, dat nog steeds bij je is?",
+            placeholder: "Wat is gebleven...",
+        },
+    },
+    {
+        tekst: "De grote dingen in het leven gebeuren zelden. De kleine, prettige dingen gebeuren bijna elke dag — als je ze opmerkt.",
+        interactie: {
+            soort: "keuze",
+            vraag: "Wat was vandaag een klein moment dat gewoon prettig was?",
+            opties: [
+                "Iets dat ik at of dronk",
+                "Een lied of geluid",
+                "Even niks moeten",
+                "Een berichtje van iemand",
+            ],
+        },
+    },
+    {
+        tekst: "De dingen die het meest de moeite waard zijn, kosten vaak niets. We waarderen ze daarom soms het minst.",
+        interactie: {
+            soort: "enkel",
+            vraag: "Wat heb je vandaag gratis gekregen dat je normaal niet als een cadeau ziet?",
+            opties: [
+                "Zonlicht of frisse lucht",
+                "Een gesprek",
+                "Muziek",
+                "Stilte",
+            ],
+        },
+    },
+    {
+        tekst: "Iets kunnen dat voor jou vanzelfsprekend voelt, is voor iemand anders misschien een droom.",
+        interactie: {
+            soort: "open",
+            vraag: "Wat kan jij dat je zelf niet meer bijzonder vindt, maar dat het wel is?",
+            placeholder: "Ik kan...",
+        },
+    },
+    {
+        tekst: "Niet iedereen die je hielp opgroeien, deed dat perfect. Maar er was waarschijnlijk wel íémand die er was.",
+        interactie: {
+            soort: "open",
+            vraag: "Wie heeft, ondanks alles, wel zijn best voor je gedaan?",
+            placeholder: "...",
+        },
+    },
+    {
+        tekst: "Een plek hebben waar je de deur achter je dicht kan doen en jezelf kan zijn, is niet overal en voor iedereen vanzelfsprekend.",
+        interactie: {
+            soort: "keuze",
+            vraag: "Waar voel jij je het meest jezelf?",
+            opties: [
+                "Thuis, letterlijk",
+                "Bij bepaalde mensen",
+                "Ergens buiten",
+                "Nog niet echt ergens, en dat mag ook",
+            ],
+        },
+    },
+    {
+        tekst: "Zomaar ergens naartoe kunnen gaan wanneer je wil, is een vrijheid die niet iedereen heeft.",
+        interactie: {
+            soort: "open",
+            vraag: "Waar zou je nu naartoe kunnen lopen of rijden, gewoon omdat je het kan?",
+            placeholder: "Ik zou kunnen...",
+        },
+    },
+    {
+        tekst: "Schoonheid is er vaak gewoon, ook op een gewone dag — we lopen er meestal langs zonder te kijken.",
+        interactie: {
+            soort: "open",
+            vraag: "Wat was het laatste mooie dat je hebt gezien zonder ernaar te zoeken?",
+            placeholder: "Dat was...",
+        },
+    },
+    {
+        tekst: "Je leest dit nu, met aandacht, uit vrije keuze. Dat is al meer dan veel mensen op dit moment vergund is.",
+        interactie: {
+            soort: "enkel",
+            vraag: "Wat ga je met de rest van vandaag doen, nu je hier even stil hebt gestaan?",
+            opties: [
+                "Gewoon verder, iets lichter",
+                "Iets goedmaken of oppakken",
+                "Niets veranderen — het was al goed genoeg",
+                "Ik weet het nog niet, en dat mag",
             ],
         },
     },
