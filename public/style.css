@@ -308,15 +308,23 @@ body::-webkit-scrollbar {
    dit geeft elke schermwissel een korte, zachte intrede in plaats daarvan.
    Puur CSS op de wrapper die toch al elk scherm heeft, dus geen dom.ts- of
    app.ts-wijziging nodig. prefers-reduced-motion zet 'm net als alle andere
-   animaties in dit bestand al uit (zie onderaan). */
+   animaties in dit bestand al uit (zie onderaan).
+   v25 — geen `transform` meer hierin. `.nav-balk` (position: fixed) zit als
+   kind in dit element (`.scherm.scherm-app`), en een `transform` op een
+   voorouder — ook via een animatie, ook al is de eindwaarde translateY(0) —
+   maakt die voorouder tijdens de hele animatie het referentiepunt voor elk
+   `position: fixed`-kind erin, in plaats van het echte scherm. De
+   navigatiebalk werd daardoor bij elke schermwissel eventjes uitgelijnd op
+   de onderkant van dít scherm (die per scherm verschilt, en vaak korter is
+   dan het echte scherm) in plaats van de onderkant van het beeldscherm —
+   precies het "springt omhoog en zakt weer terug"-effect. Alleen opacity
+   animeren geeft dezelfde zachte intrede zonder dit gevolg. */
 @keyframes scherm-in {
   from {
     opacity: 0;
-    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
