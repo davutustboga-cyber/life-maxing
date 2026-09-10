@@ -17,6 +17,37 @@
   <div class="sfeer-vignet" aria-hidden="true"></div>
   <div class="sfeer-korrel" aria-hidden="true"></div>
   <div id="app"></div>
+
+  <!-- De openingsanimatie — eenmalig per sessie, zie main.ts. Een parelwitte
+       variant van hetzelfde idee als elders in de app: de puls-cirkel uit de
+       navigatiebalk (Nu) en de level-meter uit de hero-kaart, hier op
+       merkschaal samengebracht in plaats van los in twee UI-elementen. -->
+  <div id="intro" class="intro" aria-hidden="true">
+    <div class="intro-gloed"></div>
+    <svg class="intro-ring-svg" width="112" height="112" viewBox="0 0 120 120">
+      <defs>
+        <linearGradient id="ii-ring" x1="10" y1="105" x2="110" y2="15" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#C9C2AC" />
+          <stop offset="0.55" stop-color="#F0EBDD" />
+          <stop offset="1" stop-color="#FFFBF2" />
+        </linearGradient>
+        <radialGradient id="ii-halo" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#FFFBF2" />
+          <stop offset="55%" stop-color="#F5F1E8" />
+          <stop offset="100%" stop-color="#F5F1E8" stop-opacity="0" />
+        </radialGradient>
+        <filter id="ii-bloom" x="-200%" y="-200%" width="500%" height="500%">
+          <feGaussianBlur stdDeviation="6" />
+        </filter>
+      </defs>
+      <circle class="intro-ring" cx="60" cy="60" r="34" fill="none" stroke="url(#ii-ring)" stroke-width="2.5" stroke-linecap="round" />
+      <circle class="intro-halo" cx="60" cy="60" r="22" fill="url(#ii-halo)" filter="url(#ii-bloom)" />
+      <circle class="intro-kern" cx="60" cy="60" r="3.4" fill="#FFFBF2" />
+    </svg>
+    <span class="intro-eq" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+    <p class="intro-merk">Life Maxing</p>
+  </div>
+
   <script type="module" src="./main.js"></script>
 </body>
 </html>

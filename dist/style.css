@@ -181,6 +181,102 @@ body::-webkit-scrollbar {
   background-size: 180px 180px;
 }
 
+/* ── De openingsanimatie ──────────────────────────────────────────────
+   Eenmalig per sessie (main.ts regelt sessionStorage + de timing), boven
+   alles — inclusief de navigatiebalk. Bewust een ander palet dan de rest
+   van de app (parelwit, geen messing): één merkmoment dat opvalt, niet de
+   dagelijkse kleur van de app zelf. Basiswaarden zijn de "aangekomen"
+   eindstaat; de @keyframes hieronder voegen alleen de intocht toe, dus
+   reduced-motion (globale regel onderaan dit bestand) laat gewoon de
+   eindstaat meteen zien in plaats van een onzichtbaar beginpunt. */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ruimte-4);
+  background: var(--ground);
+  transition: opacity 550ms ease;
+}
+.intro--uit {
+  opacity: 0;
+  pointer-events: none;
+}
+.intro-gloed {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(46% 34% at 50% 42%, rgba(245, 241, 232, 0.12), transparent 72%),
+    radial-gradient(60% 30% at 50% 100%, rgba(255, 251, 242, 0.05), transparent 75%);
+}
+.intro-ring-svg {
+  position: relative;
+}
+.intro-ring {
+  stroke-dasharray: 214;
+  stroke-dashoffset: 0;
+  animation: intro-ring-tekenen 750ms var(--ease-standaard) both;
+}
+.intro-halo,
+.intro-kern {
+  opacity: 1;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: intro-licht-aankomst 600ms var(--ease-standaard) 520ms both;
+}
+.intro-eq {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3.5px;
+  height: 18px;
+  opacity: 1;
+  animation: intro-fade-op 400ms ease 880ms both;
+}
+.intro-eq span {
+  display: block;
+  width: 3.5px;
+  border-radius: 1.5px;
+  background: linear-gradient(180deg, #fffbf2, #d8d2c2);
+  animation: eq-pulsen 1.8s ease-in-out infinite;
+}
+.intro-eq span:nth-child(1) { height: 45%; animation-delay: -1.4s; }
+.intro-eq span:nth-child(2) { height: 95%; animation-delay: -0.6s; }
+.intro-eq span:nth-child(3) { height: 65%; animation-delay: -1.1s; }
+.intro-eq span:nth-child(4) { height: 100%; animation-delay: -0.2s; }
+.intro-merk {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: #fffbf2;
+  text-shadow: 0 1px 28px rgba(255, 251, 242, 0.22);
+  opacity: 1;
+  animation: intro-op-en-omhoog 500ms var(--ease-standaard) 1080ms both;
+}
+
+@keyframes intro-ring-tekenen {
+  from { stroke-dashoffset: 214; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes intro-licht-aankomst {
+  from { opacity: 0; transform: scale(0.3); }
+  60% { transform: scale(1.2); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes intro-fade-op {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes intro-op-en-omhoog {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 #app {
   position: relative;
   z-index: 10;
