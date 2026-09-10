@@ -97,11 +97,16 @@ body {
   font-family: var(--sans);
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
+  touch-action: manipulation;
+  /* Geen zichtbare scrollbar — dit is een app-achtige, edge-to-edge PWA,
+     geen documentpagina. Scrollen zelf blijft gewoon werken. */
+  scrollbar-width: none;
 }
-
-body {
-  position: relative;
-  isolation: isolate;
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 ::selection {
@@ -188,7 +193,9 @@ body {
   padding: 6vh 6vw;
   gap: var(--ruimte-6);
   transition: opacity 900ms ease;
+  scrollbar-width: none;
 }
+#app::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
 .scherm {
   width: 100%;
@@ -639,6 +646,23 @@ textarea:focus {
   * {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+/* Cross-fade tussen schermen (zie dom.ts render()). Iets korter en rustiger
+   dan de browserdefault, en zonder de default "swoosh" die het oude scherm
+   ook laat bewegen — hier blijft alleen de fade. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+  animation-timing-function: var(--ease-standaard);
+  mix-blend-mode: normal;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }
 
@@ -1175,19 +1199,47 @@ textarea:focus {
   transform: translateX(2px);
 }
 
+/* Eén consistent pijltje linksboven, overal — v25: dit verving overal een
+   los tekstlinkje ("← terug", "Terug", "← Doen"), soms zelfs onderaan het
+   scherm, wat bij elk scherm weer anders oogde. Altijd hetzelfde icoon,
+   altijd dezelfde plek: eerste element van het scherm. */
 .terug-knop {
-  background: none;
-  border: 0;
-  color: var(--voorgrond-zwak);
-  font-size: var(--tekst-klein);
-  padding: var(--ruimte-2) var(--ruimte-2) var(--ruimte-2) 0;
-  margin-bottom: 0.2rem;
-  min-height: var(--raakvlak-min);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--lijn);
+  border-radius: 999px;
+  color: var(--voorgrond-zacht);
+  width: 2.5rem;
+  height: 2.5rem;
+  min-height: 0;
+  padding: 0;
+  margin: 0 auto var(--ruimte-4) 0;
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
-  transition: color 160ms ease;
+  justify-content: center;
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease, transform 160ms ease;
 }
-.terug-knop:hover { color: var(--voorgrond); }
+/* De "één-vraag-per-scherm"-schermen (.scherm zonder .scherm-app) centreren
+   hun hele inhoud verticaal — als gewoon eerste kind zou het pijltje daarom
+   ergens halverwege het scherm meedrijven in plaats van echt linksboven te
+   staan. Absoluut gepositioneerd tegen #app (de dichtstbijzijnde ouder met
+   position:relative) zet het los van die centrering, in dezelfde hoek als
+   #app's eigen randpadding (6vh/6vw). .scherm-app-schermen zijn al van
+   bovenaf opgebouwd, dus die laten het gewoon in de normale flow staan. */
+.scherm:not(.scherm-app) > .terug-knop {
+  position: absolute;
+  top: max(6vh, env(safe-area-inset-top));
+  left: max(6vw, env(safe-area-inset-left));
+  margin: 0;
+  z-index: 5;
+}
+.terug-knop svg { width: 18px; height: 18px; display: block; }
+.terug-knop:hover {
+  color: var(--brass-fel);
+  border-color: var(--lijn-sterk);
+  background: rgba(255, 255, 255, 0.06);
+}
+.terug-knop:active { transform: scale(0.92); }
 
 /* ── voortgang binnen een meerstaps-scherm (WOOP, Dag sluiten, een
    oefening) — dezelfde stippenrij overal, zodat "hoeveel stappen nog"

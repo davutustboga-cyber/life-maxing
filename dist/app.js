@@ -472,8 +472,8 @@ function toonS8(netGetekend = null) {
     if (data.sterren.length === 0) {
         render([
             el("div", { class: "scherm" }, [
+                terugKnop(() => toonTerugkijken()),
                 el("p", { class: "regel" }, [teksten.deHemel.legeHemel]),
-                el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, ["Terug"]),
             ]),
         ]);
         return;
@@ -481,11 +481,8 @@ function toonS8(netGetekend = null) {
     const canvas = el("canvas", { class: "hemel-canvas" });
     const zinRegel = el("p", { class: "zacht" }, [""]);
     const aanbodStreek = netGetekend ? null : aanbodVoorStreek(data);
-    const onderkant = el("div", { class: "hemel-onder" }, [
-        zinRegel,
-        el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, ["Terug"]),
-    ]);
-    render([el("div", { class: "scherm" }, [canvas, onderkant])]);
+    const onderkant = el("div", { class: "hemel-onder" }, [zinRegel]);
+    render([el("div", { class: "scherm" }, [terugKnop(() => toonTerugkijken()), canvas, onderkant])]);
     const stop = tekenHemel(canvas, data.sterren, (ster) => {
         zinRegel.textContent = ster.zin ?? "";
     }, {
@@ -605,12 +602,12 @@ function toonS12(brief, vanuitArchief) {
     const [opschrift, ...rest] = [briefOpschrift(brief, data.brieven ?? []), ...brief.alineas];
     render([
         el("div", { class: "scherm brief-scherm" }, [
+            vanuitArchief ? terugKnop(() => toonS13()) : null,
             el("h1", { class: "brief-opschrift" }, [opschrift]),
             el("div", { class: "brief-tekst" }, rest.map((alinea) => el("p", {}, [alinea]))),
-            el("button", {
-                class: "knop-klein",
-                onclick: () => (vanuitArchief ? toonS13() : toonS7()),
-            }, [vanuitArchief ? teksten.deBrief.terugNaarBrieven : teksten.deBrief.sluiten]),
+            vanuitArchief
+                ? null
+                : el("button", { class: "knop-klein", onclick: () => toonS7() }, [teksten.deBrief.sluiten]),
         ]),
     ]);
 }
@@ -622,10 +619,10 @@ function toonS13() {
     const brieven = data.brieven ?? [];
     render([
         el("div", { class: "scherm" }, [
+            terugKnop(() => toonTerugkijken()),
             el("div", { class: "brieven-lijst" }, brieven.map((brief) => el("button", { class: "brief-regel", onclick: () => toonS12(brief, true) }, [
                 briefOpschrift(brief, brieven),
             ]))),
-            el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, ["Terug"]),
         ]),
     ]);
 }
@@ -958,6 +955,7 @@ function toonS20WieIkWord() {
     const melding = el("p", { class: "zacht" }, [""]);
     render([
         el("div", { class: "scherm" }, [
+            terugKnop(() => toonTerugkijken()),
             el("p", { class: "vraag" }, [teksten.wieIkWord.vraag]),
             veld,
             el("button", {
@@ -970,7 +968,6 @@ function toonS20WieIkWord() {
             }, [teksten.wieIkWord.bewaren]),
             melding,
             el("button", { class: "knop-klein", onclick: () => toonS8() }, [teksten.wieIkWord.bewijslijst]),
-            el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, [teksten.wieIkWord.terug]),
         ]),
     ]);
 }
@@ -996,10 +993,10 @@ function toonS21Kwaliteiten() {
     vulLijst();
     render([
         el("div", { class: "scherm" }, [
+            terugKnop(() => toonTerugkijken()),
             el("p", { class: "vraag" }, [teksten.kwaliteiten.vraag]),
             el("p", { class: "zacht" }, [teksten.kwaliteiten.onderschrift]),
             lijst,
-            el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, [teksten.kwaliteiten.terug]),
         ]),
     ]);
 }
@@ -1030,7 +1027,7 @@ function toonS22Ochtend() {
     }
     render([
         el("div", { class: "scherm" }, [
-            el("button", { class: "terug-knop", onclick: () => toonThuis() }, ["← terug"]),
+            terugKnop(() => toonThuis()),
             el("h1", { class: "brief-opschrift" }, [teksten.ochtend.kop]),
             fragment ? el("p", { class: "opmerking" }, [`${fragment.label}: ${fragment.tekst}`]) : null,
             kwaliteit
@@ -1088,7 +1085,7 @@ function toonS23Stap1Kompas(state) {
     const visieBlok = avondVisieBlok();
     render([
         el("div", { class: "scherm" }, [
-            el("button", { class: "terug-knop", onclick: () => toonThuis() }, ["← terug"]),
+            terugKnop(() => toonThuis()),
             ...stapKop(teksten.avondSluiten.kop, 1, 5),
             visieBlok ? el("div", {}, [el("p", { class: "vraag" }, [teksten.avondSluiten.visieKop]), visieBlok]) : null,
             el("p", { class: "vraag" }, [teksten.avondSluiten.kompasVraag]),
@@ -1122,7 +1119,7 @@ function toonS23Stap2Chips(state) {
     vulChips();
     render([
         el("div", { class: "scherm" }, [
-            el("button", { class: "terug-knop", onclick: () => toonS23Stap1Kompas(state) }, ["← terug"]),
+            terugKnop(() => toonS23Stap1Kompas(state)),
             ...stapKop(teksten.avondSluiten.kop, 2, 5),
             el("p", { class: "vraag" }, [teksten.avondSluiten.chipsVraag]),
             chipsGrid,
@@ -1138,7 +1135,7 @@ function toonS23Stap3Dank(state) {
     veld.value = state.dankbaarheid;
     render([
         el("div", { class: "scherm" }, [
-            el("button", { class: "terug-knop", onclick: () => { state.dankbaarheid = veld.value; toonS23Stap2Chips(state); } }, ["← terug"]),
+            terugKnop(() => { state.dankbaarheid = veld.value; toonS23Stap2Chips(state); }),
             ...stapKop(teksten.avondSluiten.kop, 3, 5),
             el("p", { class: "vraag" }, [teksten.avondSluiten.dankbaarheidVraag]),
             veld,
@@ -1158,7 +1155,7 @@ function toonS23Stap4Zin(state) {
     veld.value = state.zin;
     render([
         el("div", { class: "scherm" }, [
-            el("button", { class: "terug-knop", onclick: () => { state.zin = veld.value; toonS23Stap3Dank(state); } }, ["← terug"]),
+            terugKnop(() => { state.zin = veld.value; toonS23Stap3Dank(state); }),
             ...stapKop(teksten.avondSluiten.kop, 4, 5),
             el("p", { class: "vraag" }, [teksten.avondSluiten.zinVraag]),
             veld,
@@ -1203,7 +1200,7 @@ function toonS23Stap5VoorMorgen(state) {
     }
     render([
         el("div", { class: "scherm" }, [
-            el("button", { class: "terug-knop", onclick: () => { state.voorMorgen = veld.value; toonS23Stap4Zin(state); } }, ["← terug"]),
+            terugKnop(() => { state.voorMorgen = veld.value; toonS23Stap4Zin(state); }),
             ...stapKop(teksten.avondSluiten.kop, 5, 5),
             el("p", { class: "vraag" }, [teksten.avondSluiten.voorMorgenVraag]),
             veld,
@@ -1317,6 +1314,12 @@ function toonVisieDeel(periode, index, onderweg) {
     }
     render([
         el("div", { class: "scherm" }, [
+            index > 0
+                ? terugKnop(() => {
+                    const huidig = { ...onderweg, [stap.veld]: veld.value.trim() };
+                    toonVisieDeel(periode, index - 1, huidig);
+                })
+                : terugKnop(() => toonVisiePeriode()),
             el("div", { class: "stip-rij" }, stappen.map((_, i) => el("span", { class: `stip${i <= index ? " vol" : ""}` }))),
             el("p", { class: "vraag" }, [stap.vraag]),
             el("p", { class: "zacht" }, [stap.onderschrift]),
@@ -1326,15 +1329,6 @@ function toonVisieDeel(periode, index, onderweg) {
                 teksten.visie.verder,
             ]),
             el("button", { class: "knop-klein", onclick: () => verder("") }, [teksten.visie.slaOver]),
-            index > 0
-                ? el("button", {
-                    class: "knop-klein",
-                    onclick: () => {
-                        const huidig = { ...onderweg, [stap.veld]: veld.value.trim() };
-                        toonVisieDeel(periode, index - 1, huidig);
-                    },
-                }, [teksten.visie.terug])
-                : el("button", { class: "knop-klein", onclick: () => toonVisiePeriode() }, [teksten.visie.terug]),
         ]),
     ]);
 }
@@ -1356,9 +1350,9 @@ function toonVisieBekijken() {
     if (!data.visie) {
         render([
             el("div", { class: "scherm" }, [
+                terugKnop(() => toonTerugkijken()),
                 el("p", { class: "vraag" }, [teksten.visie.bekijkGeenVisie]),
                 el("button", { class: "knop", onclick: () => toonVisiePeriode() }, [teksten.visie.bekijkSchrijf]),
-                el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, [teksten.visie.terug]),
             ]),
         ]);
         return;
@@ -1367,6 +1361,7 @@ function toonVisieBekijken() {
     const regels = [visie.wieIkBen, visie.watIkHeb, visie.waarIkSta].filter((r) => r.trim().length > 0);
     render([
         el("div", { class: "scherm" }, [
+            terugKnop(() => toonTerugkijken()),
             el("p", { class: "vraag" }, [`${teksten.visie.introKop} — ${periodeLabel(visie.periode)}`]),
             el("div", { class: "herkomst" }, regels.map((r) => el("p", { class: "herkomst-regel" }, [r]))),
             el("button", {
@@ -1377,7 +1372,6 @@ function toonVisieBekijken() {
                     waarIkSta: visie.waarIkSta,
                 }),
             }, [teksten.visie.herschrijven]),
-            el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, [teksten.visie.terug]),
         ]),
     ]);
 }
@@ -1399,6 +1393,13 @@ function navBalk(actief) {
         item("doen", "Doen", () => toonDoen()),
         item("terugkijken", "Terugkijken", () => toonTerugkijken()),
     ]);
+}
+const TERUG_ICOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+/** Eén consistent terug-pijltje linksboven — vervangt overal een los
+ * tekstlinkje ("← terug", "Terug"), soms onderaan het scherm. Altijd het
+ * eerste element van het scherm, altijd hetzelfde icoon. */
+function terugKnop(actie) {
+    return el("button", { class: "terug-knop", onclick: actie, "aria-label": "Terug", html: TERUG_ICOON }, []);
 }
 function duurTekst(bewegingId) {
     const b = bewegingById(bewegingId);
@@ -1553,7 +1554,7 @@ function toonThema(id) {
     }
     render([
         el("div", { class: "scherm scherm-app" }, [
-            el("button", { class: "terug-knop", onclick: () => toonDoen() }, ["← Doen"]),
+            terugKnop(() => toonDoen()),
             el("h1", { class: "tab-kop" }, [t.titel]),
             el("p", { class: "zacht" }, [t.onderschrift]),
             ...items,
@@ -1619,7 +1620,7 @@ function toonOefening(bewegingId, opties) {
         const laatste = index === stappen.length - 1;
         render([
             el("div", { class: "scherm scherm-app" }, [
-                el("button", { class: "terug-knop", onclick: () => (opties.opTerug ?? toonThuis)() }, ["← terug"]),
+                terugKnop(() => (opties.opTerug ?? toonThuis)()),
                 el("p", { class: "oefening-titel" }, [beweging.titel]),
                 el("div", { class: "stip-rij" }, stappen.map((_, i) => el("span", { class: `stip${i <= index ? " vol" : ""}` }))),
                 el("p", { class: "vraag" }, [stappen[index]]),
@@ -1665,7 +1666,7 @@ function toonDhikr(id, opTerug, opKlaar = toonKlaar) {
     function teken() {
         render([
             el("div", { class: "scherm scherm-app" }, [
-                el("button", { class: "terug-knop", onclick: opTerug }, ["← terug"]),
+                terugKnop(opTerug),
                 el("p", { class: "oefening-titel" }, [d.titel]),
                 el("p", { class: "zacht" }, [d.wanneer]),
                 el("p", { class: "arabisch", dir: "rtl", lang: "ar" }, [d.arabisch]),
@@ -1701,6 +1702,7 @@ function toonS24Richting() {
         return toonS24Wish();
     render([
         el("div", { class: "scherm" }, [
+            terugKnop(() => toonDoen()),
             el("p", { class: "vraag" }, [teksten.doelen.bekijkKop]),
             el("div", { class: "herkomst" }, [
                 el("p", { class: "herkomst-regel" }, [bestaand.wish]),
@@ -1708,7 +1710,6 @@ function toonS24Richting() {
                 el("p", { class: "herkomst-regel" }, [`Als ${bestaand.obstacleTekst}, dan ${bestaand.planDan}.`]),
             ]),
             el("button", { class: "knop", onclick: () => toonS24Wish() }, [teksten.doelen.opnieuw]),
-            el("button", { class: "knop-klein", onclick: () => toonDoen() }, [teksten.doelen.terug]),
         ]),
     ]);
 }
@@ -1733,12 +1734,12 @@ function toonS24Wish() {
     koppelDisabled(veld, knop);
     render([
         el("div", { class: "scherm" }, [
+            terugKnop(() => toonDoen()),
             ...stapKop(teksten.doelen.toegangTitel, 1, 5),
             el("p", { class: "vraag" }, [teksten.doelen.wishVraag]),
             el("p", { class: "zacht" }, [teksten.doelen.wishOnderschrift]),
             veld,
             knop,
-            el("button", { class: "knop-klein", onclick: () => toonDoen() }, [teksten.doelen.terug]),
         ]),
     ]);
 }
@@ -1756,23 +1757,23 @@ function toonS24Outcome(wish) {
     koppelDisabled(veld, knop);
     render([
         el("div", { class: "scherm" }, [
+            terugKnop(() => toonS24Wish()),
             ...stapKop(teksten.doelen.toegangTitel, 2, 5),
             el("p", { class: "vraag" }, [teksten.doelen.outcomeVraag]),
             el("p", { class: "zacht" }, [teksten.doelen.outcomeOnderschrift]),
             veld,
             knop,
-            el("button", { class: "knop-klein", onclick: () => toonS24Wish() }, [teksten.doelen.terug]),
         ]),
     ]);
 }
 function toonS24Verbeelding(wish, outcome) {
     render([
         el("div", { class: "scherm" }, [
+            terugKnop(() => toonS24Outcome(wish)),
             ...stapKop(teksten.doelen.toegangTitel, 3, 5),
             el("p", { class: "vraag" }, [teksten.doelen.verbeeldingKop]),
             el("p", { class: "regel" }, [teksten.doelen.verbeeldingTekst]),
             el("button", { class: "knop", onclick: () => toonS24Obstacle(wish, outcome) }, [teksten.doelen.klaar]),
-            el("button", { class: "knop-klein", onclick: () => toonS24Outcome(wish) }, [teksten.doelen.terug]),
         ]),
     ]);
 }
@@ -1790,12 +1791,12 @@ function toonS24Obstacle(wish, outcome) {
     koppelDisabled(veld, knop);
     render([
         el("div", { class: "scherm" }, [
+            terugKnop(() => toonS24Outcome(wish)),
             ...stapKop(teksten.doelen.toegangTitel, 4, 5),
             el("p", { class: "vraag" }, [teksten.doelen.obstacleVraag]),
             el("p", { class: "zacht" }, [teksten.doelen.obstacleOnderschrift]),
             veld,
             knop,
-            el("button", { class: "knop-klein", onclick: () => toonS24Outcome(wish) }, [teksten.doelen.terug]),
         ]),
     ]);
 }
@@ -1828,6 +1829,7 @@ function toonS24Plan(wish, outcome, obstacle) {
     koppelDisabled(danVeld, knop);
     render([
         el("div", { class: "scherm" }, [
+            terugKnop(() => toonS24Obstacle(wish, outcome)),
             ...stapKop(teksten.doelen.toegangTitel, 5, 5),
             el("p", { class: "vraag" }, [teksten.doelen.planVraag]),
             el("p", { class: "zacht" }, [teksten.doelen.planAlsLabel]),
@@ -1836,7 +1838,6 @@ function toonS24Plan(wish, outcome, obstacle) {
             danVeld,
             knop,
             melding,
-            el("button", { class: "knop-klein", onclick: () => toonS24Obstacle(wish, outcome) }, [teksten.doelen.terug]),
         ]),
     ]);
 }
@@ -1879,6 +1880,7 @@ export function toonS10() {
     const meldingTekst = el("p", { class: "zacht" }, [""]);
     render([
         el("div", { class: "scherm" }, [
+            terugKnop(() => toonTerugkijken()),
             switchRij(teksten.instellingen.islamitischeLaag.label, teksten.instellingen.islamitischeLaag.onderschrift, data.instellingen.islamitischeLaag, async (v) => {
                 data.instellingen.islamitischeLaag = v;
                 await bewaren();
@@ -1923,7 +1925,6 @@ export function toonS10() {
                     toonS0();
                 },
             }, [teksten.instellingen.allesMeenemenEnStoppen.label]),
-            el("button", { class: "knop-klein", onclick: () => toonTerugkijken() }, ["Terug"]),
         ]),
     ]);
 }
@@ -1948,10 +1949,10 @@ function toonS11() {
     });
     render([
         el("div", { class: "scherm" }, [
+            terugKnop(() => toonS0()),
             el("p", { class: "vraag" }, ["Bestand kiezen"]),
             invoer,
             melding,
-            el("button", { class: "knop-klein", onclick: () => toonS0() }, ["Terug"]),
         ]),
     ]);
 }
