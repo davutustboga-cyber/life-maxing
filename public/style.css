@@ -1507,3 +1507,44 @@ textarea:focus {
   width: 100%;
   text-align: center;
 }
+
+/* Motivatiehoek */
+.motivatie-auteur {
+  font-family: var(--sans);
+  font-size: var(--tekst-klein);
+  color: var(--voorgrond-zacht);
+  margin-top: var(--ruimte-4);
+  text-align: center;
+}
+
+.motivatie-verhaal {
+  max-width: 34rem;
+  margin-inline: auto;
+}
+
+.motivatie-verhaal p {
+  font-family: var(--sans);
+  font-size: var(--tekst-basis);
+  line-height: 1.7;
+  color: var(--voorgrond);
+  margin-bottom: var(--ruimte-4);
+}
+
+.motivatie-verhaal p:last-of-type {
+  margin-bottom: 0;
+}
+
+.motivatie-verhaal .bron {
+  font-size: var(--tekst-onderschrift);
+  color: var(--voorgrond-zwak);
+  letter-spacing: 0.04em;
+  margin-top: var(--ruimte-5);
+  display: block;
+  text-align: left;
+}
+
+.reality-optie {
+  text-align: left;
+  width: 100%;
+  padding: var(--ruimte-3) var(--ruimte-4);
+}

@@ -56,6 +56,7 @@ import {
   type SuggestieSoort,
 } from "./lib/nu.js";
 import { alleWoorden } from "./data/woorden.js";
+import { motivatiehoekVoorVandaag, type MotivatiehoekDag } from "./data/motivatiehoek.js";
 import {
   visieBeschikbaarAlsIntro,
   registreerVisieIntroAangeboden,
@@ -1210,6 +1211,103 @@ function toonS19Verder(): void {
     ]),
   ]);
 }
+// ── Motivatiehoek (Stateless Noodanker) ─────────────────────────────────
+
+function toonMotivatiequote(): void {
+  const dag = motivatiehoekVoorVandaag();
+  render([
+    el("div", { class: "scherm" }, [
+      terugKnop(() => toonThuis()),
+      el("div", { style: "display: flex; flex-direction: column; justify-content: center; min-height: 60vh;" }, [
+        el("p", { class: "vraag", style: "text-align: center; margin-bottom: 0; font-style: italic;" }, [`"${dag.quote.tekst}"`]),
+        el("p", { class: "motivatie-auteur" }, [dag.quote.auteur]),
+      ]),
+      el("div", { style: "margin-top: auto; padding-top: 2rem; width: 100%; display: flex; justify-content: center;" }, [
+        el("button", { class: "knop", onclick: () => toonMotivatieverhaal(dag) }, [teksten.motivatiehoek.verder])
+      ])
+    ]),
+  ]);
+}
+
+function toonMotivatieverhaal(dag: MotivatiehoekDag): void {
+  const verhaalParagrafen = dag.verhaal.tekst.split("\n\n").map(p => el("p", {}, [p]));
+  
+  render([
+    el("div", { class: "scherm" }, [
+      terugKnop(() => toonMotivatiequote()),
+      el("div", { class: "motivatie-verhaal" }, [
+        el("p", { class: "sectie-kop", style: "text-align: center; margin-bottom: var(--ruimte-2);" }, [dag.verhaal.titel]),
+        el("h2", { class: "vraag", style: "text-align: center; font-size: var(--tekst-kop); margin-bottom: var(--ruimte-6);" }, [dag.verhaal.profeet]),
+        ...verhaalParagrafen,
+        el("span", { class: "bron" }, [dag.verhaal.bronnen.join(" • ")])
+      ]),
+      el("div", { style: "margin-top: var(--ruimte-7); width: 100%; display: flex; justify-content: center;" }, [
+        el("button", { class: "knop", onclick: () => toonRealityCheck(dag) }, [teksten.motivatiehoek.verder])
+      ])
+    ]),
+  ]);
+}
+
+function toonRealityCheck(dag: MotivatiehoekDag): void {
+  const i = dag.realityCheck.interactie;
+  
+  let interactieElement: ReturnType<typeof el>;
+  
+  if (i.soort === "open") {
+    interactieElement = el("textarea", { 
+      placeholder: i.placeholder, 
+      rows: "3", 
+      style: "width: 100%; text-align: left; padding: var(--ruimte-3);" 
+    });
+  } else {
+    interactieElement = el("div", { style: "display: flex; flex-direction: column; gap: var(--ruimte-3); width: 100%;" }, 
+      i.opties.map(optie => 
+        el("button", { 
+          class: "woord-knop reality-optie", 
+          onclick: (e: Event) => {
+            const btn = e.currentTarget as HTMLButtonElement;
+            if (i.soort === "enkel") {
+              const parent = btn.parentElement;
+              if (parent) {
+                Array.from(parent.children).forEach(c => c.setAttribute("aria-pressed", "false"));
+              }
+            }
+            const geselecteerd = btn.getAttribute("aria-pressed") === "true";
+            btn.setAttribute("aria-pressed", geselecteerd ? "false" : "true");
+          }
+        }, [optie])
+      )
+    );
+  }
+
+  render([
+    el("div", { class: "scherm" }, [
+      terugKnop(() => toonMotivatieverhaal(dag)),
+      el("div", { style: "max-width: 34rem; margin-inline: auto; width: 100%; display: flex; flex-direction: column; align-items: center;" }, [
+        el("p", { class: "sectie-kop" }, [teksten.motivatiehoek.realityCheckKop]),
+        el("p", { class: "vraag", style: "text-align: left; margin-bottom: var(--ruimte-4); font-size: 1.4rem; width: 100%;" }, [dag.realityCheck.tekst]),
+        el("p", { class: "zacht", style: "margin-bottom: var(--ruimte-4); width: 100%; text-align: left;" }, [i.vraag]),
+        interactieElement
+      ]),
+      el("div", { style: "margin-top: var(--ruimte-7); width: 100%; display: flex; justify-content: center;" }, [
+        el("button", { class: "knop", onclick: () => toonMotivatieAfsluiting() }, [teksten.motivatiehoek.klaar])
+      ])
+    ]),
+  ]);
+}
+
+function toonMotivatieAfsluiting(): void {
+  render([
+    el("div", { class: "scherm" }, [
+      el("div", { style: "display: flex; flex-direction: column; justify-content: center; min-height: 60vh; text-align: center;" }, [
+        el("p", { class: "vraag" }, ["Genoeg gelezen. Nu doen."])
+      ]),
+      el("div", { style: "margin-top: auto; padding-top: 2rem; width: 100%; display: flex; justify-content: center;" }, [
+        el("button", { class: "knop", onclick: () => toonS7() }, [teksten.motivatiehoek.klaar])
+      ])
+    ])
+  ]);
+}
 
 // ── S20 — "Wie ik word" ─────────────────────────────────────────────────
 // v2.md §9.1 punt 10. Eén zelfgeschreven zin, altijd overschrijfbaar. De
@@ -1970,6 +2068,12 @@ function toonThuis(): void {
         : rijKnop("Hoe voel je je?", "Een woord kiezen, dan drie opties. 2 min.", () => startKompasLus()),
       rijKnop("Ik ben eruit gevallen", "Terug beginnen zonder het groot te maken.", () => toonS19Normaliseren()),
       rijKnop("Ik zit vast in mijn telefoon", "Onderbreken zonder jezelf iets te verbieden.", () => toonS15Onderbreker()),
+      // De verhalen zijn uitsluitend profetenverhalen (zie motivatiehoek.ts) —
+      // net als elders een [I]-onderdeel, dus volledig uit als de islamitische
+      // laag uit staat (v2 §instellingen: "in hun geheel").
+      data.instellingen.islamitischeLaag
+        ? rijKnop(teksten.motivatiehoek.rijTitel, teksten.motivatiehoek.rijOnder, () => toonMotivatiequote())
+        : null,
       navBalk("nu"),
     ]),
   ]);
@@ -3027,4 +3131,5 @@ function toonS11(): void {
     ]),
   ]);
 }
+
 

@@ -196,6 +196,13 @@ export const teksten = {
     grenzen: {
         aanhoudendeSlaapproblemen: "Als dit al langer speelt: dit is een plek voor een huisarts, niet voor een app.",
     },
+    motivatiehoek: {
+        rijTitel: "Geen motivatie",
+        rijOnder: "Niet voor elke dag. Alleen als je echt vastzit.",
+        realityCheckKop: "Sta even stil",
+        verder: "Verder",
+        klaar: "Ga verder met je dag",
+    },
     instellingen: {
         islamitischeLaag: {
             label: "De islamitische laag",
