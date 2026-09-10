@@ -53,7 +53,18 @@ export function root() {
  * `scherm-in`-animatie, die per nieuw scherm afspeelt, niets blokkeert en
  * door prefers-reduced-motion netjes wordt uitgezet.
  */
+/**
+ * v25 — een schermwissel liet de scrollpositie van het vórige scherm gewoon
+ * staan. Ging je van een lang scherm (bv. Terugkijken, uitgescrolld) naar
+ * een korter scherm (bv. Nu), dan stond de pagina even op een scrollpositie
+ * die niet meer bestond — mobiel Safari corrigeert dat zelf, maar doet dat
+ * met een adresbalk die in-/uitklapt en de viewport laat meeschalen. Dát is
+ * het "zoomt in en hangt even" bij het tikken op de navigatiebalk: geen
+ * echte zoom, maar de browser die de scroll herstelt. Terug naar boven vóór
+ * de wissel voorkomt dat de browser ooit iets hoeft te herstellen.
+ */
 export function render(children) {
+    window.scrollTo(0, 0);
     root().replaceChildren(...children.filter(Boolean));
 }
 /** Dimt het scherm en voert dan de callback uit — voor S7 (Afsluiten). */

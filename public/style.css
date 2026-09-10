@@ -348,6 +348,9 @@ button {
   font-family: inherit;
   color: inherit;
   cursor: pointer;
+  /* Ook hier, niet alleen op html/body: een dubbeltik op een knop mag nooit
+     als "zoom naar dit element" gelezen worden door mobiel Safari. */
+  touch-action: manipulation;
 }
 
 /* .knop is op vrijwel elk scherm de ene hoofdactie — v24: daarom niet
