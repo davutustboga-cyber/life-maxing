@@ -55,8 +55,8 @@ function wandlamp(x: number, y: number): string {
 /** Een geometrische fries: kleine ruiten in een rij (Geloof). */
 function fries(y: number): string {
   let d = "";
-  for (let x = 12; x < 360; x += 24) d += `M${x} ${y - 5}l5 5-5 5-5-5z`;
-  return P("ks-al", d) + P("ks-lijn", `M0 ${y - 9}H360M0 ${y + 9}H360`);
+  for (let x = -300; x < 660; x += 24) d += `M${x} ${y - 5}l5 5-5 5-5-5z`;
+  return P("ks-al", d) + P("ks-lijn", `M-900 ${y - 9}H1260M-900 ${y + 9}H1260`);
 }
 
 /** Een lichtsnoer: een kromme met kleine lampjes die elk op eigen tempo branden. */
@@ -111,7 +111,7 @@ function bouwAdem(): Kamerbouw {
       },
       { i: 1, z: E("ks-a2", 150, 190, 28, 9) + E("ks-a", 150, 185, 21, 6) },
       { i: 0, z: R("ks-c", 114, 180, 8, 12, 1) + E("ks-gw", 118, 176, 22, 22) + E("ks-vlam", 118, 175, 2.6, 4.6) },
-      { i: 6, z: P("ks-lijn", "M250 -60V58") + P("ks-h2", "M234 76l8-18h16l8 18z") + E("ks-gw", 250, 96, 54, 40) + C("ks-w", 250, 78, 3) },
+      { i: 6, z: P("ks-lijn", "M250 -900V58") + P("ks-h2", "M234 76l8-18h16l8 18z") + E("ks-gw", 250, 96, 54, 40) + C("ks-w", 250, 78, 3) },
       {
         i: 7,
         z: R("ks-h2", 18, 12, 138, 4, 2) + R("ks-a", 24, 16, 22, 118, 3) + R("ks-a", 128, 16, 22, 118, 3) + lichtsnoer(164, 16, 258, 52, 352, 16, 7),
@@ -228,7 +228,7 @@ function bouwGeloof(): Kamerbouw {
           boeken(301, 74, 30, [7, 5, 8, 6, 7, 5]) + boeken(301, 112, 30, [6, 8, 5, 7, 6, 8]) + boeken(301, 148, 26, [8, 6, 7]),
       },
       { i: 4, z: P("ks-al", ster8(250, 66, 24, 14)) + C("ks-al", 250, 66, 26) + P("ks-al", ster8(250, 66, 12, 7)) },
-      { i: 3, z: P("ks-lijn", "M126 -60V36") + P("ks-h2", "M116 36h20l4 10v22h-28V46z") + R("ks-w", 120, 48, 12, 18, 2) + E("ks-gw", 126, 58, 36, 32) },
+      { i: 3, z: P("ks-lijn", "M126 -900V36") + P("ks-h2", "M116 36h20l4 10v22h-28V46z") + R("ks-w", 120, 48, 12, 18, 2) + E("ks-gw", 126, 58, 36, 32) },
       {
         i: 1,
         z: P("ks-lijnh", "M240 176l22-30M270 176l-22-30") + P("ks-c", "M236 140l28-6 28 6v16l-28-6-28 6z") + P("ks-lijn", "M264 134v16"),
@@ -277,7 +277,7 @@ const BOUW: Record<string, () => Kamerbouw> = {
  * nummer van het voorwerp dat er zojuist bij kwam (dat komt langzamer en licht
  * even op).
  */
-export function kamerSceneSvg(id: string, aan: boolean[], nieuw: number | null = null, hoog = false): string {
+export function kamerSceneSvg(id: string, aan: boolean[], nieuw: number | null = null, viewBox = "0 0 360 220"): string {
   const bouw = BOUW[id]?.();
   if (!bouw) return "";
   const voorwerpen = bouw.voorwerpen
@@ -285,9 +285,9 @@ export function kamerSceneSvg(id: string, aan: boolean[], nieuw: number | null =
     .map((v) => `<g class="ks-ob${v.i === nieuw ? " ks-ob--nieuw" : ""}" style="--d:${v.i * 70}ms">${v.z}</g>`)
     .join("");
   return (
-    `<svg class="ks-svg" viewBox="0 ${hoog ? -60 : 0} 360 ${hoog ? 320 : 220}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="De kamer van binnen">` +
+    `<svg class="ks-svg" viewBox="${viewBox}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="De kamer van binnen">` +
     `<defs><radialGradient id="ks-gw"><stop offset="0" stop-color="#ffd28a" stop-opacity=".6"/><stop offset="1" stop-color="#ffd28a" stop-opacity="0"/></radialGradient></defs>` +
-    `<rect class="ks-wand" y="-60" width="360" height="234"/><path class="ks-plint" d="M0 -48H360"/><rect class="ks-vloer" y="174" width="360" height="120"/><path class="ks-plint" d="M0 174H360"/><path class="ks-planklijn" d="M0 192H360M0 208H360M0 228H360M0 250H360"/>` +
+    `<rect class="ks-wand" x="-900" y="-900" width="2160" height="1074"/><rect class="ks-vloer" x="-900" y="174" width="2160" height="900"/><path class="ks-plint" d="M-900 174H1260"/><path class="ks-planklijn" d="M-900 192H1260M-900 208H1260M-900 228H1260M-900 250H1260M-900 278H1260M-900 310H1260"/>` +
     bouw.basis +
     voorwerpen +
     `</svg>`

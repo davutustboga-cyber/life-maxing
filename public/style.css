@@ -1729,7 +1729,7 @@ body {
 .visie-hero::before {
   content: "";
   position: absolute;
-  inset: -10% -14% -6% -14%;
+  inset: -10% calc(var(--pad-x, 1.15rem) * -1) -6% calc(var(--pad-x, 1.15rem) * -1);
   z-index: -1;
   pointer-events: none;
   background: radial-gradient(60% 64% at 26% 44%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 72%);
@@ -2629,7 +2629,7 @@ button.vandaag-kern:active { background: color-mix(in srgb, var(--accent) 9%, tr
 .quote::before {
   content: "";
   position: absolute;
-  inset: -34% -22% -26%;
+  inset: -34% calc(var(--pad-x, 1.15rem) * -1) -26%;
   z-index: -1;
   pointer-events: none;
   background: radial-gradient(58% 60% at 28% 52%, color-mix(in srgb, var(--accent) 17%, transparent), transparent 72%);
@@ -3047,7 +3047,7 @@ body:has(.scherm-oplichten) .motief { opacity: 0; }
   .kamer-blad, .blad-achter { transition-duration: 1ms; }
 }
 
-/* ── De kamer zelf ────────────────────────────────────────────────────── */
+/* ── De kamer zelf: vult het hele scherm ─────────────────────────────── */
 #app:has(.scherm-binnen) { padding: 0; justify-content: flex-start; }
 .scherm-binnen {
   position: fixed;
@@ -3058,43 +3058,147 @@ body:has(.scherm-oplichten) .motief { opacity: 0; }
   gap: 0;
   align-items: stretch;
   text-align: left;
-  overflow-y: auto;
+  overflow: hidden;
+  animation: none;
 }
-.binnen-kolom { position: relative; width: min(100%, 30rem); min-height: 100%; margin: 0 auto; display: flex; flex-direction: column; }
-/* De ruimte loopt door tot de rand: de scène is de hele bovenkant. */
+/* De scène is het hele scherm; het tekstpaneel ligt eroverheen op de vloer. */
 .binnen-scene {
-  position: relative;
+  position: absolute;
+  inset: 0;
   margin: 0;
-  aspect-ratio: 360 / 320;
-  flex: none;
   background: color-mix(in srgb, var(--accent) 8%, var(--grond));
   animation: binnen-in 700ms var(--ease-uit) backwards;
 }
+.binnen-scene .ks-svg { display: block; width: 100%; height: 100%; }
 .binnen-scene::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.35), transparent 22%, transparent 70%, var(--grond));
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), transparent 18%);
 }
 @keyframes binnen-in { from { opacity: 0; } }
-.binnen-kop { position: absolute; top: 0; left: 0; padding: calc(0.8rem + env(safe-area-inset-top)) 1rem 0; z-index: 3; }
+.binnen-kop { position: absolute; top: 0; left: 0; z-index: 3; padding: calc(0.8rem + env(safe-area-inset-top)) max(1rem, env(safe-area-inset-left)) 0; }
 .binnen-kop .terug-knop { margin: 0; }
 .binnen-voet {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ruimte-2);
-  flex: 1;
-  padding: var(--ruimte-1) 1.4rem calc(1.6rem + env(safe-area-inset-bottom));
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 3.2rem max(var(--pad-x), env(safe-area-inset-right)) var(--pad-onder) max(var(--pad-x), env(safe-area-inset-left));
+  background: linear-gradient(to top, color-mix(in srgb, var(--grond) 94%, transparent) 58%, transparent);
   animation: kamer-in 520ms var(--ease-uit) 260ms backwards;
 }
-.binnen-naam { margin: 0; font-size: 2rem; font-weight: 400; line-height: 1.1; letter-spacing: -0.025em; }
+.binnen-tekst { width: 100%; max-width: 30rem; margin: 0 auto; display: flex; flex-direction: column; gap: var(--ruimte-2); }
+.binnen-naam { margin: 0; font-size: clamp(1.7rem, 7vw, 2.1rem); font-weight: 400; line-height: 1.1; letter-spacing: -0.025em; }
 .binnen-doel { margin: 0; font-size: 0.98rem; color: var(--voorgrond-zacht); }
-.binnen-status { margin: var(--ruimte-3) 0 0; font-family: var(--serif); font-size: 1.15rem; line-height: 1.45; color: var(--voorgrond); text-wrap: pretty; }
+.binnen-status { margin: var(--ruimte-2) 0 0; font-family: var(--serif); font-size: clamp(1.05rem, 4.4vw, 1.2rem); line-height: 1.4; color: var(--voorgrond); text-wrap: pretty; }
 .binnen-recent { margin: 0; font-size: var(--tekst-klein); line-height: 1.5; color: var(--voorgrond-zwak); }
-.binnen-actie { margin-top: auto; align-self: stretch; }
+.binnen-actie { margin-top: var(--ruimte-3); align-self: stretch; }
 body:has(.scherm-binnen) .motief { opacity: 0; }
 body:has(.scherm-binnen) .motief * { animation-play-state: paused !important; }
-@media (prefers-reduced-motion: reduce) {
-  .binnen-scene, .binnen-voet { animation: none; }
+/* Landscape en lage vensters: de scène links, het tekstpaneel als kolom rechts. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .scherm-binnen { display: flex; flex-direction: row; }
+  .binnen-scene { position: relative; inset: auto; flex: 1 1 auto; min-width: 0; }
+  .binnen-voet {
+    position: relative;
+    inset: auto;
+    flex: 0 0 min(22rem, 44%);
+    display: flex;
+    align-items: center;
+    overflow-y: auto;
+    padding: 1rem max(1.2rem, env(safe-area-inset-right)) calc(1rem + env(safe-area-inset-bottom)) 1.2rem;
+    background: color-mix(in srgb, var(--grond) 94%, transparent);
+  }
 }
+@media (prefers-reduced-motion: reduce) { .binnen-scene, .binnen-voet { animation: none; } }
+
+/* ══════════════════════════════════════════════════════════════════════
+   v31 — Layout, verhoudingen, scrollen en iOS
+
+   Wat er fout ging: twee decoratieve pseudo-elementen (.visie-hero::before en
+   .quote::before) stonden 14%/22% buiten hun kolom en verbreedden het
+   document (421 px scrollbreedte op een scherm van 390). Die zijn nu aan de
+   bron begrensd. Daarnaast: een vaste basis voor marges (tokens), dvh in
+   plaats van vh, veilige randen voor iPhone, en zachtere scroll-effecten.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Ruimte aan de zijkant, boven en onder: schaalt mee, met vaste grenzen. */
+  --pad-x: clamp(1rem, 4.6vw, 1.5rem);
+  --pad-boven: clamp(0.9rem, 2.4dvh, 1.4rem);
+  --pad-onder: calc(clamp(1.4rem, 3.4dvh, 2.4rem) + env(safe-area-inset-bottom));
+  --kolom: 460px;
+}
+@media (min-width: 720px) { :root { --kolom: 520px; } }
+
+/* De pagina zelf: nooit horizontaal scrollen, ook niet door een beweging. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; overflow-x: hidden; overscroll-behavior-x: none; }
+body { overflow-x: clip; touch-action: pan-y; }
+#app { overflow-x: clip; }
+/* iOS zoomt in bij het focussen van een veld kleiner dan 16 px. */
+input, textarea, select { font-size: max(16px, 1em); }
+
+.scherm-app { max-width: min(100%, var(--kolom)); }
+#app:has(.scherm-hal),
+#app:has(.scherm-kamer) {
+  padding: var(--pad-boven) max(var(--pad-x), env(safe-area-inset-right)) var(--pad-onder) max(var(--pad-x), env(safe-area-inset-left));
+}
+
+/* ── De startpagina als één samenhangend geheel ─────────────────────────
+   Bovenaan de groet, in het midden de visie (die de vrije ruimte in beslag
+   neemt), onderaan wat je nu kunt doen en de kamers, binnen duimbereik.
+   Op een lange telefoon groeit dus de ruimte rond de visie, niet de kaarten. */
+.scherm-hal { flex: 1 0 auto; display: flex; flex-direction: column; }
+.scherm-hal > .visie-hero { flex: 1 1 auto; justify-content: center; min-height: 8.5rem; }
+.scherm-hal > .hal-kop { flex: none; }
+.hal-titel { font-size: clamp(1.6rem, 6.4vw, 2rem); }
+.visie-hero-zin { font-size: clamp(1.55rem, 7vw, 2.15rem); }
+.kamerdeuren { gap: clamp(0.5rem, 2.4vw, 0.8rem); margin-top: var(--ruimte-3); }
+.scherm-hal .vandaag { flex: none; }
+.dock-knop { font-size: clamp(0.74rem, 3.3vw, 0.82rem); }
+/* Lage schermen (iPhone SE, landscape): compacter, zodat het niet eindeloos scrolt. */
+@media (max-height: 820px) {
+  .kamerdeur { aspect-ratio: 1 / 0.9; padding-bottom: 0.65rem; }
+  .visie-hero { padding-top: var(--ruimte-3); padding-bottom: var(--ruimte-2); }
+  .vandaag-kern { padding: 1rem 1.15rem 0.9rem; }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+  .kamerdeuren { grid-template-columns: repeat(6, 1fr); }
+  .kamerdeur { aspect-ratio: 1 / 1.1; }
+}
+
+/* ── De hal van het huis: past in de beschikbare ruimte, met de rest als wand ── */
+.wereld-hal { container-type: size; }
+.hal-vak { height: min(100%, 138.9vw); border-radius: 0; overflow: visible; }
+@supports (width: 1cqw) { .hal-vak { height: min(100%, 138.9cqw); } }
+.hal-svg { overflow: visible; border-radius: 0; }
+.huis-buiten-svg { max-height: calc(100dvh - 12rem); }
+@media (max-height: 520px) and (orientation: landscape) {
+  .wereld-hal { top: calc(3.4rem + env(safe-area-inset-top)); bottom: calc(4rem + env(safe-area-inset-bottom)); }
+  .wereld-buiten { bottom: calc(4rem + env(safe-area-inset-bottom)); }
+  .huis-buiten-svg { max-height: calc(100dvh - 7.5rem); }
+  .huis-sheet { flex-direction: row; justify-content: center; align-items: center; gap: 1.2rem; padding: 0.5rem 1rem calc(0.6rem + env(safe-area-inset-bottom)); }
+  .huis-sheet .knop { width: auto; padding-inline: 1.6rem; }
+  .huis-kop { padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right)); }
+}
+.huis-kop { padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right)); }
+
+/* ── Scrollen: alleen wat de compositor gratis kan ─────────────────────────
+   - Het gloeiende mesh bewoog met geanimeerde gradiënt-posities (elk frame
+     opnieuw tekenen van een schermvullend vlak). Nu beweegt één laag met
+     transform, op de GPU.
+   - De korrel gebruikte mix-blend-mode over het hele scherm; een blend over
+     een vaste laag dwingt iOS bij elke scrollstap tot opnieuw samenstellen.
+   - Terwijl je scrolt staan de bewegende omgevingen stil (body.scrolt). */
+.sfeer-mesh { inset: -8%; will-change: transform; animation: mesh-drift 70s ease-in-out infinite alternate; }
+@keyframes mesh-drift {
+  from { transform: translate3d(-1.5%, -1%, 0) scale(1); }
+  to { transform: translate3d(1.5%, 1.2%, 0) scale(1.05); }
+}
+.sfeer-korrel { mix-blend-mode: normal; opacity: 0.035; }
+body.scrolt .motief *, body.scrolt .lucht-wolk, body.scrolt .sfeer-mesh { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) { .sfeer-mesh { animation: none; } }
+body.rustig .sfeer-mesh { animation: none; }

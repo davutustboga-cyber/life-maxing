@@ -1108,6 +1108,53 @@ function lijstZin(delen) {
         return delen.join("");
     return `${delen.slice(0, -1).join(", ")} en ${delen[delen.length - 1]}`;
 }
+/**
+ * De kamer vult het hele scherm, zonder zwarte randen en zonder vervorming.
+ *
+ * De tekening is onbegrensd (wand en vloer lopen door); alleen de viewBox
+ * bepaalt wat je ziet. Die wordt hier steeds berekend uit de werkelijke maat van
+ * het vak en de hoogte van het tekstpaneel eronder, dus bij elk scherm
+ * (klein of groot toestel, portrait of landscape, met of zonder browserbalk) en
+ * bij elke verandering van grootte:
+ *   - de schaal is de grootste waarmee de kamer (INHOUD eenheden hoog en 360
+ *     breed) nog past tussen de kop en het tekstpaneel;
+ *   - blijft er hoogte over (een lange, smalle telefoon), dan wordt dat extra
+ *     plafond (55%) en vloer (45%, onder het tekstpaneel), niet uitgerekt;
+ *   - blijft er breedte over (desktop, landscape), dan loopt de wand door naar
+ *     de zijkanten.
+ * Geen 100vh: het vak is een vaste laag (`inset: 0`) en volgt dus de zichtbare
+ * ruimte van iOS Safari, ook als de adresbalk in- of uitklapt.
+ */
+function koppelKamerpassing(scene, voet) {
+    const svg = scene.querySelector("svg");
+    if (!svg)
+        return;
+    const INHOUD = 250; // van y = -10 (lampen) tot y = 240 (kleden op de vloer)
+    const KOP = 56; // de terugknop bovenaan
+    const pas = () => {
+        const cw = scene.clientWidth;
+        const ch = scene.clientHeight;
+        if (!cw || !ch)
+            return;
+        const overlay = getComputedStyle(voet).position === "absolute";
+        const voetH = overlay ? voet.offsetHeight : 0;
+        const vrij = Math.max(80, ch - voetH - KOP);
+        const u = Math.min(cw / 360, vrij / INHOUD);
+        const vw = cw / u;
+        const vh = ch / u;
+        const extra = Math.max(0, vrij - INHOUD * u);
+        const y0 = -10 - (KOP + extra * 0.55) / u;
+        svg.setAttribute("viewBox", `${((360 - vw) / 2).toFixed(1)} ${y0.toFixed(1)} ${vw.toFixed(1)} ${vh.toFixed(1)}`);
+    };
+    const ro = new ResizeObserver(() => {
+        if (!scene.isConnected)
+            return ro.disconnect();
+        pas();
+    });
+    ro.observe(scene);
+    ro.observe(voet);
+    pas();
+}
 export function toonKamerBinnen(id) {
     const kamer = kamerById(id);
     if (!kamer)
@@ -1116,27 +1163,30 @@ export function toonKamerBinnen(id) {
     const aan = objectenAan(data)[id] ?? [];
     const uit = Boolean(kamer.islamitisch && !islamAan());
     const recent = (OBJECT_NAMEN[id] ?? []).filter((_, i) => aan[i]).slice(-3);
-    render([
-        el("div", { class: "scherm scherm-binnen", "data-kamer": id }, [
-            el("div", { class: "binnen-kolom" }, [
-                el("figure", { class: "binnen-scene", html: kamerSceneSvg(id, aan, null, true) }, []),
-                el("div", { class: "binnen-kop" }, [terugKnop(() => toonHuis("hal"))]),
-                el("div", { class: "binnen-voet" }, [
-                    el("h1", { class: "binnen-naam" }, [kamer.naam]),
-                    el("p", { class: "binnen-doel" }, [kamer.doel]),
-                    id === "motivatie" ? null : el("p", { class: "binnen-status" }, [uit ? "De islamitische ruimte staat uit." : kamerStatusRegel(id)]),
-                    !uit && recent.length ? el("p", { class: "binnen-recent" }, [`Het laatst erbij: ${lijstZin(recent)}.`]) : null,
-                    el("button", {
-                        class: "knop binnen-actie",
-                        onclick: () => {
-                            kamerHerkomst = "kamer";
-                            toonKamer(id);
-                        },
-                    }, ["Werk verder aan deze kamer"]),
-                ]),
-            ]),
+    const scene = el("figure", { class: "binnen-scene", html: kamerSceneSvg(id, aan, null, "0 -60 360 320") }, []);
+    const voet = el("div", { class: "binnen-voet" }, [
+        el("div", { class: "binnen-tekst" }, [
+            el("h1", { class: "binnen-naam" }, [kamer.naam]),
+            el("p", { class: "binnen-doel" }, [kamer.doel]),
+            id === "motivatie" ? null : el("p", { class: "binnen-status" }, [uit ? "De islamitische ruimte staat uit." : kamerStatusRegel(id)]),
+            !uit && recent.length ? el("p", { class: "binnen-recent" }, [`Het laatst erbij: ${lijstZin(recent)}.`]) : null,
+            el("button", {
+                class: "knop binnen-actie",
+                onclick: () => {
+                    kamerHerkomst = "kamer";
+                    toonKamer(id);
+                },
+            }, ["Werk verder aan deze kamer"]),
         ]),
     ]);
+    render([
+        el("div", { class: "scherm scherm-binnen", "data-kamer": id }, [
+            scene,
+            el("div", { class: "binnen-kop" }, [terugKnop(() => toonHuis("hal"))]),
+            voet,
+        ]),
+    ]);
+    koppelKamerpassing(scene, voet);
 }
 function kamerStatusRegel(id) {
     const k = kamerById(id);

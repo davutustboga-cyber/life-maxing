@@ -51,6 +51,15 @@ if ("serviceWorker" in navigator) {
         herladenAlBezig = true;
         window.location.reload();
     });
+    // Terwijl je scrolt staan de bewegende achtergronden stil: scrollen mag nooit
+    // concurreren met animaties (vooral op iOS). Eén passieve luisteraar, één
+    // klasse; na een korte stilte gaat alles weer verder.
+    let scrolTimer = 0;
+    window.addEventListener("scroll", () => {
+        document.body.classList.add("scrolt");
+        window.clearTimeout(scrolTimer);
+        scrolTimer = window.setTimeout(() => document.body.classList.remove("scrolt"), 180);
+    }, { passive: true });
     let registratie = null;
     window.addEventListener("load", () => {
         navigator.serviceWorker
