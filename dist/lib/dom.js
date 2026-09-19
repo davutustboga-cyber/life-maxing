@@ -63,7 +63,23 @@ export function root() {
  * echte zoom, maar de browser die de scroll herstelt. Terug naar boven vóór
  * de wissel voorkomt dat de browser ooit iets hoeft te herstellen.
  */
+/**
+ * Telt de getoonde schermen. Een vertraagde navigatie ("na 1,4 s naar het volgende
+ * scherm") onthoudt bij welk scherm hij begon en doet niets meer als je
+ * inmiddels ergens anders bent: anders trekt hij je na een tik op "terug" alsnog
+ * weg van waar je naartoe was gegaan.
+ */
+let schermTeller = 0;
+/** Voert `actie` na `ms` uit, maar alleen als er sindsdien geen ander scherm is getoond. */
+export function naVertraging(ms, actie) {
+    const teller = schermTeller;
+    setTimeout(() => {
+        if (teller === schermTeller)
+            actie();
+    }, ms);
+}
 export function render(children) {
+    schermTeller++;
     window.scrollTo(0, 0);
     const nodes = children.filter(Boolean);
     root().replaceChildren(...nodes);
@@ -80,9 +96,12 @@ export function render(children) {
 /** Dimt het scherm en voert dan de callback uit — voor S7 (Afsluiten). */
 export function dimEnDan(callback, ms = 1400) {
     const app = root();
+    const teller = schermTeller;
     app.classList.add("fade-uit");
     setTimeout(() => {
-        callback();
+        // Ben je tijdens het dimmen al ergens anders heen gegaan, dan blijft dat zo.
+        if (teller === schermTeller)
+            callback();
         app.classList.remove("fade-uit");
     }, ms);
 }

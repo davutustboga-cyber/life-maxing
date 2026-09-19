@@ -45,7 +45,10 @@ function boogAfstand(x, y) {
   return Math.max(d, y - BODEM);
 }
 
-function pixel(x, y) {
+function pixel(px0, py0, schaal) {
+  // Een maskable icoon moet binnen de veilige zone (80% cirkel) blijven: de tekening wordt kleiner.
+  const x = (px0 - 0.5) / schaal + 0.5;
+  const y = (py0 - 0.5) / schaal + 0.5;
   // achtergrond: donker, met een warme gloed onder het midden
   const gx = x - 0.5;
   const gy = y - 0.62;
@@ -77,7 +80,7 @@ function pixel(x, y) {
   return c;
 }
 
-function teken(maat) {
+function teken(maat, schaal) {
   const SS = 4;
   const data = Buffer.alloc(maat * (maat * 3 + 1));
   for (let py = 0; py < maat; py++) {
@@ -86,7 +89,7 @@ function teken(maat) {
       let r = 0, g = 0, b = 0;
       for (let sy = 0; sy < SS; sy++) {
         for (let sx = 0; sx < SS; sx++) {
-          const c = pixel((px + (sx + 0.5) / SS) / maat, (py + (sy + 0.5) / SS) / maat);
+          const c = pixel((px + (sx + 0.5) / SS) / maat, (py + (sy + 0.5) / SS) / maat, schaal);
           r += c[0]; g += c[1]; b += c[2];
         }
       }
@@ -123,7 +126,7 @@ function brok(type, inhoud) {
   crc.writeUInt32BE(crc32(kern));
   return Buffer.concat([lengte, kern, crc]);
 }
-function png(maat) {
+function png(maat, schaal = 1) {
   const kop = Buffer.alloc(13);
   kop.writeUInt32BE(maat, 0);
   kop.writeUInt32BE(maat, 4);
@@ -132,7 +135,7 @@ function png(maat) {
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     brok("IHDR", kop),
-    brok("IDAT", zlib.deflateSync(teken(maat), { level: 9 })),
+    brok("IDAT", zlib.deflateSync(teken(maat, schaal), { level: 9 })),
     brok("IEND", Buffer.alloc(0)),
   ]);
 }
@@ -140,8 +143,8 @@ function png(maat) {
 const map = path.join(__dirname, "..", "public", "icons");
 // Nieuwe bestandsnamen: de service worker bewaart iconen cache-eerst, dus een
 // nieuw icoon op een oude naam zou bij bestaande gebruikers nooit aankomen.
-const uit = { "lm-180.png": 180, "lm-192.png": 192, "lm-512.png": 512, "lm-maskable-512.png": 512 };
-for (const [naam, maat] of Object.entries(uit)) {
-  fs.writeFileSync(path.join(map, naam), png(maat));
+const uit = { "lm-180.png": [180, 1], "lm-192.png": [192, 1], "lm-512.png": [512, 1], "lm-maskable-512.png": [512, 0.84] };
+for (const [naam, [maat, schaal]] of Object.entries(uit)) {
+  fs.writeFileSync(path.join(map, naam), png(maat, schaal));
   console.log("geschreven:", naam, maat + "×" + maat);
 }

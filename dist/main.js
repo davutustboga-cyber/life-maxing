@@ -44,9 +44,17 @@ if ("serviceWorker" in navigator) {
     // huidige pagina nog opgebouwd uit de oude bestanden. Eén stille herlaad
     // hierop, in plaats van dat je zelf de cache moet legen of de app opnieuw
     // moet installeren om een wijziging te zien.
+    // Twee uitzonderingen: de allereerste installatie (er was nog geen oude
+    // versie, dus niets om van te herladen) en een veld waar je net iets in
+    // typte (dat zou je tekst kosten; de nieuwe versie komt dan bij het volgende
+    // openen).
     let herladenAlBezig = false;
+    const wasAlBeheerd = Boolean(navigator.serviceWorker.controller);
     navigator.serviceWorker.addEventListener("controllerchange", () => {
-        if (herladenAlBezig)
+        if (herladenAlBezig || !wasAlBeheerd)
+            return;
+        const typt = [...document.querySelectorAll("textarea, input[type=text]")].some((v) => v.value.trim());
+        if (typt)
             return;
         herladenAlBezig = true;
         window.location.reload();

@@ -121,8 +121,25 @@ export function parseGeimporteerdBestand(tekst) {
             const samengesteld = {
                 ...leeg,
                 ...data,
-                instellingen: { ...leeg.instellingen, ...(data.instellingen ?? {}) },
+                instellingen: { ...leeg.instellingen, ...(typeof data.instellingen === "object" && data.instellingen ? data.instellingen : {}) },
             };
+            // Een veld met het verkeerde type (een lijst die een tekst is, een tekst die
+            // een getal is) breekt elk scherm dat het leest, en een geïmporteerd bestand
+            // wordt meteen bewaard: dan zit de app vast. Zo'n veld valt terug op de
+            // standaard; de rest van het bestand blijft heel.
+            for (const sleutel of Object.keys(leeg)) {
+                const standaard = leeg[sleutel];
+                const waarde = samengesteld[sleutel];
+                if (standaard === null || standaard === undefined)
+                    continue;
+                const goed = Array.isArray(standaard)
+                    ? Array.isArray(waarde)
+                    : typeof standaard === "object"
+                        ? typeof waarde === "object" && waarde !== null && !Array.isArray(waarde)
+                        : typeof waarde === typeof standaard;
+                if (!goed)
+                    samengesteld[sleutel] = standaard;
+            }
             // v27 — een ster met een onbekende streek zou De Hemel breken. Alleen
             // die ster laten we weg; de rest van het bestand blijft heel.
             samengesteld.sterren = samengesteld.sterren.filter((s) => s && typeof s === "object" && STREKEN.includes(s.streek));

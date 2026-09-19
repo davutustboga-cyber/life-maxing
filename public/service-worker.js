@@ -83,8 +83,13 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        const kopie = response.clone();
-        caches.open(CACHE_NAAM).then((cache) => cache.put(event.request, kopie));
+        // Alleen een heel, gewoon antwoord van onze eigen server gaat de cache in.
+        // Een 404 of 500 zou anders een goed bewaarde kopie overschrijven, en een
+        // deelantwoord (206) kan niet bewaard worden en gooit een fout.
+        if (response.ok && response.status === 200 && response.type === "basic") {
+          const kopie = response.clone();
+          caches.open(CACHE_NAAM).then((cache) => cache.put(event.request, kopie)).catch(() => {});
+        }
         return response;
       })
       .catch(() => caches.match(event.request).then((match) => match || geenVerbinding()))

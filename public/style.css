@@ -33,7 +33,7 @@
   --achtergrond: var(--ground);
   --voorgrond: var(--ink);
   --voorgrond-zacht: rgba(237, 233, 222, 0.66);
-  --voorgrond-zwak: rgba(237, 233, 222, 0.5); /* v27: was 0.40 = 3,3:1; 0.50 = 4,6:1 (WCAG AA) */
+  --voorgrond-zwak: rgba(237, 233, 222, 0.58); /* v27: was 0.40 = 3,3:1; 0.50 = 4,6:1 (WCAG AA); v32: 0.58 voor marge op kamers met een lichte gloed */
   --lijn: rgba(237, 233, 222, 0.14);
   --lijn-sterk: rgba(237, 233, 222, 0.26);
   --lijn-warm: rgba(212, 161, 58, 0.4);
@@ -3136,7 +3136,8 @@ body:has(.scherm-binnen) .motief * { animation-play-state: paused !important; }
 
 /* De pagina zelf: nooit horizontaal scrollen, ook niet door een beweging. */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; overflow-x: hidden; overscroll-behavior-x: none; }
-body { overflow-x: clip; touch-action: pan-y; }
+/* Verticaal scrollen en knijpen om te zoomen blijven; zijwaarts slepen niet. */
+body { overflow-x: clip; touch-action: pan-y pinch-zoom; }
 #app { overflow-x: clip; }
 /* iOS zoomt in bij het focussen van een veld kleiner dan 16 px. */
 input, textarea, select { font-size: max(16px, 1em); }

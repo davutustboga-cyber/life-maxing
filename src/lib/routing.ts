@@ -220,7 +220,7 @@ export function eersteStapVoorKamer(
   isGedaan: (sleutel: string) => boolean,
   dagIndex: number
 ): Suggestie | null {
-  const lijst = (KAMER_STAPPEN[kamerId] ?? []).filter((s) => kamerId !== "geloof" || data.instellingen.islamitischeLaag);
+  const lijst = (KAMER_STAPPEN[kamerId] ?? []).filter(() => kamerId !== "geloof" || data.instellingen.islamitischeLaag);
   const kandidaten = lijst.filter((s) => !isGedaan(`${s.soort}:${s.id}`));
   const bron = kandidaten.length ? kandidaten : lijst;
   if (bron.length === 0) return null;

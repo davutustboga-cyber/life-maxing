@@ -171,7 +171,7 @@ export const KAMER_STAPPEN = {
 };
 /** De eerste stap van deze kamer voor vandaag, met de reden erbij. */
 export function eersteStapVoorKamer(kamerId, data, isGedaan, dagIndex) {
-    const lijst = (KAMER_STAPPEN[kamerId] ?? []).filter((s) => kamerId !== "geloof" || data.instellingen.islamitischeLaag);
+    const lijst = (KAMER_STAPPEN[kamerId] ?? []).filter(() => kamerId !== "geloof" || data.instellingen.islamitischeLaag);
     const kandidaten = lijst.filter((s) => !isGedaan(`${s.soort}:${s.id}`));
     const bron = kandidaten.length ? kandidaten : lijst;
     if (bron.length === 0)

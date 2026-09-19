@@ -9,7 +9,6 @@ import {
   nooitPerZone,
   ONDERDRUKKING_DAGEN,
   type DeurSlot,
-  type RotatieOptie,
 } from "../data/selectie.js";
 import { bewegingById } from "../data/bewegingen.js";
 

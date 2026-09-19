@@ -3,7 +3,7 @@
 // (S1 → S2 → S3 → S4 → (S5 → S6) → S7).
 import { laadBestand, bewaarBestand, wisBestand, exporteerBestand, parseGeimporteerdBestand } from "./lib/db.js";
 import { zetMeldingenAan, zetMeldingenUit } from "./lib/meldingen.js";
-import { el, render, dimEnDan } from "./lib/dom.js";
+import { el, render, dimEnDan, naVertraging } from "./lib/dom.js";
 import { tekenSchijf, tekenHemel, tekenSterrenbeeldModus, tekenVerschil, nauwelijksVerschoven, } from "./lib/canvas.js";
 import { toonThuis, toonVisieIntro, toonDoen, toonTerugkijken, toonKamer, toonCheckIn, toonAvondRoutine, toonHuisOplichten, } from "./kamers.js";
 import { kamerVanSter, markeerHuisGezien } from "./lib/huis.js";
@@ -19,7 +19,7 @@ import { registreerPerfectionismeCheck, registreerFrictieAangeboden, } from "./l
 import { kwaliteiten, kwaliteitById } from "./data/kwaliteiten.js";
 import { huidigeDagSleutel, registreerGedaan, } from "./lib/ritme.js";
 import { dhikrById } from "./data/adhkar.js";
-import { themas } from "./data/themas.js";
+import { themas, } from "./data/themas.js";
 import { dagdeelVan, dagdeelGroep, suggestieSleutel, } from "./lib/nu.js";
 import { alleWoorden } from "./data/woorden.js";
 import { visieDelen } from "./lib/visie.js";
@@ -242,7 +242,7 @@ function toonS1(beginPositie = null) {
     }, {
         rustig: data.instellingen.rustigeBeelden,
         beginPositie,
-        onKlaar: () => setTimeout(() => toonS2(), 220),
+        onKlaar: () => naVertraging(220, () => toonS2()),
     });
 }
 // ── S2 — Woordkeuze ────────────────────────────────────────────────────
@@ -423,7 +423,7 @@ export function kiesDeurNu(id) {
         render([
             el("div", { class: "scherm" }, [el("p", { class: "vraag" }, [teksten.deuren.nietsDoen.bijKiezen])]),
         ]);
-        setTimeout(() => toonS7(), 1600);
+        naVertraging(1600, () => toonS7());
     }
     else {
         toonS5(id);
@@ -481,7 +481,7 @@ export function toonS4(openWaarom = new Set()) {
         // teksten.yaml: "opent het kompas opnieuw op dezelfde plek, klaar om te
         // verzetten" — niet op een leeg scherm, want dan verzet je niets maar
         // begin je opnieuw.
-        setTimeout(() => toonS1(huidigeTikPositie), 1400);
+        naVertraging(1400, () => toonS1(huidigeTikPositie));
     }
     const kaarten = deuren.map((id) => {
         if (id === "niets-doen") {
@@ -639,7 +639,7 @@ function toonS6(streek) {
     }, {
         rustig: data.instellingen.rustigeBeelden,
         // Het Verschil verschijnt pas als je loslaat, niet tijdens het slepen.
-        onKlaar: () => setTimeout(toonHetVerschil, 250),
+        onKlaar: () => naVertraging(250, toonHetVerschil),
     });
 }
 // ── S7 — Afsluiten ────────────────────────────────────────────────────
@@ -1082,7 +1082,7 @@ function toonS15Beweging(bewegingId) {
 // Hooguit één per kalendermaand (meer.ts). Elk pad eindigt in S7.
 export function toonS17PerfectionismeCheck() {
     function eindigen() {
-        setTimeout(() => toonS7(), 1200);
+        naVertraging(1200, () => toonS7());
     }
     function toonAfsluitregel(tekst) {
         render([el("div", { class: "scherm" }, [el("p", { class: "vraag" }, [tekst])])]);
@@ -1546,15 +1546,6 @@ export function duurTekst(bewegingId) {
     const [van, tot] = b.kosten.tijdMinuten;
     return van === tot ? `${van} min` : `${van}–${tot} min`;
 }
-function rijKnop(titel, onder, actie) {
-    return el("button", { class: "rij-knop", onclick: actie }, [
-        el("span", { class: "rij-tekst" }, [
-            el("span", { class: "rij-titel" }, [titel]),
-            el("span", { class: "rij-onder" }, [onder]),
-        ]),
-        el("span", { class: "rij-chevron", "aria-hidden": "true" }, ["›"]),
-    ]);
-}
 function stappenVan(script) {
     const delen = script
         .split(/(?<=[.!?])\s+/)
@@ -1878,6 +1869,8 @@ function toonPrikkelsLoslaten(opties) {
         ]);
         bijwerken();
         timerId = window.setInterval(() => {
+            if (!cijferEl.isConnected)
+                return stop(); // het scherm is al weg
             resterend--;
             if (resterend <= 0) {
                 stop();
@@ -1942,12 +1935,12 @@ function toonZintuigenTeller(opties) {
                 if (geteld >= stap.n) {
                     klaarMelding = true;
                     // Even laten landen, dan naar het volgende zintuig — of klaar.
-                    window.setTimeout(() => {
+                    naVertraging(650, () => {
                         if (fase === ZINTUIGEN.length - 1)
                             return opties.opKlaar();
                         fase += 1;
                         teken();
-                    }, 650);
+                    });
                 }
             },
         }, [el("span", { class: "telring-svg", html: telringSvg(stap.n) }, []), getal]);
@@ -2355,7 +2348,7 @@ function toonS24Plan(wish, outcome, obstacle) {
             data.conceptDoel = null;
             void bewaren();
             melding.textContent = teksten.doelen.bewaard;
-            setTimeout(() => toonDoen(), 900);
+            naVertraging(900, () => toonDoen());
         },
     }, [teksten.doelen.bewaren]);
     koppelDisabled(danVeld, knop);
@@ -2526,7 +2519,20 @@ export function toonS10() {
             meldingTekst,
             el("button", {
                 class: "knop-klein",
-                onclick: async () => {
+                onclick: async (e) => {
+                    // Dit wist alles. De export gaat vooraf, maar een download kan (vooral op
+                    // een iPhone-beginschermapp) stil mislukken: daarom eerst een tweede tik.
+                    const knop = e.currentTarget;
+                    if (knop.dataset.zeker !== "1") {
+                        const oud = knop.textContent;
+                        knop.dataset.zeker = "1";
+                        knop.textContent = "Zeker weten? Tik nog een keer: alles wordt gewist.";
+                        window.setTimeout(() => {
+                            knop.dataset.zeker = "";
+                            knop.textContent = oud;
+                        }, 6000);
+                        return;
+                    }
                     exporteerBestand(data);
                     await wisBestand();
                     data = await laadBestand();
@@ -2537,23 +2543,53 @@ export function toonS10() {
     ]);
 }
 // ── S11 — Import ──────────────────────────────────────────────────────
+/** "1 ster", "2 sterren". */
+function telWoord(n, enkel, meer) {
+    return `${n} ${n === 1 ? enkel : meer}`;
+}
 function toonS11() {
     const melding = el("p", { class: "zacht" }, [""]);
     const invoer = el("input", { type: "file", accept: "application/json" });
+    const bevestiging = el("div", { class: "import-bevestiging" }, []);
     invoer.addEventListener("change", async () => {
         const bestand = invoer.files?.[0];
         if (!bestand)
             return;
-        const tekst = await bestand.text();
+        bevestiging.replaceChildren();
+        melding.textContent = "";
+        melding.classList.remove("zacht--fout");
+        let tekst = "";
+        try {
+            tekst = await bestand.text();
+        }
+        catch {
+            tekst = "";
+        }
         const geimporteerd = parseGeimporteerdBestand(tekst);
         if (!geimporteerd) {
             melding.textContent = teksten.legeStaten.importMislukt;
             melding.classList.add("zacht--fout");
             return;
         }
-        data = geimporteerd;
-        await bewaren();
-        toonThuis();
+        // Een geldig bestand is nog niet het juiste bestand: eerst laten zien wat er
+        // vervangen wordt, en pas op een tweede keuze doorvoeren.
+        bevestiging.append(el("p", { class: "zacht" }, [
+            `Dit bestand bevat ${telWoord(geimporteerd.sterren.length, "ster", "sterren")} en ${telWoord(geimporteerd.momenten.length, "moment", "momenten")}. ` +
+                `Je huidige gegevens (${telWoord(data.sterren.length, "ster", "sterren")}, ${telWoord(data.momenten.length, "moment", "momenten")}) worden hiermee vervangen.`,
+        ]), el("button", { class: "knop-klein", onclick: () => exporteerBestand(data) }, ["Eerst mijn huidige gegevens exporteren"]), el("button", {
+            class: "knop",
+            onclick: async () => {
+                data = geimporteerd;
+                await bewaren();
+                toonThuis();
+            },
+        }, ["Vervang mijn gegevens"]), el("button", {
+            class: "knop-klein",
+            onclick: () => {
+                bevestiging.replaceChildren();
+                invoer.value = "";
+            },
+        }, ["Annuleren"]));
     });
     render([
         el("div", { class: "scherm" }, [
@@ -2561,6 +2597,7 @@ function toonS11() {
             el("p", { class: "vraag" }, ["Bestand kiezen"]),
             invoer,
             melding,
+            bevestiging,
         ]),
     ]);
 }

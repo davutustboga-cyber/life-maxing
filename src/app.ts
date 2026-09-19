@@ -4,7 +4,6 @@
 
 import type {
   Beweging,
-  ConceptDagsluiting,
   ConceptDoel,
   LifeMaxingData,
   Maandbrief,
@@ -12,12 +11,11 @@ import type {
   Ster,
   Streek,
   Tijd,
-  VisiePeriode,
   Zone,
 } from "./lib/types.js";
 import { laadBestand, bewaarBestand, wisBestand, exporteerBestand, parseGeimporteerdBestand } from "./lib/db.js";
 import { zetMeldingenAan, zetMeldingenUit } from "./lib/meldingen.js";
-import { el, render, dimEnDan } from "./lib/dom.js";
+import { el, render, dimEnDan, naVertraging } from "./lib/dom.js";
 import {
   tekenSchijf,
   tekenHemel,
@@ -43,53 +41,30 @@ import { teksten } from "./data/teksten.js";
 import { bepaalZone, bepaalDeuren, registreerOnderdrukking } from "./lib/selection.js";
 import { aanbodVoorStreek } from "./lib/sterrenbeeld.js";
 import { vulBrievenAan, ongelezenBrief, briefOpschrift } from "./lib/maandbrief.js";
-import { weekmomentBeschikbaar, schrijfWeekmoment } from "./lib/weekmoment.js";
+import { schrijfWeekmoment } from "./lib/weekmoment.js";
 import {
-  perfectionismeCheckBeschikbaar,
   registreerPerfectionismeCheck,
-  frictieBeschikbaar,
   registreerFrictieAangeboden,
 } from "./lib/meer.js";
 import { kwaliteiten, kwaliteitById } from "./data/kwaliteiten.js";
 import {
   huidigeDagSleutel,
-  ochtendVandaagGedaan,
-  avondVandaagGedaan,
-  ochtendMomentVandaag,
-  voorVandaagVanGisteren,
-  dagVanJaar,
   registreerGedaan,
-  registreerAflevering,
-  afleveringGelezen,
-  dagdeelAfgerond,
-  vandaagAlGedaan,
 } from "./lib/ritme.js";
-import { adhkar, dhikrById } from "./data/adhkar.js";
-import { themas, themaById } from "./data/themas.js";
+import { dhikrById } from "./data/adhkar.js";
+import { themas, } from "./data/themas.js";
 import {
-  begroeting,
   dagdeelVan,
   dagdeelGroep,
-  datumregel,
-  slotRegels,
   suggestieSleutel,
-  suggestiesVoorNu,
-  eigenZinVanEerder,
-  verrasMe,
   type Suggestie,
 } from "./lib/nu.js";
 import { alleWoorden } from "./data/woorden.js";
-import { motivatiehoekVoorVandaag, type MotivatiehoekDag } from "./data/motivatiehoek.js";
 import { visieDelen } from "./lib/visie.js";
 import {
   visieBeschikbaarAlsIntro,
-  registreerVisieIntroAangeboden,
-  schrijfVisie,
-  periodeLabel,
   visieFragment,
-  visieFragmentZichtbaar,
   visieCheckInsVoor,
-  toekomstSignaal,
 } from "./lib/visie.js";
 
 export let data: LifeMaxingData;
@@ -338,7 +313,7 @@ function toonS1(beginPositie: { energie: number; toon: number } | null = null): 
     {
       rustig: data.instellingen.rustigeBeelden,
       beginPositie,
-      onKlaar: () => setTimeout(() => toonS2(), 220),
+      onKlaar: () => naVertraging(220, () => toonS2()),
     }
   );
 }
@@ -550,7 +525,7 @@ export function kiesDeurNu(id: string): void {
     render([
       el("div", { class: "scherm" }, [el("p", { class: "vraag" }, [teksten.deuren.nietsDoen.bijKiezen])]),
     ]);
-    setTimeout(() => toonS7(), 1600);
+    naVertraging(1600, () => toonS7());
   } else {
     toonS5(id);
   }
@@ -620,7 +595,7 @@ export function toonS4(openWaarom: Set<string> = new Set()): void {
     // teksten.yaml: "opent het kompas opnieuw op dezelfde plek, klaar om te
     // verzetten" — niet op een leeg scherm, want dan verzet je niets maar
     // begin je opnieuw.
-    setTimeout(() => toonS1(huidigeTikPositie), 1400);
+    naVertraging(1400, () => toonS1(huidigeTikPositie));
   }
 
   const kaarten = deuren.map((id) => {
@@ -798,7 +773,7 @@ function toonS6(streek: Streek): void {
     {
       rustig: data.instellingen.rustigeBeelden,
       // Het Verschil verschijnt pas als je loslaat, niet tijdens het slepen.
-      onKlaar: () => setTimeout(toonHetVerschil, 250),
+      onKlaar: () => naVertraging(250, toonHetVerschil),
     }
   );
 }
@@ -1319,7 +1294,7 @@ function toonS15Beweging(bewegingId: string): void {
 // Hooguit één per kalendermaand (meer.ts). Elk pad eindigt in S7.
 export function toonS17PerfectionismeCheck(): void {
   function eindigen(): void {
-    setTimeout(() => toonS7(), 1200);
+    naVertraging(1200, () => toonS7());
   }
 
   function toonAfsluitregel(tekst: string): void {
@@ -1873,15 +1848,6 @@ export function duurTekst(bewegingId: string): string {
   return van === tot ? `${van} min` : `${van}–${tot} min`;
 }
 
-function rijKnop(titel: string, onder: string, actie: () => void): ReturnType<typeof el> {
-  return el("button", { class: "rij-knop", onclick: actie }, [
-    el("span", { class: "rij-tekst" }, [
-      el("span", { class: "rij-titel" }, [titel]),
-      el("span", { class: "rij-onder" }, [onder]),
-    ]),
-    el("span", { class: "rij-chevron", "aria-hidden": "true" }, ["›"]),
-  ]);
-}
 
 
 // ── De oefening, stap voor stap ───────────────────────────────────────
@@ -2269,6 +2235,7 @@ function toonPrikkelsLoslaten(opties: OefeningOpties): void {
     ]);
     bijwerken();
     timerId = window.setInterval(() => {
+      if (!cijferEl.isConnected) return stop(); // het scherm is al weg
       resterend--;
       if (resterend <= 0) {
         stop();
@@ -2339,11 +2306,11 @@ function toonZintuigenTeller(opties: OefeningOpties): void {
           if (geteld >= stap.n) {
             klaarMelding = true;
             // Even laten landen, dan naar het volgende zintuig — of klaar.
-            window.setTimeout(() => {
+            naVertraging(650, () => {
               if (fase === ZINTUIGEN.length - 1) return opties.opKlaar();
               fase += 1;
               teken();
-            }, 650);
+            });
           }
         },
       },
@@ -2807,7 +2774,7 @@ function toonS24Plan(wish: string, outcome: string, obstacle: string): void {
       data.conceptDoel = null;
       void bewaren();
       melding.textContent = teksten.doelen.bewaard;
-      setTimeout(() => toonDoen(), 900);
+      naVertraging(900, () => toonDoen());
     },
   }, [teksten.doelen.bewaren]) as HTMLButtonElement;
   koppelDisabled(danVeld, knop);
@@ -3022,7 +2989,20 @@ export function toonS10(): void {
       meldingTekst,
       el("button", {
         class: "knop-klein",
-        onclick: async () => {
+        onclick: async (e: Event) => {
+          // Dit wist alles. De export gaat vooraf, maar een download kan (vooral op
+          // een iPhone-beginschermapp) stil mislukken: daarom eerst een tweede tik.
+          const knop = e.currentTarget as HTMLButtonElement;
+          if (knop.dataset.zeker !== "1") {
+            const oud = knop.textContent;
+            knop.dataset.zeker = "1";
+            knop.textContent = "Zeker weten? Tik nog een keer: alles wordt gewist.";
+            window.setTimeout(() => {
+              knop.dataset.zeker = "";
+              knop.textContent = oud;
+            }, 6000);
+            return;
+          }
           exporteerBestand(data);
           await wisBestand();
           data = await laadBestand();
@@ -3034,23 +3014,66 @@ export function toonS10(): void {
 }
 
 // ── S11 — Import ──────────────────────────────────────────────────────
+/** "1 ster", "2 sterren". */
+function telWoord(n: number, enkel: string, meer: string): string {
+  return `${n} ${n === 1 ? enkel : meer}`;
+}
+
 function toonS11(): void {
   const melding = el("p", { class: "zacht" }, [""]);
   const invoer = el("input", { type: "file", accept: "application/json" });
+  const bevestiging = el("div", { class: "import-bevestiging" }, []);
 
   invoer.addEventListener("change", async () => {
     const bestand = (invoer as HTMLInputElement).files?.[0];
     if (!bestand) return;
-    const tekst = await bestand.text();
+    bevestiging.replaceChildren();
+    melding.textContent = "";
+    melding.classList.remove("zacht--fout");
+    let tekst = "";
+    try {
+      tekst = await bestand.text();
+    } catch {
+      tekst = "";
+    }
     const geimporteerd = parseGeimporteerdBestand(tekst);
     if (!geimporteerd) {
       melding.textContent = teksten.legeStaten.importMislukt;
       melding.classList.add("zacht--fout");
       return;
     }
-    data = geimporteerd;
-    await bewaren();
-    toonThuis();
+    // Een geldig bestand is nog niet het juiste bestand: eerst laten zien wat er
+    // vervangen wordt, en pas op een tweede keuze doorvoeren.
+    bevestiging.append(
+      el("p", { class: "zacht" }, [
+        `Dit bestand bevat ${telWoord(geimporteerd.sterren.length, "ster", "sterren")} en ${telWoord(geimporteerd.momenten.length, "moment", "momenten")}. ` +
+          `Je huidige gegevens (${telWoord(data.sterren.length, "ster", "sterren")}, ${telWoord(data.momenten.length, "moment", "momenten")}) worden hiermee vervangen.`,
+      ]),
+      el("button", { class: "knop-klein", onclick: () => exporteerBestand(data) }, ["Eerst mijn huidige gegevens exporteren"]),
+      el(
+        "button",
+        {
+          class: "knop",
+          onclick: async () => {
+            data = geimporteerd;
+            await bewaren();
+            toonThuis();
+          },
+        },
+        ["Vervang mijn gegevens"]
+      ),
+      el(
+        "button",
+        {
+          class: "knop-klein",
+          onclick: () => {
+            bevestiging.replaceChildren();
+            (invoer as HTMLInputElement).value = "";
+          },
+        },
+        ["Annuleren"]
+      )
+    );
   });
 
   render([
@@ -3059,6 +3082,7 @@ function toonS11(): void {
       el("p", { class: "vraag" }, ["Bestand kiezen"]),
       invoer,
       melding,
+      bevestiging,
     ]),
   ]);
 }

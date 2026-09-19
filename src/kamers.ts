@@ -211,20 +211,6 @@ function kamerVanSuggestie(s: Suggestie): Kamer | null {
   }
 }
 
-/** Het aanbod van dit moment: één, met zijn kamer erbij. */
-function nuPaneel(s: Suggestie): ReturnType<typeof el> {
-  const kamer = kamerVanSuggestie(s);
-  const meta = [kamer?.naam, s.duur].filter(Boolean).join(" · ");
-  return el("button", { class: "nu-paneel", "data-kamer": kamer?.id ?? "vandaag", onclick: () => voerSuggestieUit(s) }, [
-    el("span", { class: "nu-titel" }, [s.titel]),
-    el("span", { class: "nu-waarom" }, [s.waaromNu]),
-    s.nieuw ? el("span", { class: "nu-nieuw" }, [teksten.nuRegels.nieuw]) : null,
-    el("span", { class: "nu-voet" }, [
-      el("span", { class: "nu-meta" }, [kamer ? glyph(kamer.glyph) : null, meta || "Vandaag"]),
-      el("span", { class: "nu-actie" }, ["Beginnen", glyph("verder")]),
-    ]),
-  ]);
-}
 
 function slotBlok(groep: ReturnType<typeof dagdeelGroep>): ReturnType<typeof el> {
   const r = slotRegels(groep);
@@ -613,7 +599,7 @@ export function toonKamerVisie(): void {
   render([
     kamerScherm("visie", [
       kamerBalk(
-        () => toonThuis(),
+        terugNaarHerkomst,
         el("button", { class: "tekst-knop", onclick: () => toonVisieSchrijven() }, [glyph("schrijven"), "Bewerken"])
       ),
       el("header", { class: "visie-kop" }, [
@@ -1298,6 +1284,19 @@ function toonKamerBlad(k: Kamer, opener: HTMLElement): void {
   if (!scherm || scherm.querySelector(".kamer-blad-laag")) return;
   const opToets = (e: KeyboardEvent): void => {
     if (e.key === "Escape") sluit();
+    // Het blad is modaal: Tab blijft binnen de twee keuzes.
+    if (e.key === "Tab") {
+      const keuzes = [...laag.querySelectorAll<HTMLButtonElement>(".kamer-blad button")];
+      const eerste = keuzes[0];
+      const laatste = keuzes[keuzes.length - 1];
+      if (e.shiftKey && document.activeElement === eerste) {
+        e.preventDefault();
+        laatste.focus();
+      } else if (!e.shiftKey && document.activeElement === laatste) {
+        e.preventDefault();
+        eerste.focus();
+      }
+    }
   };
   const ruim = (): void => document.removeEventListener("keydown", opToets);
   const sluit = (): void => {

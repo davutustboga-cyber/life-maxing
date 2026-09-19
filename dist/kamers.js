@@ -128,20 +128,6 @@ function kamerVanSuggestie(s) {
             return null;
     }
 }
-/** Het aanbod van dit moment: één, met zijn kamer erbij. */
-function nuPaneel(s) {
-    const kamer = kamerVanSuggestie(s);
-    const meta = [kamer?.naam, s.duur].filter(Boolean).join(" · ");
-    return el("button", { class: "nu-paneel", "data-kamer": kamer?.id ?? "vandaag", onclick: () => voerSuggestieUit(s) }, [
-        el("span", { class: "nu-titel" }, [s.titel]),
-        el("span", { class: "nu-waarom" }, [s.waaromNu]),
-        s.nieuw ? el("span", { class: "nu-nieuw" }, [teksten.nuRegels.nieuw]) : null,
-        el("span", { class: "nu-voet" }, [
-            el("span", { class: "nu-meta" }, [kamer ? glyph(kamer.glyph) : null, meta || "Vandaag"]),
-            el("span", { class: "nu-actie" }, ["Beginnen", glyph("verder")]),
-        ]),
-    ]);
-}
 function slotBlok(groep) {
     const r = slotRegels(groep);
     return el("div", { class: "slot-blok" }, [
@@ -492,7 +478,7 @@ export function toonKamerVisie() {
     const geschreven = new Date(visie.geschrevenOp).toLocaleDateString("nl-BE", { day: "numeric", month: "long", year: "numeric" });
     render([
         kamerScherm("visie", [
-            kamerBalk(() => toonThuis(), el("button", { class: "tekst-knop", onclick: () => toonVisieSchrijven() }, [glyph("schrijven"), "Bewerken"])),
+            kamerBalk(terugNaarHerkomst, el("button", { class: "tekst-knop", onclick: () => toonVisieSchrijven() }, [glyph("schrijven"), "Bewerken"])),
             el("header", { class: "visie-kop" }, [
                 el("h1", { class: "visie-titel" }, [`Ik, over ${periodeLabel(visie.periode)}`]),
                 el("p", { class: "visie-datum" }, [`Geschreven op ${geschreven}`]),
@@ -1057,6 +1043,20 @@ function toonKamerBlad(k, opener) {
     const opToets = (e) => {
         if (e.key === "Escape")
             sluit();
+        // Het blad is modaal: Tab blijft binnen de twee keuzes.
+        if (e.key === "Tab") {
+            const keuzes = [...laag.querySelectorAll(".kamer-blad button")];
+            const eerste = keuzes[0];
+            const laatste = keuzes[keuzes.length - 1];
+            if (e.shiftKey && document.activeElement === eerste) {
+                e.preventDefault();
+                laatste.focus();
+            }
+            else if (!e.shiftKey && document.activeElement === laatste) {
+                e.preventDefault();
+                eerste.focus();
+            }
+        }
     };
     const ruim = () => document.removeEventListener("keydown", opToets);
     const sluit = () => {
