@@ -23,8 +23,8 @@
 }
 
 :root {
-  --ground: #0a0d16;
-  --ink: #ede9de;
+  --ground: #110f16;
+  --ink: #f2ece1;
   --brass: #d4a13a;
   --dusk: #8b9bc0;
   --ember: #d97a5a;
@@ -33,12 +33,12 @@
   --achtergrond: var(--ground);
   --voorgrond: var(--ink);
   --voorgrond-zacht: rgba(237, 233, 222, 0.66);
-  --voorgrond-zwak: rgba(237, 233, 222, 0.4);
+  --voorgrond-zwak: rgba(237, 233, 222, 0.5); /* v27: was 0.40 = 3,3:1; 0.50 = 4,6:1 (WCAG AA) */
   --lijn: rgba(237, 233, 222, 0.14);
   --lijn-sterk: rgba(237, 233, 222, 0.26);
   --lijn-warm: rgba(212, 161, 58, 0.4);
-  --oppervlak: #131a29;
-  --oppervlak-hoog: #182238;
+  --oppervlak: #1a1821;
+  --oppervlak-hoog: #221f2c;
   --brass-gloed: rgba(212, 161, 58, 0.5);
   --brass-fel: #f0c674;
   --brass-diep: #9c6f22;
@@ -407,28 +407,6 @@ button {
   box-shadow: none;
 }
 
-/* Terwijl bewaren() bezig is (IndexedDB is vrijwel altijd synchroon-snel,
-   maar nooit gegarandeerd): een knop die weet dat hij aan het werk is, in
-   plaats van een tweede tik die een tweede schrijfactie zou starten. */
-.knop.bezig {
-  color: transparent;
-  pointer-events: none;
-}
-.knop.bezig::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 2px solid rgba(237, 233, 222, 0.25);
-  border-top-color: var(--voorgrond);
-  animation: bezig-draaien 700ms linear infinite;
-}
-@keyframes bezig-draaien {
-  to { transform: rotate(360deg); }
-}
 
 .knop-klein {
   background: transparent;
@@ -705,22 +683,11 @@ textarea:focus {
   outline-offset: 2px;
 }
 
-.hulplijst {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ruimte-4);
-  width: 100%;
-  text-align: left;
-}
 
-.hulplijn {
-  border-bottom: 1px solid var(--lijn);
-  padding-bottom: var(--ruimte-3);
-}
 
-.hulplijn strong {
-  font-size: var(--tekst-groot);
-}
+
+
+
 
 .lengte-link {
   background: none;
@@ -934,20 +901,6 @@ textarea:focus {
    duration` die toonAdemPacer() per fase zet, niet op een keyframe-lus zoals
    .ademvorm. ".rustig" (dezelfde instelling als elders) zet de overgang uit
    -- de cirkel springt dan gewoon meteen naar zijn nieuwe maat. */
-.adem-pacer-cirkel {
-  width: min(55vw, 220px);
-  height: min(55vw, 220px);
-  margin: var(--ruimte-5) auto 0;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, rgba(212, 161, 58, 0.32), rgba(212, 161, 58, 0.06) 70%);
-  box-shadow: 0 0 40px -8px rgba(212, 161, 58, 0.35), inset 0 0 30px rgba(212, 161, 58, 0.15);
-  transform: scale(0.85);
-  transition-property: transform;
-  transition-timing-function: linear;
-}
-.adem-pacer-cirkel.rustig {
-  transition: none !important;
-}
 .adem-pacer-getal {
   font-family: var(--serif);
   font-size: 2.6rem;
@@ -1059,10 +1012,7 @@ textarea:focus {
   to { opacity: 1; transform: translate(-50%, 0); }
 }
 
-.melding--succes {
-  border-color: var(--status-succes-rand);
-  color: var(--voorgrond);
-}
+
 .melding--fout {
   border-color: var(--status-fout-rand);
   color: var(--voorgrond);
@@ -1168,29 +1118,10 @@ textarea:focus {
 }
 
 /* ── kop van het startscherm ─────────────────────────────────────── */
-.thuis-kop { margin: 0 0 0.15rem; }
-.merk-kicker {
-  font-size: 0.66rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--brass);
-  opacity: 0.85;
-  margin: 0 0 0.5rem;
-}
-.thuis-groet {
-  font-family: var(--serif);
-  font-weight: 400;
-  font-size: 2rem;
-  line-height: 1.15;
-  margin: 0;
-  letter-spacing: -0.01em;
-  text-shadow: 0 1px 20px rgba(212, 161, 58, 0.1);
-}
-.thuis-datum {
-  font-size: var(--tekst-klein);
-  color: var(--voorgrond-zwak);
-  margin: 0.25rem 0 0;
-}
+
+
+
+
 
 .tab-kop {
   font-family: var(--serif);
@@ -1239,104 +1170,29 @@ textarea:focus {
 }
 .kaart:active { transform: scale(0.99); }
 
-.kaart-primair {
-  position: relative;
-  background: linear-gradient(165deg, var(--oppervlak-hoog), var(--oppervlak));
-  border: 1px solid var(--lijn-warm);
-  border-radius: 20px;
-  padding: 1.5rem 1.4rem 1.3rem;
-  box-shadow: var(--schaduw-zwevend), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  overflow: hidden;
-}
+
 /* een dunne messing gloedlijn bovenaan — het enige beeldelement dat de
    kaart als "hét" aanbod van dit moment markeert, geen zwaar frame. */
-.kaart-primair::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(240, 198, 116, 0.65), transparent);
-}
-.kaart-primair:hover,
-.kaart-primair:focus-visible {
-  border-color: rgba(212, 161, 58, 0.55);
-  box-shadow: var(--schaduw-gloed-brass), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  outline: none;
-}
-.kaart-label-rij {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ruimte-3);
-}
-.kaart-primair .kaart-label {
-  display: block;
-  font-size: 0.68rem;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--brass-fel);
-}
-.kaart-primair .kaart-titel {
-  display: block;
-  font-family: var(--serif);
-  font-size: 1.75rem;
-  line-height: 1.16;
-  margin: 0.45rem 0 0.05rem;
-  text-wrap: balance;
-}
-.kaart-primair .kaart-duur {
-  display: block;
-  font-size: var(--tekst-klein);
-  color: var(--voorgrond-zwak);
-}
-.kaart-primair .kaart-waarom {
-  display: block;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  color: var(--voorgrond-zacht);
-  margin-top: var(--ruimte-3);
-}
-.kaart-primair .kaart-actie {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-top: var(--ruimte-4);
-  padding: 0.5rem 1.05rem;
-  border-radius: 999px;
-  background: linear-gradient(160deg, var(--brass-fel), var(--brass) 60%, var(--brass-diep));
-  color: var(--op-tekst-op-brass);
-  font-size: var(--tekst-klein);
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  box-shadow: 0 8px 20px -8px rgba(212, 161, 58, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
-  transition: transform 160ms var(--ease-standaard), box-shadow 200ms ease;
-}
-.kaart-primair:hover .kaart-actie {
-  box-shadow: 0 10px 26px -8px rgba(212, 161, 58, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-.kaart-primair:active .kaart-actie { transform: scale(0.96); }
+
+
+
+
+
+
+
+
+
+
 
 /* Level-meter — een klein, stil "live mixing"-accent: geen decoratie zonder
    betekenis, het knippert exact zoals een VU-meter dat zou doen naast "dit
    past nu". prefers-reduced-motion zet 'm net als elke andere animatie uit. */
-.eq-meter {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 2.5px;
-  height: 13px;
-}
-.eq-meter span {
-  display: block;
-  width: 2.5px;
-  border-radius: 1px;
-  background: var(--brass-fel);
-  opacity: 0.75;
-  animation: eq-pulsen 1.8s ease-in-out infinite;
-}
-.eq-meter span:nth-child(1) { height: 40%; animation-delay: -1.4s; }
-.eq-meter span:nth-child(2) { height: 90%; animation-delay: -0.6s; }
-.eq-meter span:nth-child(3) { height: 60%; animation-delay: -1.1s; }
-.eq-meter span:nth-child(4) { height: 100%; animation-delay: -0.2s; }
+
+
+
+
+
+
 @keyframes eq-pulsen {
   0%, 100% { transform: scaleY(0.55); opacity: 0.55; }
   50% { transform: scaleY(1); opacity: 0.9; }
@@ -1351,24 +1207,14 @@ textarea:focus {
   min-height: var(--raakvlak-min);
   justify-content: center;
 }
-.kaart-klein.past-nu {
-  border-color: var(--lijn-warm);
-  box-shadow: 0 0 0 1px rgba(212, 161, 58, 0.1);
-}
+
 .kaart-titel-klein { font-size: 0.98rem; }
 .kaart-meta { font-size: 0.78rem; color: var(--voorgrond-zwak); }
-.kaart-klein.past-nu .kaart-meta { color: var(--brass); }
+
 
 /* ── lege staat: één regel, geen illustratie — dezelfde stem als de rest
    van de app ("legeHemel" in teksten.ts is hier het precedent). ── */
-.lege-staat {
-  padding: var(--ruimte-6) var(--ruimte-4);
-  text-align: center;
-  color: var(--voorgrond-zwak);
-  font-size: var(--tekst-klein);
-  border: 1px dashed var(--lijn);
-  border-radius: 16px;
-}
+
 
 /* ── stille rijen: nu een eigen kleine kaart met tekst + chevron, niet
    langer een kale onderstreepte tekstregel — dezelfde oppervlaktetaal
@@ -1475,56 +1321,15 @@ textarea:focus {
 }
 
 /* ── vaste navigatiebalk onderaan ────────────────────────────────── */
-.nav-balk {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 15;
-  display: flex;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 0.6rem 0.85rem calc(0.7rem + env(safe-area-inset-bottom));
-  background: rgba(9, 12, 20, 0.72);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  border-top: 1px solid var(--lijn);
-  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.03) inset, 0 -12px 32px -12px rgba(4, 6, 12, 0.6);
-  margin-top: var(--ruimte-6) !important;
-}
-.nav-item {
-  flex: 1;
-  max-width: 8.5rem;
-  min-height: var(--raakvlak-min);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.2rem;
-  background: none;
-  border: 0;
-  border-radius: 14px;
-  padding: 0.45rem 0.3rem 0.4rem;
-  font-size: 0.72rem;
-  letter-spacing: 0.01em;
-  color: var(--voorgrond-zwak);
-  transition: color 200ms ease, background 200ms ease, transform 160ms var(--ease-standaard);
-}
-.nav-icoon {
-  width: 20px;
-  height: 20px;
-  display: block;
-}
-.nav-icoon svg { width: 100%; height: 100%; display: block; }
-.nav-label { line-height: 1; }
-.nav-item:hover { color: var(--voorgrond-zacht); }
-.nav-item:active { transform: scale(0.94); }
-.nav-item.actief {
-  color: var(--brass-fel);
-  background: linear-gradient(180deg, rgba(212, 161, 58, 0.2), rgba(212, 161, 58, 0.04));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(212, 161, 58, 0.16);
-}
-.nav-item.actief .nav-label { color: var(--voorgrond); }
+
+
+
+
+
+
+
+
+
 
 /* ── de stap-voor-stap-oefening ──────────────────────────────────── */
 .oefening-titel {
@@ -1580,42 +1385,1716 @@ textarea:focus {
 }
 
 /* Motivatiehoek */
-.motivatie-auteur {
-  font-family: var(--sans);
-  font-size: var(--tekst-klein);
-  color: var(--voorgrond-zacht);
-  margin-top: var(--ruimte-4);
-  text-align: center;
-}
 
-.motivatie-verhaal {
-  max-width: 34rem;
-  margin-inline: auto;
-}
 
-.motivatie-verhaal p {
-  font-family: var(--sans);
-  font-size: var(--tekst-basis);
-  line-height: 1.7;
-  color: var(--voorgrond);
-  margin-bottom: var(--ruimte-4);
-}
 
-.motivatie-verhaal p:last-of-type {
-  margin-bottom: 0;
-}
 
-.motivatie-verhaal .bron {
-  font-size: var(--tekst-onderschrift);
-  color: var(--voorgrond-zwak);
-  letter-spacing: 0.04em;
-  margin-top: var(--ruimte-5);
-  display: block;
-  text-align: left;
-}
+
+
+
+
+
 
 .reality-optie {
   text-align: left;
   width: 100%;
   padding: var(--ruimte-3) var(--ruimte-4);
+}
+
+/* ══ v27 — "Geef eerst, vraag daarna" ══════════════════════════════════
+   Vier schermvormen (bouwplan v27, §6.1). Alles hieronder gebruikt alleen
+   bestaande tokens: geen nieuwe kleur, geen nieuw font, geen nieuwe radius. */
+
+/* De aflevering — volbeeld, serif, veel lucht, geen kaartranden. */
+
+.aflevering {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ruimte-2);
+}
+
+
+
+
+
+
+
+/* Het verhaal en de stilstaan-vraag: links uitgelijnd, gewone leesbreedte. */
+
+
+
+
+.aflevering-stilstaan {
+  font-family: var(--serif);
+  font-size: 1.4rem;
+  line-height: 1.32;
+  margin: var(--ruimte-2) 0 var(--ruimte-4);
+  text-wrap: balance;
+}
+.aflevering-veld { width: 100%; text-align: left; padding: var(--ruimte-3); }
+.aflevering-opties { display: flex; flex-direction: column; gap: var(--ruimte-3); width: 100%; }
+.aflevering-eerlijk {
+  font-size: var(--tekst-klein);
+  color: var(--voorgrond-zwak);
+  margin: var(--ruimte-4) 0 0;
+}
+
+/* Het slot — na een afgeronde handeling. Rustig, zonder kaart. */
+.slot-blok { padding: var(--ruimte-4) 0 var(--ruimte-2); }
+.slot-dit {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  line-height: 1.25;
+  margin: 0;
+}
+.slot-straks {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  line-height: 1.25;
+  color: var(--voorgrond-zacht);
+  margin: var(--ruimte-1) 0 0;
+}
+
+/* De twee stille uitgangen onder het aanbod. */
+.thuis-stil {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin-top: var(--ruimte-2);
+}
+
+/* "Deze heb je nog niet eerder geprobeerd." — stil, geen badge. */
+
+
+/* De Hemel — het kaartje bij een aangetikte ster (v27, W7): datum · wat je
+   deed · je zin. Zelfde onderkant als voorheen, geen nieuw vlak. */
+.hemel-zin { text-align: center; max-width: 30rem; }
+.hemel-kaart-meta {
+  font-size: var(--tekst-klein);
+  color: var(--voorgrond-zacht);
+  margin: 0;
+}
+.hemel-kaart-zin {
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  line-height: 1.3;
+  margin: var(--ruimte-2) 0 0;
+}
+
+/* ── v27 (W6) — instrumenten: de ring van het Verlangen, de teller van
+   vijf-vier-drie-twee-één, de accentlijn per thema. Alleen bestaande tokens. */
+
+/* Het Verlangen van deze periode: negen punten op een ring. */
+.kwaliteit-ring {
+  position: relative;
+  width: min(19rem, 80vw);
+  aspect-ratio: 1;
+  margin: var(--ruimte-2) auto;
+  border-radius: 50%;
+  border: 1px solid var(--lijn);
+}
+.kwaliteit-midden {
+  position: absolute;
+  inset: 22%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--ruimte-1);
+}
+.kwaliteit-naam {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  line-height: 1.15;
+  margin: 0;
+}
+.kwaliteit-hint,
+.kwaliteit-islam {
+  font-size: var(--tekst-klein);
+  color: var(--voorgrond-zwak);
+  margin: 0;
+}
+.kwaliteit-punt {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--raakvlak-min);
+  height: var(--raakvlak-min);
+  transform: translate(-50%, -50%);
+  background: none;
+  border: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kwaliteit-stip {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--voorgrond-zwak);
+  transition: transform 200ms var(--ease-standaard), background 200ms ease, box-shadow 200ms ease;
+}
+.kwaliteit-punt:hover .kwaliteit-stip { background: var(--voorgrond-zacht); }
+.kwaliteit-punt.bewaard .kwaliteit-stip { background: var(--brass); }
+.kwaliteit-punt[aria-pressed="true"] .kwaliteit-stip {
+  background: var(--brass-fel);
+  transform: scale(1.7);
+  box-shadow: 0 0 12px var(--brass-gloed);
+}
+
+/* vijf-vier-drie-twee-één: een cirkel die met je meetelt. */
+.telring {
+  position: relative;
+  width: 11rem;
+  height: 11rem;
+  margin: var(--ruimte-2) auto;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 160ms var(--ease-standaard);
+}
+.telring:active { transform: scale(0.97); }
+.telring-svg { position: absolute; inset: 0; }
+.telring-svg svg { width: 100%; height: 100%; display: block; }
+.telring-boog {
+  fill: none;
+  stroke: var(--lijn-sterk);
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: stroke 260ms ease, filter 260ms ease;
+}
+.telring-boog.vol {
+  stroke: var(--brass);
+  filter: drop-shadow(0 0 4px var(--brass-gloed));
+}
+.telring-getal {
+  font-family: var(--serif);
+  font-size: 3.6rem;
+  line-height: 1;
+}
+
+/* De thema's krijgen een gezicht: één dunne accentlijn per thema. */
+.kaart-klein.thema { border-left: 2px solid var(--thema-lijn, var(--lijn)); }
+
+
+
+
+
+
+/* Terugkijken: Instellingen staan apart onderaan. */
+
+
+/* Het HTML-attribuut [hidden] verliest van een `display` op de klasse; het
+   ingeklapte "waarom dit werkt" (waaromInPlace) moet echt dicht zijn. */
+.herkomst[hidden] { display: none; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   v27 — HET HUIS. Herontwerp van de visuele identiteit.
+
+   Idee: de app is een huis in de avond. Elke kamer wordt door één lamp
+   verlicht, in een eigen kleur (data-kamer); de rest van het ontwerp —
+   ruimteschaal, tekstschaal, vormen, beweging — is gedeeld, zodat het één
+   huis blijft en geen zes apps. Eén accent per kamer (--accent); alle
+   bestaande "brass"-tokens volgen dat accent, dus elk oud component (knop,
+   stip, focusring) neemt de kleur van de kamer over.
+
+   Regels van dit systeem:
+   - Sans voor alles wat je bedient (Hanken Grotesk); serif (Instrument
+     Serif) alleen voor wat van jou is of tot je spreekt: de visie, de zin
+     van een aflevering, een verhaal. Zo leest de app niet als een krant.
+   - Geen kaartenwand. De vormen wisselen per kamer: een tekst (visie), orbs
+     (adem), banden (lichaam), zinnen (mensen), een boog (geloof), een citaat
+     (motivatie). Lijsten zijn rijen met een dunne lijn, zonder kaders.
+   - Eén beweging per scherm, uit ease-out, onder 300 ms (behalve de
+     leesmomenten), alleen transform en opacity; alles valt weg bij
+     prefers-reduced-motion.
+   ══════════════════════════════════════════════════════════════════════ */
+
+@property --l1 { syntax: "<color>"; inherits: true; initial-value: rgba(243, 184, 132, 0.15); }
+@property --l2 { syntax: "<color>"; inherits: true; initial-value: rgba(214, 120, 140, 0.1); }
+@property --l3 { syntax: "<color>"; inherits: true; initial-value: rgba(120, 100, 190, 0.1); }
+@property --grond { syntax: "<color>"; inherits: true; initial-value: #110f16; }
+
+:root {
+  --ease-uit: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* De kamers — één accent en drie lichten per kamer. */
+:root,
+[data-kamer="vandaag"] { --accent: #f3b884; --l1: rgba(243, 184, 132, 0.15); --l2: rgba(214, 120, 140, 0.1); --l3: rgba(120, 100, 190, 0.1); --grond: #110f16; }
+[data-kamer="visie"] { --accent: #edd0a6; --l1: rgba(150, 120, 230, 0.2); --l2: rgba(237, 208, 166, 0.16); --l3: rgba(90, 80, 190, 0.14); --grond: #100e1d; }
+[data-kamer="adem"] { --accent: #86cdc4; --l1: rgba(80, 190, 180, 0.16); --l2: rgba(90, 150, 210, 0.12); --l3: rgba(40, 110, 130, 0.14); --grond: #0a1418; }
+[data-kamer="lichaam"] { --accent: #eb9a72; --l1: rgba(232, 130, 90, 0.16); --l2: rgba(240, 180, 90, 0.1); --l3: rgba(150, 70, 50, 0.14); --grond: #170f0d; }
+[data-kamer="mensen"] { --accent: #e8a6b6; --l1: rgba(228, 140, 165, 0.16); --l2: rgba(160, 90, 170, 0.11); --l3: rgba(120, 60, 90, 0.14); --grond: #160e14; }
+[data-kamer="geloof"] { --accent: #7fcaa2; --l1: rgba(80, 190, 140, 0.15); --l2: rgba(226, 190, 110, 0.1); --l3: rgba(30, 110, 90, 0.15); --grond: #09140f; }
+[data-kamer="motivatie"] { --accent: #f3c25a; --l1: rgba(243, 190, 80, 0.17); --l2: rgba(240, 120, 70, 0.11); --l3: rgba(150, 90, 30, 0.13); --grond: #16110a; }
+[data-kamer="hemel"] { --accent: #e8d7b0; --l1: rgba(120, 130, 220, 0.14); --l2: rgba(232, 215, 176, 0.08); --l3: rgba(60, 70, 140, 0.14); --grond: #0a0c18; }
+
+/* Alle "brass"-tokens volgen het accent van de kamer waarin het element staat.
+   (Afgeleide waarden moeten per element opnieuw worden uitgerekend; anders
+   zouden ze de waarde van :root erven.) */
+:root,
+[data-kamer] {
+  --brass: var(--accent);
+  --brass-fel: color-mix(in oklab, var(--accent) 72%, #fff);
+  --brass-diep: color-mix(in oklab, var(--accent) 62%, #000);
+  --brass-gloed: color-mix(in srgb, var(--accent) 45%, transparent);
+  --lijn-warm: color-mix(in srgb, var(--accent) 38%, transparent);
+  --op-tekst-op-brass: #1b140c;
+}
+
+body {
+  background: var(--grond);
+  transition: --l1 900ms ease, --l2 900ms ease, --l3 900ms ease, --grond 900ms ease;
+}
+.sfeer-mesh {
+  background:
+    radial-gradient(52% 38% at var(--mx1, 18%) var(--my1, 12%), var(--l1), transparent 70%),
+    radial-gradient(46% 34% at var(--mx2, 86%) var(--my2, 8%), var(--l2), transparent 70%),
+    radial-gradient(70% 46% at var(--mx3, 78%) var(--my3, 92%), var(--l3), transparent 70%),
+    var(--grond);
+}
+
+/* ── Type: sans bedient, serif spreekt ──────────────────────────────── */
+.hal-titel,
+.kamer-titel,
+.tab-kop { font-family: var(--sans); letter-spacing: -0.025em; }
+
+/* ── Knoppen: één effen accent, geen gradientglans ──────────────────── */
+.knop {
+  background: var(--accent);
+  border: 0;
+  color: var(--op-tekst-op-brass);
+  box-shadow: 0 14px 28px -16px color-mix(in srgb, var(--accent) 70%, #000), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.knop:hover,
+.knop:focus-visible { box-shadow: 0 16px 32px -14px color-mix(in srgb, var(--accent) 80%, #000), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+.knop:active { box-shadow: 0 8px 18px -12px color-mix(in srgb, var(--accent) 70%, #000); }
+.knop-klein { text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+
+/* ── Ruimte: geen navigatiebalk meer, dus geen 6,5 rem lucht onderaan ─ */
+#app:has(.scherm-hal),
+#app:has(.scherm-kamer) {
+  padding: 1.1rem 1.15rem calc(2.5rem + env(safe-area-inset-bottom));
+  justify-content: flex-start;
+}
+#app:has(.scherm-kamer.scherm-midden) { justify-content: center; }
+
+/* ══ De hal ══════════════════════════════════════════════════════════ */
+.hal-kop { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--ruimte-4); }
+.hal-titel { font-weight: 400; font-size: 1.85rem; line-height: 1.1; margin: 0; }
+.hal-datum { margin: 0.35rem 0 0; font-size: var(--tekst-klein); color: var(--voorgrond-zwak); }
+.hal-tekens { display: flex; gap: var(--ruimte-2); }
+.teken {
+  width: var(--raakvlak-min);
+  height: var(--raakvlak-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--lijn);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--voorgrond-zacht);
+  transition: color 160ms ease, border-color 160ms ease, transform 160ms var(--ease-uit);
+}
+.teken:active { transform: scale(0.94); }
+@media (hover: hover) and (pointer: fine) {
+  .teken:hover { color: var(--accent); border-color: var(--lijn-warm); }
+}
+.glyph { display: inline-flex; }
+.glyph svg { width: 1.25rem; height: 1.25rem; display: block; }
+
+/* De visie op de hal: tekst in licht, geen kaart. */
+.visie-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruimte-4);
+  width: 100%;
+  padding: var(--ruimte-6) 0 var(--ruimte-4);
+  background: none;
+  border: 0;
+  text-align: left;
+  color: var(--voorgrond);
+}
+.visie-hero::before {
+  content: "";
+  position: absolute;
+  inset: -10% -14% -6% -14%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(60% 64% at 26% 44%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 72%);
+}
+.visie-hero-zin {
+  font-family: var(--serif);
+  font-size: clamp(1.7rem, 7.2vw, 2.15rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.visie-hero--leeg .visie-hero-zin { color: var(--voorgrond-zacht); }
+.visie-hero-onder {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruimte-2);
+  font-size: var(--tekst-klein);
+  color: var(--accent);
+}
+.visie-hero-onder .glyph svg { width: 1rem; height: 1rem; }
+.visie-hero:active .visie-hero-zin { opacity: 0.85; }
+
+.scherm-hal .opmerking {
+  border: 0;
+  padding: 0;
+  font-size: var(--tekst-klein);
+  line-height: 1.5;
+  color: var(--voorgrond-zacht);
+}
+
+/* Wat er nu past: één paneel, in het licht van zijn eigen kamer. */
+.nu-paneel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruimte-2);
+  width: 100%;
+  padding: 1.25rem 1.3rem 1.1rem;
+  border-radius: 26px;
+  text-align: left;
+  color: var(--voorgrond);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 17%, var(--oppervlak)), var(--oppervlak) 72%);
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+  box-shadow: 0 22px 40px -26px #000;
+  transition: transform 180ms var(--ease-uit), border-color 200ms ease;
+}
+.nu-paneel:active { transform: scale(0.985); }
+.nu-titel { font-size: 1.35rem; line-height: 1.2; letter-spacing: -0.015em; }
+.nu-waarom { font-size: 0.95rem; line-height: 1.5; color: var(--voorgrond-zacht); }
+.nu-nieuw { font-size: var(--tekst-klein); color: var(--voorgrond-zwak); }
+.nu-voet { display: flex; align-items: center; justify-content: space-between; gap: var(--ruimte-3); margin-top: var(--ruimte-2); }
+.nu-meta { display: inline-flex; align-items: center; gap: 0.4rem; font-size: var(--tekst-klein); color: color-mix(in srgb, var(--accent) 75%, var(--voorgrond)); }
+.nu-meta .glyph svg { width: 1rem; height: 1rem; }
+.nu-actie {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem 0.85rem 0.5rem 1.05rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--op-tekst-op-brass);
+  font-size: var(--tekst-klein);
+  font-weight: 600;
+}
+.nu-actie .glyph svg { width: 0.95rem; height: 0.95rem; }
+
+/* De deuren: zes bogen, elk in het licht van zijn kamer. */
+.kamerdeuren { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; margin-top: var(--ruimte-5); }
+.kamerdeur {
+  aspect-ratio: 1 / 1.22;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ruimte-2);
+  padding: 0.6rem 0.3rem 0.85rem;
+  border-radius: 999px 999px 18px 18px;
+  color: var(--voorgrond);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  background: linear-gradient(to top, color-mix(in srgb, var(--accent) 20%, transparent), transparent 72%), rgba(255, 255, 255, 0.02);
+  animation: deur-in 420ms var(--ease-uit) both;
+  animation-delay: calc(var(--i, 0) * 45ms + 120ms);
+  transition: transform 180ms var(--ease-uit), border-color 200ms ease;
+}
+.kamerdeur-glyph { color: var(--accent); }
+.kamerdeur-glyph svg { width: 1.7rem; height: 1.7rem; }
+.kamerdeur-naam { font-size: 0.8rem; line-height: 1.15; text-align: center; }
+.kamerdeur:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) {
+  .kamerdeur:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+}
+@keyframes deur-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.thuis-stil { display: flex; align-items: center; justify-content: center; gap: var(--ruimte-4); flex-wrap: wrap; margin-top: var(--ruimte-2); }
+.slot-blok { padding: var(--ruimte-2) 0; }
+
+/* ══ Kamers: gedeelde bouwstenen ═════════════════════════════════════ */
+.kamer-balk { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--ruimte-2); }
+.kamer-balk .terug-knop { margin: 0; }
+.tekst-knop {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: var(--raakvlak-min);
+  padding: 0 var(--ruimte-2);
+  background: none;
+  border: 0;
+  font-size: var(--tekst-klein);
+  color: var(--accent);
+}
+.tekst-knop .glyph svg { width: 1rem; height: 1rem; }
+.tekst-knop:active { opacity: 0.6; }
+
+.kamer-kop { margin: var(--ruimte-4) 0 var(--ruimte-3); }
+.kamer-titel { font-weight: 400; font-size: 2rem; line-height: 1.1; margin: 0; color: var(--voorgrond); }
+.kamer-doel { margin: var(--ruimte-2) 0 0; font-size: 0.95rem; line-height: 1.5; color: var(--voorgrond-zacht); }
+.kamer-principe {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  line-height: 1.45;
+  color: var(--voorgrond-zacht);
+  margin: 0 0 var(--ruimte-3);
+  text-wrap: pretty;
+}
+
+.rij-lijst { display: flex; flex-direction: column; border-top: 1px solid var(--lijn); margin-top: var(--ruimte-3); }
+.rij {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ruimte-4);
+  width: 100%;
+  min-height: 3.5rem;
+  padding: 0.95rem 0.1rem;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--lijn);
+  text-align: left;
+  color: var(--voorgrond);
+  transition: opacity 140ms ease;
+}
+.rij:active { opacity: 0.6; }
+.rij-tekst { display: flex; flex-direction: column; gap: 0.15rem; }
+.rij-titel { font-size: var(--tekst-basis); line-height: 1.3; }
+.rij-onder { font-size: var(--tekst-klein); line-height: 1.4; color: var(--voorgrond-zwak); }
+.rij-pijl { color: var(--voorgrond-zwak); flex: none; }
+.rij-pijl svg { width: 1.1rem; height: 1.1rem; }
+@media (hover: hover) and (pointer: fine) {
+  .rij:hover .rij-titel { color: var(--accent); }
+}
+.lijst-kop { font-size: var(--tekst-klein); font-weight: 400; color: var(--accent); margin: var(--ruimte-6) 0 0; }
+
+/* ══ Mijn visie ══════════════════════════════════════════════════════ */
+.visie-kop { margin: var(--ruimte-5) 0 var(--ruimte-4); }
+.visie-titel { font-family: var(--serif); font-weight: 400; font-size: 2.2rem; line-height: 1.08; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+.visie-titel--groot { font-size: clamp(2.2rem, 10vw, 2.8rem); margin: var(--ruimte-5) 0 var(--ruimte-4); }
+.visie-datum { margin: var(--ruimte-2) 0 0; font-size: var(--tekst-klein); color: var(--voorgrond-zwak); }
+.visie-tekst { display: flex; flex-direction: column; gap: 1.5rem; margin: var(--ruimte-5) 0 var(--ruimte-6); }
+.visie-deel {
+  display: block;
+  padding: 0;
+  background: none;
+  border: 0;
+  text-align: left;
+  font-family: var(--serif);
+  font-size: 1.42rem;
+  line-height: 1.48;
+  color: var(--voorgrond);
+  text-wrap: pretty;
+  animation: visie-in 640ms var(--ease-uit) both;
+  animation-delay: calc(var(--i, 0) * 90ms + 120ms);
+  transition: opacity 140ms ease;
+}
+.visie-deel:active { opacity: 0.7; }
+.visie-stam { color: var(--accent); }
+@keyframes visie-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.visie-uitleg { display: flex; flex-direction: column; gap: var(--ruimte-3); max-width: 34rem; }
+.visie-uitleg p { margin: 0; font-size: var(--tekst-basis); line-height: 1.65; color: var(--voorgrond-zacht); }
+.visie-herkomst { font-size: var(--tekst-klein); line-height: 1.5; color: var(--voorgrond-zwak); margin: var(--ruimte-3) 0 var(--ruimte-5); }
+.visie-verder { margin-top: var(--ruimte-5); }
+
+/* De schrijfruimte: geen invoervelden met kaders, alleen regels om af te maken. */
+.schrijf-deel { display: block; margin-bottom: var(--ruimte-5); }
+.schrijf-stam { display: block; font-family: var(--serif); font-size: 1.3rem; line-height: 1.25; color: var(--accent); margin-bottom: var(--ruimte-1); }
+.scherm-schrijven textarea {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  padding: 0.3rem 0 0.6rem;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--lijn-sterk);
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 1.08rem;
+  line-height: 1.55;
+  text-align: left;
+  resize: none;
+  overflow: hidden;
+}
+.scherm-schrijven textarea:focus { outline: none; border-bottom-color: var(--accent); box-shadow: none; }
+.visie-hint { min-height: 1.3em; margin: 0; font-size: var(--tekst-klein); color: var(--voorgrond-zacht); }
+.schrijf-voet {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  padding: var(--ruimte-4) 0 calc(var(--ruimte-2) + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--grond) 55%, transparent);
+}
+.scherm-schrijven .schrijf-voet .knop { width: 100%; }
+
+/* ══ Adem & rust: orbs die meeademen ═════════════════════════════════ */
+.orbs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ruimte-5) var(--ruimte-3); margin: var(--ruimte-5) 0 var(--ruimte-6); }
+.orb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--voorgrond);
+}
+.orb:nth-child(even) { transform: translateY(1.3rem); }
+.orb-cirkel {
+  width: 6.6rem;
+  height: 6.6rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%, color-mix(in srgb, var(--accent) 48%, transparent), color-mix(in srgb, var(--accent) 7%, transparent) 72%);
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+  box-shadow: inset 0 0 26px color-mix(in srgb, var(--accent) 20%, transparent);
+  animation: orb-ademen 7s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * -1.6s);
+}
+.orb:active .orb-cirkel { transform: scale(0.94); }
+.orb-naam { font-size: 1rem; }
+.orb-ritme { font-size: 0.8rem; color: var(--voorgrond-zwak); }
+@keyframes orb-ademen { 0%, 100% { transform: scale(0.94); } 50% { transform: scale(1); } }
+
+/* De adem-oefening zelf: de cirkel is het scherm; alles eromheen wijkt. */
+.scherm-adem { gap: var(--ruimte-4); }
+.scherm-adem .herkomst,
+.scherm-adem .knop-klein { opacity: 0.6; }
+
+/* ══ Lichaam: banden ═════════════════════════════════════════════════ */
+.band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ruimte-4);
+  width: 100%;
+  margin-top: 0.8rem;
+  padding: 1.3rem 1.25rem;
+  border-radius: 22px;
+  text-align: left;
+  color: var(--voorgrond);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  background: linear-gradient(100deg, color-mix(in srgb, var(--accent) 16%, transparent), transparent 85%), rgba(255, 255, 255, 0.02);
+  transition: transform 180ms var(--ease-uit);
+}
+.band:active { transform: scale(0.985); }
+.band--vandaag { padding: 1.9rem 1.25rem; background: linear-gradient(100deg, color-mix(in srgb, var(--accent) 28%, transparent), transparent 90%), rgba(255, 255, 255, 0.02); }
+.band-tekst { display: flex; flex-direction: column; gap: 0.25rem; }
+.band-titel { font-size: 1.2rem; line-height: 1.2; letter-spacing: -0.01em; }
+.band-onder { font-size: var(--tekst-klein); color: var(--voorgrond-zacht); }
+.band-pijl { color: var(--accent); flex: none; }
+
+/* ══ Mensen: zinnen die je kunt doen ═════════════════════════════════ */
+.zinnen { display: flex; flex-direction: column; margin-top: var(--ruimte-3); border-top: 1px solid var(--lijn); }
+.zin {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.5rem 0.1rem;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--lijn);
+  text-align: left;
+  color: var(--voorgrond);
+  animation: visie-in 520ms var(--ease-uit) both;
+  animation-delay: calc(var(--i, 0) * 70ms + 80ms);
+  transition: opacity 140ms ease;
+}
+.zin:active { opacity: 0.6; }
+.zin-tekst { font-size: clamp(1.45rem, 6.2vw, 1.85rem); line-height: 1.2; letter-spacing: -0.02em; }
+.zin-onder { font-size: var(--tekst-klein); color: var(--accent); }
+
+/* ══ Geloof: één boog, verder rust ═══════════════════════════════════ */
+.geloof-nu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ruimte-3);
+  width: 100%;
+  margin: var(--ruimte-3) 0 var(--ruimte-3);
+  padding: 2.6rem 1.4rem 1.7rem;
+  border-radius: 150px 150px 26px 26px;
+  text-align: center;
+  color: var(--voorgrond);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--accent) 16%, transparent), transparent 75%), rgba(255, 255, 255, 0.02);
+  transition: transform 180ms var(--ease-uit);
+}
+.geloof-nu:active { transform: scale(0.985); }
+.geloof-arabisch { font-size: 1.8rem; line-height: 1.9; }
+.geloof-translit { font-size: 0.95rem; line-height: 1.5; color: var(--voorgrond-zacht); }
+.geloof-vertaling { font-size: var(--tekst-klein); line-height: 1.5; color: var(--voorgrond-zwak); }
+
+/* ══ Motivatie en verhalen: lezen ════════════════════════════════════ */
+.quote { margin: var(--ruimte-5) 0 var(--ruimte-4); }
+.quote-tekst { font-family: var(--serif); font-size: clamp(1.6rem, 6.6vw, 2.05rem); line-height: 1.25; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.quote-auteur { margin: var(--ruimte-3) 0 0; font-size: var(--tekst-klein); color: var(--accent); }
+.scherm-lezen { max-width: 34rem; }
+.verhaal { margin: var(--ruimte-4) 0 var(--ruimte-5); }
+.verhaal-titel { font-family: var(--serif); font-weight: 400; font-size: 2.1rem; line-height: 1.1; margin: 0; text-wrap: balance; }
+.verhaal-profeet { margin: var(--ruimte-2) 0 var(--ruimte-5); font-size: 0.95rem; color: var(--accent); }
+.verhaal-alinea { margin: 0 0 var(--ruimte-4); font-size: 1.05rem; line-height: 1.75; color: var(--voorgrond); }
+.verhaal-bron { margin: var(--ruimte-5) 0 0; font-size: var(--tekst-klein); color: var(--voorgrond-zwak); }
+.scherm-lezen .knop { align-self: center; }
+.aflevering-stilstaan { font-family: var(--serif); font-size: 1.55rem; line-height: 1.3; margin: var(--ruimte-4) 0 var(--ruimte-3); text-wrap: balance; }
+
+
+/* De boog in Geloof toont een fragment; de volle tekst staat één tik verder. */
+.geloof-arabisch,
+.geloof-translit,
+.geloof-vertaling {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.geloof-arabisch { -webkit-line-clamp: 3; line-clamp: 3; }
+.geloof-translit,
+.geloof-vertaling { -webkit-line-clamp: 3; line-clamp: 3; }
+
+/* ══ Life Maxi 2.0 — het huis, de check-in en de structuur van de kamers ══ */
+
+/* De deuren op de hal lichten mee met hoe ver hun kamer is ingericht (--trap 0–4). */
+.kamerdeur {
+  background:
+    linear-gradient(to top, color-mix(in srgb, var(--accent) calc(8% + var(--trap, 0) * 5%), transparent), transparent 72%),
+    rgba(255, 255, 255, 0.02);
+}
+
+/* Elke kamer: één stille statusregel, een "begin hier"-paneel, en een voet. */
+.kamer-status {
+  margin: 0 0 var(--ruimte-4);
+  font-size: var(--tekst-klein);
+  line-height: 1.5;
+  color: var(--voorgrond-zwak);
+}
+.nu-paneel--begin { margin-bottom: var(--ruimte-3); }
+.kamer-visieregel {
+  margin: var(--ruimte-3) 0 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  text-align: left;
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  line-height: 1.45;
+  color: var(--voorgrond-zacht);
+  text-wrap: pretty;
+}
+.kamer-visieregel--knop { display: block; width: 100%; margin: 0 0 var(--ruimte-3); }
+.kamer-visieregel--knop:active { opacity: 0.7; }
+.kamer-voet { align-self: center; margin-top: var(--ruimte-5); }
+
+/* Gevoelscheck-in: chips die eruitzien als een handvol keuzes, niet als een formulier. */
+.gevoelens { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: var(--ruimte-4) 0 var(--ruimte-3); }
+.gevoel-knop {
+  padding: 0.8rem 1.2rem;
+  min-height: var(--raakvlak-min);
+  border-radius: 999px;
+  font-size: 1.02rem;
+  color: var(--voorgrond);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  animation: deur-in 380ms var(--ease-uit) both;
+  animation-delay: calc(var(--i, 0) * 35ms);
+  transition: transform 160ms var(--ease-uit), background 180ms ease, border-color 180ms ease;
+}
+.gevoel-knop:active { transform: scale(0.96); background: color-mix(in srgb, var(--accent) 22%, transparent); }
+@media (hover: hover) and (pointer: fine) {
+  .gevoel-knop:hover { border-color: color-mix(in srgb, var(--accent) 60%, transparent); }
+}
+.tijd-keuze { display: flex; gap: 0.5rem; margin: var(--ruimte-3) 0 0; }
+.tijd-pil {
+  padding: 0.5rem 0.95rem;
+  min-height: 2.5rem;
+  border-radius: 999px;
+  font-size: var(--tekst-klein);
+  color: var(--voorgrond-zacht);
+  background: none;
+  border: 1px solid var(--lijn);
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+.tijd-pil[aria-pressed="true"] {
+  color: var(--voorgrond);
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+
+.scherm-oplichten { justify-content: center; min-height: 80vh; }
+.oplicht-zin {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  line-height: 1.25;
+  text-align: center;
+  margin: var(--ruimte-4) 0 0;
+  animation: visie-in 700ms var(--ease-uit) 900ms both;
+}
+
+/* ══ Het levende huis, het groene Geloof en de symmetrische adem-ruimte ══ */
+
+/* ── Adem & rust: vier gelijke tegels, symmetrisch, één ritme ─────────── */
+.orbs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ruimte-4);
+  max-width: 24rem;
+  margin: var(--ruimte-5) auto var(--ruimte-6);
+}
+.orb,
+.orb:nth-child(even) {
+  transform: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ruimte-2);
+  padding: var(--ruimte-5) var(--ruimte-2) var(--ruimte-4);
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 7%, transparent), transparent 80%), rgba(255, 255, 255, 0.02);
+  text-align: center;
+  transition: transform 180ms var(--ease-uit), border-color 200ms ease;
+}
+.orb:active { transform: scale(0.98); }
+@media (hover: hover) and (pointer: fine) {
+  .orb:hover { border-color: color-mix(in srgb, var(--accent) 42%, transparent); }
+}
+/* Alle vier ademen gelijk op: één samenhangend onderdeel. */
+.orb-cirkel {
+  width: min(28vw, 6rem);
+  height: min(28vw, 6rem);
+  animation-delay: 0s;
+}
+.orb-naam { font-size: 1.02rem; line-height: 1.2; }
+.orb-ritme { font-size: 0.8rem; line-height: 1.3; min-height: 2.1em; }
+
+/* ── Geloof: groen, met een fijn geometrisch patroon ─────────────────── */
+[data-kamer="geloof"] {
+  --accent: #6fd0a3;
+  --l1: rgba(34, 170, 110, 0.3);
+  --l2: rgba(226, 190, 110, 0.12);
+  --l3: rgba(16, 120, 80, 0.26);
+  --grond: #061a12;
+}
+.sfeer-patroon {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 900ms ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 80 80'%3E%3Cpath d='M40 4L46.5 24.3 65.5 14.5 55.7 33.5 76 40 55.7 46.5 65.5 65.5 46.5 55.7 40 76 33.5 55.7 14.5 65.5 24.3 46.5 4 40 24.3 33.5 14.5 14.5 33.5 24.3Z' fill='none' stroke='%237fd1a8' stroke-width='1'/%3E%3C/svg%3E");
+  background-size: 96px 96px;
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent 72%);
+  mask-image: linear-gradient(to bottom, #000, transparent 72%);
+}
+body[data-kamer="geloof"] .sfeer-patroon { opacity: 0.09; }
+
+.kamerdeur--uit { opacity: 0.5; }
+.kamer-titel--klein { font-size: 1.7rem; }
+.geloof-wanneer { font-size: 0.78rem; letter-spacing: 0.02em; color: var(--accent); }
+.geloof-nu { background: linear-gradient(to bottom, color-mix(in srgb, var(--accent) 22%, transparent), transparent 78%), rgba(255, 255, 255, 0.02); }
+
+/* Het verhaal van vandaag: een eigen paneel in het groen. */
+.geloof-verhaal {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ruimte-1);
+  width: 100%;
+  margin: var(--ruimte-3) 0;
+  padding: 1.2rem 1.3rem;
+  border-radius: 22px;
+  text-align: left;
+  color: var(--voorgrond);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  background: linear-gradient(140deg, color-mix(in srgb, var(--accent) 18%, transparent), transparent 75%), rgba(255, 255, 255, 0.02);
+  transition: transform 180ms var(--ease-uit);
+}
+.geloof-verhaal:active { transform: scale(0.985); }
+.geloof-verhaal-kop { font-size: var(--tekst-klein); color: var(--accent); }
+.geloof-verhaal-titel { font-family: var(--serif); font-size: 1.6rem; line-height: 1.15; }
+.geloof-verhaal-profeet { font-size: 0.9rem; color: var(--voorgrond-zacht); }
+.geloof-verhaal-thema { font-size: var(--tekst-klein); color: var(--voorgrond-zwak); }
+.geloof-verhaal--groot { padding: 1.6rem 1.4rem 1.3rem; }
+.geloof-verhaal--groot .geloof-verhaal-titel { font-size: 1.9rem; }
+.geloof-verhaal-actie { margin-top: var(--ruimte-3); }
+
+/* ══ Het huis: een wereld om te verkennen ═══════════════════════════════ */
+#app:has(.scherm-huis) { padding: 0; justify-content: flex-start; align-items: stretch; }
+.scherm-huis {
+  position: fixed;
+  inset: 0;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+  align-items: stretch;
+  animation: none;
+}
+.wereld {
+  --px: 0;
+  --py: 0;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: pan-y;
+  background: linear-gradient(180deg, var(--w-l1), var(--w-l2) 62%, var(--w-gras));
+}
+.wereld[data-tijd="ochtend"] { --w-l1: #34305e; --w-l2: #e0a58c; --w-heuvel2: #5d6a8a; --w-heuvel: #3f5a6e; --w-gras: #33613f; --w-wand: #cdbfae; --w-dak: #6b463f; --w-glow: 0.55; --w-boom: #2d5a45; --w-pad: #b39f82; --w-hek: #d9cdb8; }
+.wereld[data-tijd="dag"] { --w-l1: #22506c; --w-l2: #9ec0c8; --w-heuvel2: #6d93a0; --w-heuvel: #4b7d78; --w-gras: #3b7146; --w-wand: #dcd1bd; --w-dak: #6a4a41; --w-glow: 0.3; --w-boom: #2f6a4c; --w-pad: #bfae8f; --w-hek: #e6dcc8; }
+.wereld[data-tijd="avond"] { --w-l1: #2a2148; --w-l2: #d9915f; --w-heuvel2: #5a4a72; --w-heuvel: #3d3a5c; --w-gras: #2c4a3a; --w-wand: #b9a596; --w-dak: #4d3540; --w-glow: 0.85; --w-boom: #24473a; --w-pad: #8f7a66; --w-hek: #c9b8a6; }
+.wereld[data-tijd="nacht"] { --w-l1: #060915; --w-l2: #1a2244; --w-heuvel2: #151b38; --w-heuvel: #101830; --w-gras: #0f2419; --w-wand: #4b4760; --w-dak: #2a2233; --w-glow: 1; --w-boom: #0d2219; --w-pad: #3c3a48; --w-hek: #6b667e; }
+
+/* Lucht: zon of maan, wolken, sterren — traag, alleen transform/opacity. */
+.wereld-lucht { position: absolute; inset: 0; pointer-events: none; transition: opacity 700ms ease; transform: translate3d(calc(var(--px) * -2px), 0, 0); }
+.wereld[data-ruimte="hal"] .wereld-lucht { opacity: 0; }
+.lucht-lichaam { position: absolute; width: 58px; height: 58px; border-radius: 50%; }
+.wereld[data-tijd="ochtend"] .lucht-lichaam { left: 16%; top: 30%; background: radial-gradient(circle, #ffe2b0 30%, rgba(255, 210, 150, 0.35) 62%, transparent 72%); }
+.wereld[data-tijd="dag"] .lucht-lichaam { left: 68%; top: 14%; background: radial-gradient(circle, #fff3c8 32%, rgba(255, 240, 190, 0.3) 62%, transparent 72%); }
+.wereld[data-tijd="avond"] .lucht-lichaam { left: 74%; top: 32%; background: radial-gradient(circle, #ffc98a 30%, rgba(255, 170, 100, 0.35) 62%, transparent 72%); }
+.wereld[data-tijd="nacht"] .lucht-lichaam { left: 70%; top: 14%; width: 40px; height: 40px; background: radial-gradient(circle at 36% 36%, #f5f0dc 55%, #d8d2bc 60%, transparent 62%); box-shadow: 0 0 40px rgba(240, 235, 210, 0.35); }
+.wereld[data-tijd="nacht"] .wereld-lucht::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.85;
+  background-image:
+    radial-gradient(1.4px 1.4px at 10% 12%, #fff, transparent), radial-gradient(1.2px 1.2px at 24% 26%, #fff, transparent),
+    radial-gradient(1.6px 1.6px at 38% 9%, #fff, transparent), radial-gradient(1.2px 1.2px at 52% 22%, #fff, transparent),
+    radial-gradient(1.4px 1.4px at 61% 8%, #fff, transparent), radial-gradient(1.2px 1.2px at 84% 24%, #fff, transparent),
+    radial-gradient(1.4px 1.4px at 92% 12%, #fff, transparent), radial-gradient(1.2px 1.2px at 16% 40%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 76% 42%, #fff, transparent);
+}
+.lucht-wolk { position: absolute; width: 130px; height: 34px; border-radius: 999px; background: rgba(255, 255, 255, 0.16); filter: blur(9px); animation: wolk 80s linear infinite alternate; }
+.wereld[data-tijd="nacht"] .lucht-wolk { background: rgba(120, 130, 190, 0.1); }
+.lucht-wolk--1 { top: 14%; left: -10%; }
+.lucht-wolk--2 { top: 24%; left: 40%; width: 170px; animation-duration: 110s; animation-delay: -30s; }
+.lucht-wolk--3 { top: 32%; left: 10%; width: 100px; animation-duration: 95s; animation-delay: -60s; }
+@keyframes wolk { from { transform: translateX(-30px); } to { transform: translateX(120px); } }
+
+/* Buitenkant: camera-zoom naar binnen via de voordeur. */
+.wereld-buiten {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(10.5rem + env(safe-area-inset-bottom));
+  transform-origin: 50% 76%;
+  transition: transform 850ms var(--ease-uit), opacity 520ms ease 120ms;
+  animation: wereld-in 900ms var(--ease-uit) backwards;
+}
+.wereld[data-ruimte="hal"] .wereld-buiten { transform: scale(2.7); opacity: 0; visibility: hidden; pointer-events: none; transition: transform 850ms var(--ease-uit), opacity 520ms ease 120ms, visibility 0s linear 850ms; }
+@keyframes wereld-in { from { opacity: 0; transform: translateY(18px) scale(1.04); } to { opacity: 1; transform: none; } }
+.huis-buiten-svg { display: block; width: 100%; max-width: 540px; height: auto; margin: 0 auto; overflow: visible; }
+.lg { will-change: transform; animation: lg-in 800ms var(--ease-uit) both; }
+.lg-1 { transform: translate3d(calc(var(--px) * -5px), calc(var(--py) * -2px), 0); animation-delay: 0ms; }
+.lg-2 { transform: translate3d(calc(var(--px) * -10px), calc(var(--py) * -3px), 0); animation-delay: 80ms; }
+.lg-3 { transform: translate3d(calc(var(--px) * -18px), calc(var(--py) * -4px), 0); animation-delay: 160ms; }
+.lg-4 { transform: translate3d(calc(var(--px) * -30px), calc(var(--py) * -6px), 0); animation-delay: 240ms; }
+@keyframes lg-in { from { opacity: 0; } to { opacity: 1; } }
+
+.hw-heuvel2 { fill: var(--w-heuvel2); }
+.hw-heuvel { fill: var(--w-heuvel); }
+.hw-boom-ver circle, .hw-boom-ver rect { fill: var(--w-boom); }
+.hw-gras { fill: var(--w-gras); }
+.hw-wand { fill: var(--w-wand); }
+.hw-dak { fill: var(--w-dak); }
+.hw-raam { fill: #ffd489; fill-opacity: var(--w-glow); }
+.hw-kozijn { stroke: rgba(30, 20, 20, 0.5); fill: none; stroke-width: 1.4; }
+.hw-deur { fill: #5b3c34; }
+.hw-knop { fill: #e0c48a; }
+.hw-pad { fill: var(--w-pad); }
+.hw-steen { fill: color-mix(in srgb, var(--w-pad) 65%, #fff); }
+.hw-lijn { fill: none; stroke: color-mix(in srgb, var(--w-wand) 75%, #000); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.hw-plint { fill: color-mix(in srgb, var(--w-wand) 70%, #fff); }
+.hw-struik { fill: #2f6a44; }
+.hw-water { fill: #3b7f95; }
+.hw-glans { fill: none; stroke: rgba(255, 255, 255, 0.5); stroke-width: 1.2; stroke-dasharray: 8 6; animation: glans 6s linear infinite; }
+.hw-stam { fill: #5a3f34; }
+.hw-kroon { fill: #2b6a45; }
+.hw-lamp { fill: #ffd98a; }
+.hw-lamp-gloed { fill: #ffcf7a; fill-opacity: 0.22; animation: gloed-adem 4.5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.hw-tuft { fill: #3f8a4f; transform-box: fill-box; transform-origin: 50% 100%; animation: wieg 5s ease-in-out infinite; }
+.hw-vuurvliegjes circle { fill: #eaff9a; opacity: 0; }
+.wereld[data-tijd="avond"] .hw-vuurvliegjes circle,
+.wereld[data-tijd="nacht"] .hw-vuurvliegjes circle { animation: vlieg 7s ease-in-out infinite; }
+.hw-vuurvliegjes circle:nth-child(2) { animation-delay: -2s; }
+.hw-vuurvliegjes circle:nth-child(3) { animation-delay: -4s; }
+.hw-vuurvliegjes circle:nth-child(4) { animation-delay: -5.5s; }
+.hw-hit { fill: transparent; }
+.hw-huis { cursor: pointer; outline: none; }
+.hw-huis:focus-visible .hw-hit { stroke: var(--accent); stroke-width: 2; }
+@keyframes gloed-adem { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; } }
+@keyframes twinkel { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+@keyframes wieg { 0%, 100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
+@keyframes glans { to { stroke-dashoffset: -28; } }
+@keyframes vlieg { 0%, 100% { opacity: 0; transform: translate(0, 0); } 25% { opacity: 0.95; } 50% { opacity: 0.4; transform: translate(10px, -14px); } 75% { opacity: 0.95; transform: translate(-6px, -6px); } }
+
+
+.huis-kop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ruimte-3);
+  padding: calc(0.8rem + env(safe-area-inset-top)) 1rem 0.5rem;
+}
+.huis-kop .terug-knop { margin: 0; }
+.huis-titel { font-size: 0.95rem; color: var(--voorgrond-zacht); }
+.huis-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ruimte-2);
+  padding: 2.4rem 1.15rem calc(1.1rem + env(safe-area-inset-bottom));
+  text-align: center;
+  background: linear-gradient(to top, rgba(10, 9, 15, 0.94) 58%, transparent);
+}
+.huis-sheet--in { animation: visie-in 380ms var(--ease-uit) both; }
+.huis-sheet .knop { width: min(100%, 22rem); }
+.sheet-kamer { display: flex; flex-direction: column; gap: 0.2rem; }
+.sheet-naam { margin: 0; font-size: 1.4rem; font-weight: 400; letter-spacing: -0.015em; }
+.sheet-regel { margin: 0; font-size: 0.95rem; line-height: 1.45; color: var(--voorgrond-zacht); max-width: 24rem; }
+.scherm-oplichten .oplicht-zin { position: absolute; left: 0; right: 0; bottom: calc(3rem + env(safe-area-inset-bottom)); z-index: 6; margin: 0; }
+.scherm-huis.scherm-oplichten { min-height: 0; }
+
+/* Flex-kolom met margin:auto laat de tegels anders krimpen tot hun inhoud. */
+.orbs { width: 100%; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   v28 — De hal als één geheel, en elke kamer een eigen omgeving
+
+   Wat Geloof sterk maakt is niet alleen groen: (1) een omgeving die bij het
+   onderwerp hoort (het geometrische patroon), (2) de inhoud zit in een vorm
+   die bij het thema past (de boog), (3) één duidelijk hoofdelement en verder
+   rust, (4) dezelfde ritmes in alle schermen van de kamer. Die vier principes
+   krijgen de andere kamers nu ook, elk met een eigen omgeving:
+     adem      → rimpels op stil water
+     lichaam   → heuvels met hoogtelijnen, een pad en een lage zon
+     mensen    → een lichtsnoer, en kringen die dichter naar elkaar toe komen
+     visie     → sterren en de horizon van over vijf jaar
+     motivatie → een lantaarn met vonken
+   Kleuren blijven die van de kamers. Alleen transform/opacity bewegen, traag,
+   en alles staat stil bij prefers-reduced-motion.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── De omgevingen (achtergrondmotieven) ─────────────────────────────── */
+.sfeer-motief { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+.motief { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 900ms ease; }
+.motief * { animation-play-state: paused; }
+.motief--vandaag { color: #f3b884; }
+.motief--adem { color: #86cdc4; }
+.motief--lichaam { color: #eb9a72; }
+.motief--mensen { color: #e8a6b6; }
+.motief--visie { color: #edd0a6; }
+.motief--motivatie { color: #f3c25a; }
+body[data-kamer="vandaag"] .motief--vandaag,
+body[data-kamer="adem"] .motief--adem,
+body[data-kamer="lichaam"] .motief--lichaam,
+body[data-kamer="mensen"] .motief--mensen,
+body[data-kamer="visie"] .motief--visie,
+body[data-kamer="motivatie"] .motief--motivatie { opacity: 1; }
+body[data-kamer="vandaag"] .motief--vandaag *,
+body[data-kamer="adem"] .motief--adem *,
+body[data-kamer="lichaam"] .motief--lichaam *,
+body[data-kamer="mensen"] .motief--mensen *,
+body[data-kamer="visie"] .motief--visie *,
+body[data-kamer="motivatie"] .motief--motivatie * { animation-play-state: running; }
+
+/* Adem: rimpels die uitwaaieren, golven die traag voorbijdrijven. */
+.m-rimpel { transform-box: fill-box; transform-origin: center; opacity: 0; animation: m-rimpel 10.2s cubic-bezier(0.2, 0.6, 0.3, 1) infinite; }
+@keyframes m-rimpel { 0% { transform: scale(0.4); opacity: 0; } 14% { opacity: 0.5; } 100% { transform: scale(4.6); opacity: 0; } }
+.m-golf { animation: m-golf var(--dur, 50s) linear infinite; }
+@keyframes m-golf { to { transform: translateX(120px); } }
+
+/* Lichaam: de zon boven de heuvels ademt heel licht. */
+.m-zon { transform-box: fill-box; transform-origin: center; animation: m-zon 14s ease-in-out infinite; }
+@keyframes m-zon { 0%, 100% { transform: scale(0.94); opacity: 0.07; } 50% { transform: scale(1.06); opacity: 0.13; } }
+
+/* Mensen: elk lampje brandt op zijn eigen tempo. */
+.m-lamp { animation: m-lamp 5s ease-in-out infinite; }
+@keyframes m-lamp { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+
+/* Visie: sterren flonkeren, de horizon gloeit. */
+.m-ster { animation: m-ster 9s ease-in-out infinite; }
+@keyframes m-ster { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.9; } }
+.m-horizon { animation: m-horizon 12s ease-in-out infinite; }
+@keyframes m-horizon { 0%, 100% { opacity: 0.07; } 50% { opacity: 0.14; } }
+
+/* Motivatie: het licht van een lantaarn, vonken die stijgen. */
+.m-lantaarn { animation: m-lantaarn 7s ease-in-out infinite; }
+@keyframes m-lantaarn { 0%, 100% { opacity: 0.1; } 50% { opacity: 0.17; } }
+.m-vonk { opacity: 0; animation: m-vonk var(--dur, 10s) linear infinite; }
+@keyframes m-vonk { 0% { transform: translate3d(0, 0, 0); opacity: 0; } 12% { opacity: 0.75; } 100% { transform: translate3d(16px, -640px, 0); opacity: 0; } }
+
+/* Hal: het licht uit een raam, nauwelijks zichtbaar. */
+.m-baan { animation: m-baan 16s ease-in-out infinite; }
+.m-baan--2 { animation-delay: -8s; }
+@keyframes m-baan { 0%, 100% { opacity: 0.03; } 50% { opacity: 0.07; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .motief * { animation: none !important; }
+  .m-rimpel { opacity: 0.16; transform: scale(1.6); }
+  .m-vonk { opacity: 0.4; }
+}
+
+/* ── De hal: één paneel voor "Vandaag" ───────────────────────────────── */
+.vandaag {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border-radius: 28px;
+  overflow: hidden;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 17%, var(--oppervlak)), var(--oppervlak) 70%);
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+  box-shadow: 0 22px 40px -26px #000;
+}
+.vandaag-kern {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruimte-2);
+  width: 100%;
+  padding: 1.3rem 1.35rem 1.15rem;
+  text-align: left;
+  color: var(--voorgrond);
+  background: none;
+  border: 0;
+  transition: background 200ms ease;
+}
+button.vandaag-kern:active { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.vandaag-kern--stil { align-items: flex-start; }
+.vandaag-kern--stil .knop-klein { margin-top: var(--ruimte-2); }
+
+/* De drie manieren om zelf te sturen: hetzelfde licht, één rij, gescheiden door haarlijnen. */
+.vandaag-dock {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr 1.1fr;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 16%, transparent);
+  background: rgba(0, 0, 0, 0.17);
+}
+.vandaag--alleen .vandaag-dock { border-top: 0; background: none; }
+.dock-knop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 4.7rem;
+  padding: 0.85rem 0.3rem 0.8rem;
+  background: none;
+  border: 0;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--voorgrond-zacht);
+  transition: color 160ms ease, background 160ms ease;
+}
+.dock-knop + .dock-knop::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 24%;
+  bottom: 24%;
+  width: 1px;
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.dock-teken {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 50%;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  transition: transform 180ms var(--ease-uit), background 180ms ease;
+}
+.dock-teken .glyph svg { width: 1.15rem; height: 1.15rem; }
+/* De eerste is de meest gekozen weg: iets helderder, niet luider. */
+.dock-knop--gevoel { color: var(--voorgrond); }
+.dock-knop--gevoel .dock-teken { background: color-mix(in srgb, var(--accent) 24%, transparent); }
+.dock-knop:active .dock-teken { transform: scale(0.9); }
+.dock-knop:active { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+@media (hover: hover) and (pointer: fine) {
+  .dock-knop:hover { color: var(--voorgrond); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+  .dock-knop:hover .dock-teken { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+}
+
+/* De deuren staan in dezelfde ruimte: een lamp in elke boog, feller als de kamer verder is ingericht. */
+.kamerdeuren { margin-top: var(--ruimte-3); gap: 0.65rem; }
+.kamerdeur {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  aspect-ratio: 1 / 1.08;
+  animation-fill-mode: backwards;
+}
+.kamerdeur::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 8%;
+  z-index: -1;
+  width: 86%;
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) calc(12% + var(--trap, 0) * 6%), transparent), transparent);
+}
+.kamerdeur-glyph svg { width: 1.6rem; height: 1.6rem; }
+.kamerdeur--uit::before { opacity: 0.4; }
+
+/* ── Kamers: dezelfde intrede, elk deel net na het vorige ────────────── */
+.scherm-kamer:not(.scherm-lezen):not(.scherm-midden):not(.scherm-schrijven) > * { animation: kamer-in 460ms var(--ease-uit) backwards; }
+.scherm-kamer:not(.scherm-lezen):not(.scherm-midden):not(.scherm-schrijven) > :nth-child(2) { animation-delay: 50ms; }
+.scherm-kamer:not(.scherm-lezen):not(.scherm-midden):not(.scherm-schrijven) > :nth-child(3) { animation-delay: 100ms; }
+.scherm-kamer:not(.scherm-lezen):not(.scherm-midden):not(.scherm-schrijven) > :nth-child(4) { animation-delay: 150ms; }
+.scherm-kamer:not(.scherm-lezen):not(.scherm-midden):not(.scherm-schrijven) > :nth-child(5) { animation-delay: 200ms; }
+.scherm-kamer:not(.scherm-lezen):not(.scherm-midden):not(.scherm-schrijven) > :nth-child(n + 6) { animation-delay: 250ms; }
+@keyframes kamer-in { from { opacity: 0; transform: translateY(10px); } }
+.kamerdeur { animation-name: deur-in; }
+
+/* Kamerkoppen: de titel krijgt in elke kamer dezelfde plek, met de omgeving eronder. */
+.scherm-kamer .kamer-titel { text-shadow: 0 0 40px color-mix(in srgb, var(--accent) 35%, transparent); }
+
+/* Visie: onder de titel ligt de horizon. */
+.visie-kop::after {
+  content: "";
+  display: block;
+  height: 1px;
+  margin-top: var(--ruimte-4);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, transparent), transparent 82%);
+}
+
+/* Lichaam: elke band ligt in een landschap van hoogtelijnen. */
+.band { position: relative; isolation: isolate; overflow: hidden; }
+.band::after {
+  content: "";
+  position: absolute;
+  right: -4%;
+  bottom: 0;
+  width: 62%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 80' preserveAspectRatio='none' fill='none' stroke='%23eb9a72' stroke-opacity='.4'%3E%3Cpath d='M0 66C40 36 80 40 120 54S180 42 200 26'/%3E%3Cpath d='M0 76C50 50 90 56 130 66S180 58 200 46'/%3E%3Cpath d='M30 80C64 58 100 64 140 78' stroke-opacity='.25'/%3E%3C/svg%3E") no-repeat right bottom / 100% 100%;
+}
+.band--vandaag::after { opacity: 1; }
+.band:not(.band--vandaag)::after { opacity: 0.55; }
+
+/* Mensen: elke zin heeft twee kringen die iets dichter naar elkaar toe komen. */
+.zin { position: relative; padding-right: 4.6rem; }
+.zin::after {
+  content: "";
+  position: absolute;
+  right: 0.1rem;
+  top: 50%;
+  width: 3.6rem;
+  height: 2rem;
+  transform: translateY(-50%);
+  opacity: 0.8;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 24' fill='none' stroke='%23e8a6b6' stroke-width='1.2'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Ccircle cx='32' cy='12' r='8'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.zin:nth-child(2)::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 24' fill='none' stroke='%23e8a6b6' stroke-width='1.2'%3E%3Ccircle cx='13' cy='12' r='8'/%3E%3Ccircle cx='29' cy='12' r='8'/%3E%3C/svg%3E"); }
+.zin:nth-child(3)::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 24' fill='none' stroke='%23e8a6b6' stroke-width='1.2'%3E%3Ccircle cx='15' cy='12' r='8'/%3E%3Ccircle cx='27' cy='12' r='8'/%3E%3C/svg%3E"); }
+.zin:nth-child(4)::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 24' fill='none' stroke='%23e8a6b6' stroke-width='1.2'%3E%3Ccircle cx='17' cy='12' r='8'/%3E%3Ccircle cx='25' cy='12' r='8'/%3E%3C/svg%3E"); }
+.zin { transition: opacity 140ms ease; }
+
+/* Motivatie: het citaat staat in het licht van de lantaarn. */
+.quote { position: relative; isolation: isolate; }
+.quote::before {
+  content: "";
+  position: absolute;
+  inset: -34% -22% -26%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(58% 60% at 28% 52%, color-mix(in srgb, var(--accent) 17%, transparent), transparent 72%);
+}
+
+/* "Rustige beelden": de omgevingen blijven, maar staan stil. */
+body.rustig .motief * { animation: none !important; }
+body.rustig .m-rimpel { opacity: 0.16; transform: scale(1.6); }
+body.rustig .m-vonk { opacity: 0.4; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   v29 — De ademoefening: één ding beweegt, de tekst staat stil
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Zodra je een oefening opent, verdwijnt de omgeving van de kamer: alleen de
+   cirkel beweegt nog. (De omgeving staat ook stil, niet alleen onzichtbaar.) */
+body:has(.scherm-adem) .motief { opacity: 0; }
+body:has(.scherm-adem) .motief * { animation-play-state: paused !important; }
+body:has(.scherm-adem) .sfeer-mesh { animation-play-state: paused; }
+
+.scherm-adem { gap: var(--ruimte-3); }
+.scherm-adem .oefening-titel { margin: 0; }
+.adem-ronde { margin: 0; }
+
+/* Het vak: vierkant en altijd even groot. De cirkel schaalt binnen dit vak en
+   raakt de tekst eronder dus nooit. */
+.adem-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(76vw, 300px);
+  aspect-ratio: 1;
+  margin: var(--ruimte-4) auto var(--ruimte-2);
+}
+/* Twee haarlijnen tonen hoe groot de adem wordt: vol en leeg. */
+.adem-ring,
+.adem-ring::after {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.adem-ring { inset: 0; }
+.adem-ring::after { content: ""; inset: 19.5%; border-style: dashed; border-color: color-mix(in srgb, var(--accent) 16%, transparent); }
+
+.adem-cirkel,
+.adem-gloed { position: absolute; inset: 0; border-radius: 50%; }
+.adem-cirkel {
+  background: radial-gradient(circle at 36% 30%, color-mix(in srgb, var(--accent) 46%, transparent), color-mix(in srgb, var(--accent) 9%, transparent) 72%);
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
+  box-shadow: inset 0 0 40px color-mix(in srgb, var(--accent) 22%, transparent);
+  transform: scale(0.6);
+  transition-property: transform;
+  transition-timing-function: linear;
+  will-change: transform;
+}
+/* De gloed volgt de fase: helder bij "vol", zacht bij "leeg" (alleen opacity). */
+.adem-gloed {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 34%, transparent), transparent);
+  opacity: 0.25;
+  transition: opacity 900ms ease;
+}
+.adem-stage[data-vol="1"] .adem-gloed { opacity: 0.85; }
+.adem-stage[data-pauze="1"] .adem-gloed { opacity: 0.45; }
+
+.adem-getal {
+  position: relative;
+  z-index: 2;
+  font-family: var(--serif);
+  font-size: 3.4rem;
+  line-height: 1;
+  color: var(--voorgrond);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 24px color-mix(in srgb, var(--grond) 70%, transparent);
+}
+
+/* De fase staat op een vaste plek, met ruimte voor twee regels ("Nog een klein beetje in"). */
+.adem-label {
+  margin: var(--ruimte-3) 0 0;
+  min-height: 2.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 1.7rem;
+  line-height: 1.2;
+  text-align: center;
+  text-wrap: balance;
+}
+.adem-label--wissel { animation: adem-label-in 380ms var(--ease-uit) backwards; }
+@keyframes adem-label-in { from { opacity: 0; transform: translateY(6px); } }
+.adem-volgende { margin: 0; font-size: var(--tekst-klein); color: var(--voorgrond-zwak); min-height: 1.4em; }
+.adem-pauze { margin-top: var(--ruimte-2); opacity: 0.85; }
+
+/* Rustige beelden en reduced motion: de cirkel springt, en de fase blijft duidelijk
+   door helderheid in plaats van beweging. */
+.adem-stage.rustig .adem-cirkel { transition: none !important; }
+.adem-stage.rustig[data-vol="1"] .adem-cirkel { filter: brightness(1.25); }
+.adem-stage.rustig .adem-gloed { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .adem-cirkel { transition: none !important; }
+  .adem-label--wissel { animation: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   v29 — Het huis: buiten voor iedereen hetzelfde, binnen een hal met zes
+   kamers, en de voortgang zit in de kamers.
+
+   Camera: het scherm is een functie van twee attributen op .wereld:
+     [data-ruimte="buiten"|"hal"]   waar je bent
+     [data-zoom="uit"|"deur"]       is de camera op een deur ingezoomd?
+   Er staat nergens een inline transform; alleen --cx/--cy (waar de deur zit).
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── De buitenkant: nieuwe onderdelen van de villa en de tuin ─────────── */
+.hw-hout { fill: color-mix(in srgb, #8a5c40 72%, var(--w-wand)); }
+.hw-planken { fill: none; stroke: rgba(30, 18, 12, 0.32); stroke-width: 1; }
+.hw-wand--boven { fill: color-mix(in srgb, var(--w-wand) 88%, #fff); }
+.hw-rail { fill: rgba(200, 230, 240, 0.14); stroke: var(--w-hek); stroke-width: 1.2; }
+.hw-heg-vlak { fill: color-mix(in srgb, #2f6a44 82%, var(--w-gras)); }
+.hw-heg { transform-box: fill-box; transform-origin: 50% 100%; animation: heg-wieg 9s ease-in-out infinite; }
+.hw-boom { transform-box: fill-box; transform-origin: 50% 100%; animation: boom-wieg 8s ease-in-out infinite; }
+.hw-kroon--licht { fill: color-mix(in srgb, #3a8a58 80%, var(--w-boom)); }
+.hw-lamp-kap { fill: #3a2e2a; }
+.hw-bl { transform-box: fill-box; transform-origin: 50% 100%; animation: bloem-wieg 6s ease-in-out infinite; }
+.hw-bl1 { fill: #f0a0b8; }
+.hw-bl2 { fill: #f3c25a; animation-delay: -1.5s; }
+.hw-bl3 { fill: #f4efe6; animation-delay: -3s; }
+.hw-bl4 { fill: #a99bf0; animation-delay: -4.5s; }
+.hw-steel { fill: none; stroke: #3f8a4f; stroke-width: 1.4; stroke-linecap: round; }
+.hw-lelie { fill: #3f8a4f; }
+.hw-riet { fill: none; stroke: #4a7a4a; stroke-width: 1.6; stroke-linecap: round; transform-box: fill-box; transform-origin: 50% 100%; animation: wieg 6s ease-in-out infinite; }
+.hw-vogel { fill: none; stroke: rgba(20, 20, 32, 0.55); stroke-width: 1.4; stroke-linecap: round; animation: vogel 44s linear infinite; }
+.hw-vogel--2 { animation-duration: 58s; }
+.hw-vogel--3 { animation-duration: 70s; }
+.wereld[data-tijd="nacht"] .hw-vogel { opacity: 0; }
+@keyframes vogel { from { transform: translateX(-70px); } to { transform: translateX(480px); } }
+@keyframes heg-wieg { 0%, 100% { transform: rotate(-0.7deg); } 50% { transform: rotate(0.7deg); } }
+@keyframes boom-wieg { 0%, 100% { transform: rotate(-1.4deg); } 50% { transform: rotate(1.4deg); } }
+@keyframes bloem-wieg { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+
+/* ── De hal ───────────────────────────────────────────────────────────── */
+.wereld-hal {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(4.2rem + env(safe-area-inset-top));
+  bottom: calc(8.6rem + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: scale(0.94);
+  transition: transform 850ms var(--ease-uit), opacity 420ms ease, visibility 0s linear 850ms;
+}
+.wereld[data-ruimte="hal"] .wereld-hal {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition: transform 850ms var(--ease-uit) 140ms, opacity 520ms ease 240ms, visibility 0s;
+}
+/* Achter de hal: donker, zodat de lucht er niet doorheen schijnt. */
+/* Binnen is de hele wereld donker: de lucht en de tuin schijnen er niet doorheen. */
+.wereld::before { content: ""; position: absolute; inset: 0; background: #0f0b12; opacity: 0; transition: opacity 600ms ease; pointer-events: none; }
+.wereld[data-ruimte="hal"]::before { opacity: 1; }
+
+/* De hal is een vast vak (verhouding 360 : 500) dat in de beschikbare ruimte past. */
+.hal-vak {
+  position: relative;
+  height: min(100%, 138.9vw);
+  aspect-ratio: 360 / 500;
+  max-width: 100%;
+  transform-origin: var(--cx, 50%) var(--cy, 50%);
+  transition: transform 620ms cubic-bezier(0.5, 0, 0.2, 1), opacity 320ms ease 260ms;
+  border-radius: 6px;
+  overflow: visible;
+}
+.wereld[data-zoom="deur"] .hal-vak { transform: scale(2.9); opacity: 0; }
+.hal-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; border-radius: 6px; }
+
+.hl-wand { fill: #2a2230; }
+.hl-lambrisering { fill: #231c29; }
+.hl-slab { fill: #3a2f36; }
+.hl-rail { fill: none; stroke: #8b7a86; stroke-width: 1.4; }
+.hl-dakraam { fill: #ffe6b0; fill-opacity: 0.4; }
+.hl-baan { fill: url(#hl-baan); opacity: 0.4; animation: hl-baan 12s ease-in-out infinite; }
+.hl-baan--2 { animation-delay: -6s; }
+@keyframes hl-baan { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.5; } }
+.hl-lijn { fill: none; stroke: #8b7a86; stroke-width: 1.2; }
+.hl-gloed { fill: url(#hl-gw); animation: gloed-adem 6s ease-in-out infinite; }
+.hl-lamp { fill: #ffd98a; }
+.hl-lijst { fill: #5a4032; }
+.hl-doek { fill: #3b3140; }
+.hl-doek-lijn { fill: none; stroke: #c9a06a; stroke-width: 1.2; }
+.hl-trap { fill: #3a2f36; }
+.hl-trap-lijn { fill: none; stroke: #5a4a52; stroke-width: 1; }
+.hl-vloer { fill: #3a2a26; }
+.hl-plint { fill: none; stroke: #5a4a52; stroke-width: 1.4; }
+.hl-kleed { fill: #5a2f3c; }
+.hl-kleed-lijn { fill: none; stroke: #c99a6a; stroke-opacity: 0.55; }
+.hl-pot { fill: #5a4032; }
+.hl-blad { fill: #3c7a58; }
+.hl-blad--2 { fill: #2f6a4c; }
+
+/* Een deur: een boog in het licht van zijn kamer. Er zit een echte knop achter. */
+.hal-deur {
+  position: absolute;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--voorgrond);
+  perspective: 700px;
+  isolation: isolate;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  animation: deur-in 480ms var(--ease-uit) backwards;
+}
+.hal-deur:nth-child(n + 3) { animation-delay: 60ms; }
+.hal-deur:nth-child(n + 5) { animation-delay: 120ms; }
+/* Het licht in de kamer erachter: wordt zichtbaar als de deur opengaat. */
+.deur-licht {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 999px 999px 3px 3px;
+  background: radial-gradient(closest-side at 50% 62%, color-mix(in srgb, var(--accent) 92%, #fff), color-mix(in srgb, var(--accent) 45%, #000));
+}
+.deur-blad {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  padding: 0.5rem 0.2rem 0.75rem;
+  border-radius: 999px 999px 3px 3px;
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  background:
+    linear-gradient(to top, color-mix(in srgb, var(--accent) calc(16% + var(--trap, 0) * 5%), #1d1621), #1d1621 86%);
+  box-shadow: inset 0 0 0 4px rgba(0, 0, 0, 0.18), 0 6px 18px -8px #000;
+  transform-origin: 0 50%;
+  transition: transform 520ms var(--ease-uit);
+}
+.deur-glyph { color: var(--accent); }
+.deur-glyph svg { width: 1.55rem; height: 1.55rem; }
+.deur-naam { font-size: 0.74rem; line-height: 1.15; text-align: center; padding: 0 0.15rem; }
+/* De lamp boven de deur brandt feller naarmate de kamer verder is ingericht; nooit een getal. */
+.hal-deur::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -0.9rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  opacity: calc(0.45 + var(--trap, 0) * 0.13);
+  box-shadow: 0 0 calc(0.4rem + var(--trap, 0) * 0.25rem) var(--accent);
+}
+.hal-deur.is-open .deur-blad { transform: rotateY(-72deg); }
+@media (hover: hover) and (pointer: fine) {
+  .hal-deur:hover .deur-blad { transform: rotateY(-9deg); }
+  .hal-deur.is-open:hover .deur-blad { transform: rotateY(-72deg); }
+}
+.hal-deur:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 999px 999px 4px 4px; }
+.hal-deur--uit .deur-blad { opacity: 0.5; }
+/* Iets nieuws in een kamer: één zachte puls van het licht boven de deur, geen badge. */
+.hal-deur--nieuw::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -0.9rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  transform: translateX(-50%);
+  animation: deur-nieuw 2.6s var(--ease-uit) 800ms 3 backwards;
+}
+@keyframes deur-nieuw { 0% { transform: translateX(-50%) scale(1); opacity: 0.9; } 100% { transform: translateX(-50%) scale(5); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hw-heg, .hw-boom, .hw-bl, .hw-riet, .hw-vogel, .hl-baan, .hl-gloed { animation: none !important; }
+  .wereld-hal, .hal-vak, .deur-blad { transition-duration: 1ms !important; transition-delay: 0s !important; }
+  .hal-deur--nieuw::after { animation: none; }
+}
+body.rustig .hw-heg, body.rustig .hw-boom, body.rustig .hw-bl, body.rustig .hw-riet, body.rustig .hw-vogel, body.rustig .hl-baan, body.rustig .hl-gloed { animation: none !important; }
+
+/* ── De kamers van binnen ─────────────────────────────────────────────── */
+.kamer-scene {
+  position: relative;
+  margin: 0 0 var(--ruimte-3);
+  border-radius: 22px;
+  overflow: hidden;
+  aspect-ratio: 360 / 210;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--grond));
+  box-shadow: 0 22px 40px -28px #000;
+}
+.kamer-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 100% at 50% 38%, transparent 52%, rgba(0, 0, 0, 0.4));
+}
+.ks-svg { display: block; width: 100%; height: 100%; }
+.ks-wand { fill: color-mix(in srgb, var(--accent) 11%, var(--grond)); }
+.ks-vloer { fill: color-mix(in srgb, var(--accent) 13%, #0b090d); }
+.ks-plint { fill: none; stroke: color-mix(in srgb, var(--accent) 32%, transparent); stroke-width: 1.2; }
+.ks-raam { fill: #0d1522; stroke: color-mix(in srgb, var(--accent) 50%, transparent); stroke-width: 1.4; }
+.ks-plank { fill: color-mix(in srgb, var(--accent) 34%, #241b26); }
+.ks-lijn { fill: none; stroke: color-mix(in srgb, var(--accent) 60%, transparent); stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+.ks-lijnh { fill: none; stroke: #7a5642; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.ks-draad { fill: none; stroke: color-mix(in srgb, var(--accent) 45%, transparent); stroke-width: 1; }
+.ks-al { fill: none; stroke: color-mix(in srgb, var(--accent) 80%, transparent); stroke-width: 1.2; stroke-linejoin: round; }
+.ks-a { fill: color-mix(in srgb, var(--accent) 24%, #171219); }
+.ks-a2 { fill: color-mix(in srgb, var(--accent) 44%, #171219); }
+.ks-h { fill: #7b5842; }
+.ks-h2 { fill: #4d3729; }
+.ks-c { fill: #e9dcc4; }
+.ks-g { fill: #3f8a63; }
+.ks-g2 { fill: #2f6a4c; }
+.ks-w { fill: #ffd28a; }
+.ks-z { fill: #0d0a0a; }
+.ks-nis { fill: #0c0a08; }
+.ks-maan { fill: #f2ecd2; }
+.ks-ster { fill: #fff; opacity: 0.8; animation: twinkel 5s ease-in-out infinite; }
+.ks-water { fill: #3b7f95; }
+.ks-spiegel { fill: color-mix(in srgb, var(--accent) 14%, #101418); stroke: color-mix(in srgb, var(--accent) 70%, transparent); stroke-width: 1.4; }
+.ks-wiel { fill: none; stroke: color-mix(in srgb, var(--accent) 70%, transparent); stroke-width: 2.2; }
+.ks-gw { fill: url(#ks-gw); animation: gloed-adem 6s ease-in-out infinite; }
+.ks-lampje { animation: twinkel 4.6s ease-in-out infinite; }
+.ks-vlam { fill: #ffd98a; transform-box: fill-box; transform-origin: 50% 100%; animation: ks-vlam 1.8s ease-in-out infinite; }
+.ks-vuur { transform-box: fill-box; transform-origin: 50% 100%; animation: ks-vlam 1.6s ease-in-out infinite; }
+.ks-vuur--2 { animation-delay: -0.5s; }
+.ks-vuur--3 { animation-delay: -1s; }
+.ks-rimpel { fill: none; stroke: rgba(255, 255, 255, 0.55); stroke-width: 0.8; transform-box: fill-box; transform-origin: center; animation: ks-rimpel 4.4s ease-out infinite; }
+@keyframes ks-vlam { 0%, 100% { transform: scaleY(1) scaleX(1); } 50% { transform: scaleY(1.14) scaleX(0.92); } }
+@keyframes ks-rimpel { 0% { transform: scale(0.5); opacity: 0.9; } 100% { transform: scale(2.6); opacity: 0; } }
+
+/* Voorwerpen komen zacht binnen; het nieuwe komt langzamer en licht even op. */
+.ks-ob { animation: ks-in 700ms var(--ease-uit) backwards; animation-delay: calc(var(--d, 0ms) + 120ms); }
+@keyframes ks-in { from { opacity: 0; transform: translateY(6px); } }
+.ks-ob--nieuw { transform-box: fill-box; transform-origin: 50% 100%; animation: ks-nieuw 1800ms var(--ease-uit) 900ms backwards; }
+@keyframes ks-nieuw {
+  0% { opacity: 0; transform: translateY(10px) scale(0.96); filter: none; }
+  40% { opacity: 1; filter: drop-shadow(0 0 10px var(--accent)); }
+  100% { transform: none; filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ks-ster, .ks-gw, .ks-lampje, .ks-vlam, .ks-vuur, .ks-rimpel, .ks-ob { animation: none !important; }
+}
+body.rustig .ks-ster, body.rustig .ks-gw, body.rustig .ks-lampje, body.rustig .ks-vlam, body.rustig .ks-vuur, body.rustig .ks-rimpel { animation: none !important; }
+
+/* Na een handeling: de kamer, groot, met het nieuwe voorwerp. */
+.scherm-oplichten { justify-content: center; }
+.scherm-oplichten .kamer-scene { width: 100%; margin-bottom: 0; }
+.scherm-oplichten .oplicht-zin { position: static; margin-top: var(--ruimte-4); }
+.hal-camera { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.ks-planklijn { fill: none; stroke: color-mix(in srgb, var(--accent) 14%, transparent); stroke-width: 1; }
+body:has(.scherm-oplichten) .motief { opacity: 0; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   v30 — Twee lagen per kamer: de kamer zelf en de activiteiten
+
+   Vandaag → (blad) → activiteiten                     de werkomgeving
+   Huis → hal → kamer (alleen interieur) → activiteiten
+   De activiteitenpagina's tonen geen interieur meer; de kamer toont geen
+   activiteiten. Ze delen de kleur van de kamer, niet de indeling.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Het blad op Vandaag ─────────────────────────────────────────────── */
+.kamer-blad-laag { position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; justify-content: center; }
+.blad-achter {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 7, 12, 0);
+  border: 0;
+  padding: 0;
+  transition: background 240ms ease;
+}
+.kamer-blad-laag.is-open .blad-achter { background: rgba(8, 7, 12, 0.6); }
+.kamer-blad {
+  position: relative;
+  width: min(100%, 30rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ruimte-2);
+  padding: 0.8rem 1.4rem calc(1.4rem + env(safe-area-inset-bottom));
+  text-align: center;
+  border-radius: 28px 28px 0 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-bottom: 0;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 16%, #17131d), #17131d 62%);
+  box-shadow: 0 -24px 60px -20px #000;
+  transform: translateY(102%);
+  transition: transform 320ms var(--ease-uit);
+}
+.kamer-blad-laag.is-open .kamer-blad { transform: none; }
+.blad-greep { width: 2.4rem; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--accent) 35%, transparent); margin-bottom: var(--ruimte-2); }
+.blad-glyph { color: var(--accent); }
+.blad-glyph svg { width: 2rem; height: 2rem; }
+.blad-naam { margin: 0; font-size: 1.6rem; font-weight: 400; letter-spacing: -0.02em; }
+.blad-doel { margin: 0; font-size: 0.95rem; color: var(--voorgrond-zacht); }
+.blad-status { margin: 0 0 var(--ruimte-3); font-size: var(--tekst-klein); line-height: 1.5; color: var(--voorgrond-zwak); max-width: 22rem; }
+.kamer-blad .knop { width: 100%; }
+@media (prefers-reduced-motion: reduce) {
+  .kamer-blad, .blad-achter { transition-duration: 1ms; }
+}
+
+/* ── De kamer zelf ────────────────────────────────────────────────────── */
+#app:has(.scherm-binnen) { padding: 0; justify-content: flex-start; }
+.scherm-binnen {
+  position: fixed;
+  inset: 0;
+  max-width: none;
+  width: 100%;
+  padding: 0;
+  gap: 0;
+  align-items: stretch;
+  text-align: left;
+  overflow-y: auto;
+}
+.binnen-kolom { position: relative; width: min(100%, 30rem); min-height: 100%; margin: 0 auto; display: flex; flex-direction: column; }
+/* De ruimte loopt door tot de rand: de scène is de hele bovenkant. */
+.binnen-scene {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 360 / 320;
+  flex: none;
+  background: color-mix(in srgb, var(--accent) 8%, var(--grond));
+  animation: binnen-in 700ms var(--ease-uit) backwards;
+}
+.binnen-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.35), transparent 22%, transparent 70%, var(--grond));
+}
+@keyframes binnen-in { from { opacity: 0; } }
+.binnen-kop { position: absolute; top: 0; left: 0; padding: calc(0.8rem + env(safe-area-inset-top)) 1rem 0; z-index: 3; }
+.binnen-kop .terug-knop { margin: 0; }
+.binnen-voet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruimte-2);
+  flex: 1;
+  padding: var(--ruimte-1) 1.4rem calc(1.6rem + env(safe-area-inset-bottom));
+  animation: kamer-in 520ms var(--ease-uit) 260ms backwards;
+}
+.binnen-naam { margin: 0; font-size: 2rem; font-weight: 400; line-height: 1.1; letter-spacing: -0.025em; }
+.binnen-doel { margin: 0; font-size: 0.98rem; color: var(--voorgrond-zacht); }
+.binnen-status { margin: var(--ruimte-3) 0 0; font-family: var(--serif); font-size: 1.15rem; line-height: 1.45; color: var(--voorgrond); text-wrap: pretty; }
+.binnen-recent { margin: 0; font-size: var(--tekst-klein); line-height: 1.5; color: var(--voorgrond-zwak); }
+.binnen-actie { margin-top: auto; align-self: stretch; }
+body:has(.scherm-binnen) .motief { opacity: 0; }
+body:has(.scherm-binnen) .motief * { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) {
+  .binnen-scene, .binnen-voet { animation: none; }
 }

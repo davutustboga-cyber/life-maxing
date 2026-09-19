@@ -4,6 +4,14 @@ export function huidigeDagSleutel(nu = new Date()) {
     const tz = new Date(nu.getTime() - nu.getTimezoneOffset() * 60000);
     return tz.toISOString().slice(0, 10);
 }
+/**
+ * v27 — de dag van het jaar (1–366), lokale kalenderdag. Hetzelfde principe
+ * als `visieFragment()` en `motivatiehoekVoorVandaag()`: een deterministische
+ * keuze per dag wisselt van dag tot dag, staat de hele dag stil en telt niets.
+ */
+export function dagVanJaar(nu = new Date()) {
+    return Math.floor((Date.UTC(nu.getFullYear(), nu.getMonth(), nu.getDate()) - Date.UTC(nu.getFullYear(), 0, 0)) / 86400000);
+}
 export function ochtendVandaagGedaan(data) {
     const vandaag = huidigeDagSleutel();
     return (data.ochtendMomenten ?? []).some((o) => o.datum === vandaag);
@@ -53,4 +61,38 @@ export function voorVandaagVanGisteren(data, nu = new Date()) {
     const d = (data.dagsluitingen ?? []).find((x) => x.datum === gisteren);
     const tekst = d?.voorMorgen?.trim();
     return tekst ? tekst : null;
+}
+// ── v27 — wat je vandaag al deed ─────────────────────────────────────────
+// Zie `GedaanVandaag` in types.ts. Een dag-vlag, geen geschiedenis: de
+// record van gisteren telt niet mee en wordt bij de eerstvolgende schrijfactie
+// gewoon vervangen.
+function vandaagRecord(data, nu) {
+    const r = data.gedaanVandaag;
+    return r && r.datum === huidigeDagSleutel(nu) ? r : null;
+}
+function schrijfbaarRecord(data, nu) {
+    const r = vandaagRecord(data, nu);
+    if (r)
+        return r;
+    const nieuw = { datum: huidigeDagSleutel(nu), aflevering: false, items: [] };
+    data.gedaanVandaag = nieuw;
+    return nieuw;
+}
+export function registreerGedaan(data, dagdeel, sleutel, nu = new Date()) {
+    const r = schrijfbaarRecord(data, nu);
+    if (!r.items.some((i) => i.dagdeel === dagdeel && i.sleutel === sleutel))
+        r.items.push({ dagdeel, sleutel });
+}
+export function registreerAflevering(data, nu = new Date()) {
+    schrijfbaarRecord(data, nu).aflevering = true;
+}
+export function afleveringGelezen(data, nu = new Date()) {
+    return vandaagRecord(data, nu)?.aflevering ?? false;
+}
+/** Heb je in dit dagdeel al iets gedaan? Dan sluit het startscherm af. */
+export function dagdeelAfgerond(data, dagdeel, nu = new Date()) {
+    return (vandaagRecord(data, nu)?.items ?? []).some((i) => i.dagdeel === dagdeel);
+}
+export function vandaagAlGedaan(data, sleutel, nu = new Date()) {
+    return (vandaagRecord(data, nu)?.items ?? []).some((i) => i.sleutel === sleutel);
 }

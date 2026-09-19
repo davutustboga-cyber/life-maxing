@@ -401,8 +401,11 @@ function fractie(v) {
 export function berekenSterPosities(sterren, breedte, hoogte) {
     const posities = new Map();
     const perStreek = { lichaam: [], geest: [], verbinding: [], ziel: [] };
+    // v27 — een ster met een onbekende streek (een export van een oudere
+    // versie, een hernoemde streek) sloeg hier `undefined.push` op en maakte de
+    // hele Hemel zwart, zonder foutmelding. Nu wordt alleen die ster overgeslagen.
     for (const s of sterren)
-        perStreek[s.streek].push(s);
+        perStreek[s.streek]?.push(s);
     const kwadranten = [
         { streek: "geest", x0: 0, y0: 0 },
         { streek: "lichaam", x0: breedte / 2, y0: 0 },
@@ -586,8 +589,10 @@ function genereerAchtergrondSterren(breedte, hoogte) {
         sterren.push({
             x: random() * breedte,
             y: random() * hoogte,
-            r: 0.6 + random() * random() * 1.6,
-            basisAlpha: 0.18 + random() * 0.42,
+            // v27 — fors gedimd: de verre sterren zijn sfeer, jouw eigen sterren
+            // moeten er duidelijk bovenuit steken (voorheen 0.18–0.60).
+            r: 0.5 + random() * random() * 1.3,
+            basisAlpha: 0.1 + random() * 0.26,
             twinkel: random() * Math.PI * 2,
             kleur: kiesSterkleur(random),
         });
@@ -729,12 +734,115 @@ function tekenVallendeSterren(ctx, sterren, nu) {
         ctx.restore();
     }
 }
+// ── v27 — De Hemel opknappen (bouwplan v27, hoofdstuk 7) ────────────────
+//
+// Drie aanwijsbare problemen, allemaal gemeten (analyse 19 september):
+//  1. je eigen sterren waren niet te onderscheiden van de honderden
+//     decoratieve achtergrondsterren;
+//  2. aantikken gaf bijna niets;
+//  3. bij een jaar gebruik (420 sterren) klontert de hemel dicht en zakt de
+//     framerate op Retina naar 23 fps.
+//
+// Aanpak hier: de achtergrond (atmosfeer, melkweg, verre sterren) wordt één
+// keer naar een offscreen-canvas getekend en daarna per frame alleen nog als
+// plaatje verschoven (parallax); alleen een zevende deel van de verre sterren
+// fonkelt nog per frame. Eigen sterren zijn groter en warmer met een zachte
+// ring, en oudere sterren zakken naar achter in plaats van net zo hard te
+// schreeuwen als de nieuwe. Alleen de nieuwste ~40 krijgen nog een gloed; de
+// rest is een gewone stip — dat is wat de framerate terugbrengt.
+const WARM = "240, 198, 116"; // messing-fel, de warme tint van je eigen sterren
+const KERN = "250, 240, 214";
+/** Zoveel eigen sterren krijgen de volle gloed; daarna zakken ze naar achter. */
+const VOORGROND_STERREN = 40;
+/** Tot deze leeftijdsrang is elke ster aantikbaar; daarbuiten alleen als er een zin bij staat. */
+const TIKBAAR_STERREN = 150;
+const PARALLAX_MARGE = 20;
+/** Rang op leeftijd: 0 is de nieuwste ster. */
+function leeftijdsRang(sterren) {
+    const oplopend = sterren
+        .map((s, i) => ({ s, i }))
+        .sort((a, b) => (a.s.datum ?? "").localeCompare(b.s.datum ?? "") || a.i - b.i);
+    const rang = new Map();
+    oplopend.forEach((x, idx) => rang.set(x.s.id, oplopend.length - 1 - idx));
+    return rang;
+}
+/**
+ * De statische achtergrond, één keer getekend. Iets groter dan het canvas, zodat
+ * de parallax nooit een lege rand laat zien.
+ */
+function maakAchtergrondLaag(breedte, hoogte, stilleSterren) {
+    if (breedte <= 0 || hoogte <= 0)
+        return null;
+    const dpr = window.devicePixelRatio || 1;
+    const laag = document.createElement("canvas");
+    const B = breedte + PARALLAX_MARGE * 2;
+    const H = hoogte + PARALLAX_MARGE * 2;
+    laag.width = Math.round(B * dpr);
+    laag.height = Math.round(H * dpr);
+    const c = laag.getContext("2d");
+    if (!c)
+        return null;
+    c.scale(dpr, dpr);
+    tekenAtmosfeer(c, B, H, 0, true);
+    tekenMelkweg(c, B, H);
+    c.translate(PARALLAX_MARGE, PARALLAX_MARGE);
+    tekenAchtergrondSterren(c, stilleSterren, 0, true);
+    return laag;
+}
+function tekenEigenSter(ctx, p, rang, metZin, helderheid, oplicht) {
+    const voorgrond = rang < VOORGROND_STERREN;
+    const factor = voorgrond ? 1 : Math.max(0.4, 1 - (rang - VOORGROND_STERREN) / 260);
+    const kern = (p.r * 1.15 + 0.8) * (metZin ? 1.15 : 1) * (0.7 + 0.3 * factor);
+    const a = Math.min(1, helderheid) * factor;
+    if (voorgrond) {
+        const straal = kern * (oplicht !== null ? 5.5 + 5 * (1 - oplicht) : 5.5);
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, straal);
+        g.addColorStop(0, `rgba(${WARM}, ${0.36 * a})`);
+        g.addColorStop(1, `rgba(${WARM}, 0)`);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, straal, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, kern, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${KERN}, ${a})`;
+    ctx.fill();
+    // De vierpuntsflonker: alleen op sterren die een zin dragen.
+    if (metZin && voorgrond) {
+        const lengte = kern * 3.6;
+        ctx.strokeStyle = `rgba(${KERN}, ${a * 0.5})`;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(p.x - lengte, p.y);
+        ctx.lineTo(p.x + lengte, p.y);
+        ctx.moveTo(p.x, p.y - lengte);
+        ctx.lineTo(p.x, p.y + lengte);
+        ctx.stroke();
+    }
+    // Een ster die net ontstaat: één ring die uitdijt en dooft.
+    if (oplicht !== null && oplicht < 1) {
+        const e = 1 - Math.pow(1 - oplicht, 3);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 6 + e * 34, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(${WARM}, ${(1 - e) * 0.55})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+}
 export function tekenHemel(canvas, sterren, onTikSter, opties = {}) {
-    const { sterrenbeelden = [], nieuwSterrenbeeldId = null, rustig = false } = opties;
+    const { sterrenbeelden = [], nieuwSterrenbeeldId = null, rustig = false, oplichtSterId = null, oplichtMs = 1200, oplichtVertraging = 250, } = opties;
+    const rang = leeftijdsRang(sterren);
+    // Nieuwste voorop in de rang, maar getekend van oud naar nieuw: de nieuwe
+    // ster ligt dus altijd bovenop.
+    const tekenVolgorde = [...sterren].sort((a, b) => (rang.get(b.id) ?? 0) - (rang.get(a.id) ?? 0));
+    const tikbaar = sterren.filter((s) => (rang.get(s.id) ?? 0) < TIKBAAR_STERREN || Boolean(s.zin));
     let ctx = sizeCanvas(canvas);
     let rect = canvas.getBoundingClientRect();
     let posities = berekenSterPosities(sterren, rect.width, rect.height);
     let achtergrond = genereerAchtergrondSterren(rect.width, rect.height);
+    let funkelend = achtergrond.filter((_, i) => i % 7 === 0);
+    let laag = maakAchtergrondLaag(rect.width, rect.height, achtergrond.filter((_, i) => i % 7 !== 0));
     let raf = 0;
     let fase = 0;
     const begonnenOp = performance.now();
@@ -751,11 +859,11 @@ export function tekenHemel(canvas, sterren, onTikSter, opties = {}) {
     let voltooiGepulst = false;
     let voltooiPulsBegonnenOp = 0;
     const VOLTOOI_PULS_MS = 900;
-    // Diepteparallax: alleen de achtergrond (atmosfeer, melkweg, verre sterren,
-    // vallende sterren) schuift licht mee met je vinger of muis — je eigen
-    // sterren blijven op hun exacte, tikbare plek staan. Zonder aanraking
-    // zakt dit vanzelf terug naar het midden. Uitgezet bij rustige beelden,
-    // net als elke andere beweging die niet stilstaat als je 'm niet aanraakt.
+    // Diepteparallax: alleen de achtergrond schuift licht mee met je vinger of
+    // muis — je eigen sterren blijven op hun exacte, tikbare plek staan. Zonder
+    // aanraking zakt dit vanzelf terug naar het midden. Uitgezet bij rustige
+    // beelden, net als elke andere beweging die niet stilstaat als je 'm niet
+    // aanraakt.
     let parallaxDoelX = 0;
     let parallaxDoelY = 0;
     let parallaxX = 0;
@@ -781,6 +889,12 @@ export function tekenHemel(canvas, sterren, onTikSter, opties = {}) {
     canvas.addEventListener("pointerleave", pointerWegHandler);
     canvas.addEventListener("pointerup", pointerWegHandler);
     function herteken() {
+        // Het canvas is uit de pagina gehaald (je verliet dit scherm): stop de
+        // lus in plaats van eindeloos op een los canvas te blijven tekenen.
+        if (!canvas.isConnected) {
+            opruimen();
+            return;
+        }
         const nu = performance.now();
         ctx.clearRect(0, 0, rect.width, rect.height);
         fase += 0.02;
@@ -788,11 +902,16 @@ export function tekenHemel(canvas, sterren, onTikSter, opties = {}) {
         parallaxY += (parallaxDoelY - parallaxY) * 0.05;
         const verstreken = nu - begonnenOp;
         const drawOn = rustig ? 1 : Math.min(1, verstreken / DRAW_ON_MS);
+        if (laag) {
+            ctx.drawImage(laag, -PARALLAX_MARGE + parallaxX, -PARALLAX_MARGE + parallaxY, rect.width + PARALLAX_MARGE * 2, rect.height + PARALLAX_MARGE * 2);
+        }
+        else {
+            ctx.fillStyle = "#080a15";
+            ctx.fillRect(0, 0, rect.width, rect.height);
+        }
         ctx.save();
         ctx.translate(parallaxX, parallaxY);
-        tekenAtmosfeer(ctx, rect.width, rect.height, nu, rustig);
-        tekenMelkweg(ctx, rect.width, rect.height);
-        tekenAchtergrondSterren(ctx, achtergrond, fase, rustig);
+        tekenAchtergrondSterren(ctx, funkelend, fase, rustig);
         if (!rustig) {
             if (nu >= volgendeVal) {
                 vallendeSterren.push(spawnVallendeSter(rect.width, rect.height, nu));
@@ -818,25 +937,32 @@ export function tekenHemel(canvas, sterren, onTikSter, opties = {}) {
                 voltooiPulsBegonnenOp = nu;
             }
         }
-        for (const s of sterren) {
+        for (const s of tekenVolgorde) {
             const p = posities.get(s.id);
             if (!p)
                 continue;
+            // De ster die net ontstond (of die van vandaag) licht op: hij is er
+            // eerst niet, dan groeit hij in `oplichtMs` uit tot zijn plek.
+            let oplicht = null;
+            if (!rustig && oplichtSterId === s.id) {
+                const t = (verstreken - oplichtVertraging) / oplichtMs;
+                if (t <= 0)
+                    continue;
+                oplicht = Math.min(1, t);
+            }
             const twinkel = rustig ? 0.85 : 0.6 + 0.4 * Math.sin(fase + p.twinkel);
-            let helderheid = 0.4 + 0.5 * twinkel;
+            let helderheid = 0.55 + 0.45 * twinkel;
+            if (oplicht !== null)
+                helderheid = Math.min(1, 0.25 + 0.9 * (1 - Math.pow(1 - oplicht, 2)));
             // Een zeldzame, korte opflakkering per ster — echte sterren fonkelen
-            // onregelmatig, niet als een gladde sinus. Elke ster krijgt zijn eigen,
-            // uit zijn positie afgeleide ritme, dus dit is puur een functie van de
-            // tijd — geen aparte planning of state nodig.
+            // onregelmatig, niet als een gladde sinus.
             if (!rustig) {
                 const vlamFase = Math.sin(fase * 0.16 + p.twinkel * 3.7);
                 if (vlamFase > 0.965)
-                    helderheid += ((vlamFase - 0.965) / 0.035) * 0.55;
+                    helderheid += ((vlamFase - 0.965) / 0.035) * 0.45;
             }
             if (voltooiGepulst) {
-                const isVanNieuw = sterrenbeelden
-                    .find((sb) => sb.id === nieuwSterrenbeeldId)
-                    ?.sterIds.includes(s.id);
+                const isVanNieuw = sterrenbeelden.find((sb) => sb.id === nieuwSterrenbeeldId)?.sterIds.includes(s.id);
                 if (isVanNieuw) {
                     const tv = (nu - voltooiPulsBegonnenOp) / VOLTOOI_PULS_MS;
                     if (tv >= 0 && tv <= 1)
@@ -851,7 +977,7 @@ export function tekenHemel(canvas, sterren, onTikSter, opties = {}) {
                         helderheid += (1 - tt) * 0.5;
                 }
             }
-            tekenSter(ctx, p, Boolean(s.zin), Math.min(1, helderheid));
+            tekenEigenSter(ctx, p, oplicht !== null ? 0 : (rang.get(s.id) ?? 0), Boolean(s.zin), Math.min(1, helderheid), oplicht);
         }
         if (tikPuls) {
             const tt = (nu - tikPuls.begonnenOp) / TIK_PULS_MS;
@@ -872,7 +998,7 @@ export function tekenHemel(canvas, sterren, onTikSter, opties = {}) {
     }
     function clickHandler(e) {
         const r = canvas.getBoundingClientRect();
-        const ster = sterOnderTik(sterren, posities, e.clientX - r.left, e.clientY - r.top);
+        const ster = sterOnderTik(tikbaar, posities, e.clientX - r.left, e.clientY - r.top, 18);
         if (ster) {
             onTikSter(ster);
             const p = posities.get(ster.id);
@@ -886,17 +1012,20 @@ export function tekenHemel(canvas, sterren, onTikSter, opties = {}) {
         rect = canvas.getBoundingClientRect();
         posities = berekenSterPosities(sterren, rect.width, rect.height);
         achtergrond = genereerAchtergrondSterren(rect.width, rect.height);
+        funkelend = achtergrond.filter((_, i) => i % 7 === 0);
+        laag = maakAchtergrondLaag(rect.width, rect.height, achtergrond.filter((_, i) => i % 7 !== 0));
     }
     const stopMaat = opMaat(canvas, resize);
     raf = requestAnimationFrame(herteken);
-    return () => {
+    function opruimen() {
         cancelAnimationFrame(raf);
         stopMaat();
         canvas.removeEventListener("click", clickHandler);
         canvas.removeEventListener("pointermove", pointerMoveHandler);
         canvas.removeEventListener("pointerleave", pointerWegHandler);
         canvas.removeEventListener("pointerup", pointerWegHandler);
-    };
+    }
+    return opruimen;
 }
 /**
  * Tekenmodus binnen De Hemel (schermenoverzicht.md S8): dezelfde hemel, maar

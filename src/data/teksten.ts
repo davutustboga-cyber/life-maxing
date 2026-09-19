@@ -204,11 +204,11 @@ export const teksten = {
       "Als dit al langer speelt: dit is een plek voor een huisarts, niet voor een app.",
   },
   motivatiehoek: {
-    rijTitel: "Geen motivatie",
-    rijOnder: "Niet voor elke dag. Alleen als je echt vastzit.",
     realityCheckKop: "Sta even stil",
     verder: "Verder",
     klaar: "Ga verder met je dag",
+    slot: "Genoeg gelezen.",
+    alleenVoorNu: "Wat je hier invult of aantikt blijft alleen voor nu. Het wordt niet bewaard.",
   },
 
   instellingen: {
@@ -270,6 +270,7 @@ export const teksten = {
     voorMorgen: "Van gisteravond, voor vandaag",
     kerntaak: "Je kerntaak vandaag",
     plan: "Je plan",
+    nieuw: "Deze heb je nog niet eerder geprobeerd.",
   },
   legeStaten: {
     storageVolOfGeweigerd: "Er is nu geen ruimte om dit te bewaren op je toestel. Probeer het opnieuw, of maak een export.",
@@ -382,11 +383,15 @@ export const teksten = {
   // en de brug naar een concreet doel (met obstakel + plan) is een vrije
   // keuze, geen automatische volgende stap.
   visie: {
-    introKop: "Waar je naartoe leeft",
+    introKop: "Wie ben je over vijf jaar?",
     introRegels: [
-      "Je kunt hier kort opschrijven hoe je leven eruitziet als het al is geworden wat je wil — niet als wens, maar alsof het nu al zo is.",
-      "Dat helpt vooral om helder te krijgen wie je wil zijn. Het lukt het best in combinatie met eerlijk kijken naar wat er nu in de weg zit — dat kun je hierna altijd apart doen, bij \"Richting en doelen\".",
+      "Schrijf op hoe je leven eruitziet als het is geworden wat je wil: wie je bent, hoe je je dagen leeft, wat je geloof, je lichaam en de mensen om je heen voor je betekenen.",
+      "In de ik-vorm en in de tegenwoordige tijd, alsof het al zo is. Dat helpt vooral om helder te krijgen wie je wil zijn. Het lukt het best samen met eerlijk kijken naar wat er nu in de weg zit — dat kun je altijd apart doen, bij \"Van visie naar een doel\".",
     ],
+    heroUitnodiging: "Schrijf het op, in je eigen woorden.",
+    schrijfKop: "Over vijf jaar",
+    schrijfRegel:
+      "Maak de zinnen af in de ik-vorm, alsof het al zo is. Alles mag leeg blijven en je kunt het altijd aanpassen.",
     introHerkomst:
       "Zelf geschreven, in je eigen woorden werkt beter dan een kant-en-klare zin steeds herhalen.",
     // v25 — stond op "Beginnen", precies dezelfde tekst als de knop op het

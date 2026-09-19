@@ -5,6 +5,7 @@ const DB_NAAM = "life-maxing";
 const STORE_NAAM = "bestand";
 const DOC_KEY = "het-bestand";
 const DB_VERSIE = 1;
+const STREKEN = ["lichaam", "geest", "verbinding", "ziel"];
 function openDb() {
     return new Promise((resolve, reject) => {
         const req = indexedDB.open(DB_NAAM, DB_VERSIE);
@@ -105,7 +106,16 @@ export function parseGeimporteerdBestand(tekst) {
             Array.isArray(data.sterren)) {
             // vul ontbrekende velden aan met de lege standaard, voor het geval
             // een ouder exportbestand een later toegevoegd veld mist
-            return { ...leegBestand(), ...data };
+            const leeg = leegBestand();
+            const samengesteld = {
+                ...leeg,
+                ...data,
+                instellingen: { ...leeg.instellingen, ...(data.instellingen ?? {}) },
+            };
+            // v27 — een ster met een onbekende streek zou De Hemel breken. Alleen
+            // die ster laten we weg; de rest van het bestand blijft heel.
+            samengesteld.sterren = samengesteld.sterren.filter((s) => s && typeof s === "object" && STREKEN.includes(s.streek));
+            return samengesteld;
         }
         return null;
     }

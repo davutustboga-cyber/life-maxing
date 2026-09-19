@@ -13,6 +13,8 @@ export const themas = [
         id: "rust",
         titel: "Rust vinden",
         onderschrift: "Als je gespannen, gejaagd of overprikkeld bent.",
+        doet: "Laat eerst je adem en je lichaam zakken.",
+        accent: "dusk",
         bewegingIds: [
             "adem-lange-uitademing",
             "fysiologische-zucht",
@@ -27,6 +29,8 @@ export const themas = [
         id: "lichaam",
         titel: "Lichaam en bewegen",
         onderschrift: "Als stilzitten niet meer helpt.",
+        doet: "Zet je in beweging, ook als het klein is.",
+        accent: "ember",
         bewegingIds: [
             "vijf-minuten-naar-buiten",
             "tien-minuten-wandelen-groen",
@@ -39,6 +43,8 @@ export const themas = [
         id: "hoofd",
         titel: "Hoofd leegmaken",
         onderschrift: "Als het maalt, piekert of te vol zit.",
+        doet: "Haalt de gedachten uit je hoofd en op afstand.",
+        accent: "brass",
         bewegingIds: [
             "uitschrijven-zonder-filter",
             "benoemen-en-parkeren",
@@ -54,12 +60,16 @@ export const themas = [
         id: "verbinding",
         titel: "Mensen",
         onderschrift: "Als je alleen zit, of iets scheef staat met iemand.",
+        doet: "Brengt je een stap dichter bij iemand.",
+        accent: "moss",
         bewegingIds: ["bericht-sturen", "dankbaarheid-naar-persoon", "aanname-omdraaien", "vergeven-eerste-stap"],
     },
     {
         id: "geloof",
         titel: "Geloof en zingeving",
         onderschrift: "Wat de dag ergens aan vastmaakt.",
+        doet: "Maakt de dag vast aan iets wat groter is.",
+        accent: "brass",
         islamitisch: true,
         bewegingIds: [
             "shukr-drie-dingen",
@@ -75,12 +85,16 @@ export const themas = [
         id: "slaap",
         titel: "Slaap en ritme",
         onderschrift: "Wat je dag- en nachtritme op zijn plek houdt.",
+        doet: "Zet je dag- en nachtritme terug op zijn plek.",
+        accent: "dusk",
         bewegingIds: ["ochtendlicht-zien", "adem-lange-uitademing", "vijf-minuten-naar-buiten"],
     },
     {
         id: "doorzetten",
         titel: "Aanpakken",
         onderschrift: "Als er iets blijft liggen, of je jezelf hard aanpakt.",
+        doet: "Maakt aanpakken kleiner en vriendelijker.",
+        accent: "ember",
         bewegingIds: ["vijftien-minuten-moeilijke-ding", "zelfcompassie-na-misstap", "savoring-zestig-seconden"],
     },
     {
@@ -90,12 +104,16 @@ export const themas = [
         id: "richting",
         titel: "Richting en doelen",
         onderschrift: "Als je iets wil bereiken en niet weet waar te beginnen.",
+        doet: "Maakt van een wens een plan met een als-dan.",
+        accent: "brass",
         bewegingIds: [],
     },
     {
         id: "reset",
         titel: "Prikkels resetten",
         onderschrift: "Als je hoofd overprikkeld is van schermen en stilzitten niet meer lukt.",
+        doet: "Haalt je uit de schermprikkel terug naar wat er is.",
+        accent: "moss",
         bewegingIds: ["prikkels-loslaten", "vijf-zintuigen-grounding"],
     },
 ];

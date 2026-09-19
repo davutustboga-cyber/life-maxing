@@ -20,6 +20,15 @@
 const { chromium } = require('/home/claude/.npm-global/lib/node_modules/playwright');
 
 const BASIS = 'http://localhost:8792';
+
+// v27 (W8) — de nepklok van de pagina stond vast op 10 september, terwijl
+// dagSleutel() in Node de echte datum gebruikt. Op 10 september klopte dat;
+// daarna niet meer, en faalden drie controles zonder dat de app iets mankeerde.
+// Nu is de klok van de pagina altijd "vandaag" (lokale kalenderdag) op het
+// gevraagde uur, dus beide klokken lopen weer gelijk.
+const NU = new Date();
+const VANDAAG = [NU.getFullYear(), String(NU.getMonth() + 1).padStart(2, '0'), String(NU.getDate()).padStart(2, '0')].join('-');
+const om = (uur) => `${VANDAAG}T${uur}`;
 const uitkomsten = [];
 function check(naam, waar, extra) {
   uitkomsten.push({ naam, ok: !!waar, extra: extra ?? '' });
@@ -106,8 +115,16 @@ function canvasGevuld(selector) {
   if (!c.width || !c.height) return { gevonden: true, breedte: c.width, pixels: 0 };
   const d = ctx.getImageData(0, 0, c.width, c.height).data;
   let gevuld = 0;
-  for (let i = 3; i < d.length; i += 4) if (d[i] > 0) gevuld++;
-  return { gevonden: true, breedte: c.width, pixels: gevuld };
+  // v27 (W8) — "helder" telt alleen pixels die echt licht zijn. De atmosfeer
+  // vult het hele canvas (alpha > 0 voor elke pixel), waardoor de controle
+  // "De Hemel tekent werkelijk sterren" 329.160 van 329.160 meldde en niet
+  // kon falen, ook zonder één ster.
+  let helder = 0;
+  for (let i = 3; i < d.length; i += 4) {
+    if (d[i] > 0) gevuld++;
+    if (d[i] > 200 && Math.max(d[i - 3], d[i - 2], d[i - 1]) > 170) helder++;
+  }
+  return { gevonden: true, breedte: c.width, pixels: gevuld, helder };
 }
 
 async function nieuwePagina(browser, doc, klok) {
@@ -142,7 +159,7 @@ async function nieuwePagina(browser, doc, klok) {
 
   // ── 1. De Schijf tekent op S1 ─────────────────────────────────────
   {
-    const { ctx, page, fouten } = await nieuwePagina(browser, bestand(), '2026-09-10T12:30:00');
+    const { ctx, page, fouten } = await nieuwePagina(browser, bestand(), om('12:30:00'));
     await page.locator('text=Hoe voel je je?').first().click();
     await page.waitForTimeout(300);
     check('S2 heeft een weg terug', await page.$('.terug-knop'));
@@ -191,7 +208,7 @@ async function nieuwePagina(browser, doc, klok) {
 
   // ── 3. Een oefening vanaf "Doen" laat een ster achter ─────────────
   {
-    const { ctx, page, fouten } = await nieuwePagina(browser, bestand(), '2026-09-10T12:30:00');
+    const { ctx, page, fouten } = await nieuwePagina(browser, bestand(), om('12:30:00'));
     await page.locator('.nav-item').nth(1).click();
     await page.waitForTimeout(300);
     await page.click('text=Rust vinden');
@@ -249,7 +266,7 @@ async function nieuwePagina(browser, doc, klok) {
           sinds: '2026-09-01T09:00:00+02:00',
         },
       }),
-      '2026-09-10T12:30:00'
+      om('12:30:00')
     );
     await page.locator('.nav-item').nth(2).click();
     await page.waitForTimeout(300);
@@ -258,7 +275,7 @@ async function nieuwePagina(browser, doc, klok) {
     const hemel = await page.evaluate(canvasGevuld, 'canvas.hemel-canvas');
     check(
       'De Hemel tekent werkelijk sterren',
-      hemel.gevonden && hemel.breedte > 0 && hemel.pixels > 200,
+      hemel.gevonden && hemel.breedte > 0 && hemel.helder > 20,
       JSON.stringify(hemel)
     );
 
@@ -298,7 +315,7 @@ async function nieuwePagina(browser, doc, klok) {
   {
     const doc = bestand();
     doc.instellingen.islamitischeLaag = false;
-    const { ctx, page, fouten } = await nieuwePagina(browser, doc, '2026-09-10T12:30:00');
+    const { ctx, page, fouten } = await nieuwePagina(browser, doc, om('12:30:00'));
     await page.click('text=Ik ben eruit gevallen');
     await page.waitForTimeout(300);
     await page.click('text=Verder');
@@ -331,7 +348,7 @@ async function nieuwePagina(browser, doc, klok) {
         },
       ],
     });
-    const { ctx, page, fouten } = await nieuwePagina(browser, doc, '2026-09-10T07:30:00');
+    const { ctx, page, fouten } = await nieuwePagina(browser, doc, om('07:30:00'));
     const ochtend = await page.$eval('#app', (n) => n.innerText);
     check(
       "'Iets kleins voor morgen' komt de volgende ochtend terug",
@@ -354,7 +371,7 @@ async function nieuwePagina(browser, doc, klok) {
         { id: 'o-1', datum: dagSleutel(0), intentie: 'rustig blijven', kerntaak: 'het hoofdstuk afmaken' },
       ],
     });
-    const { ctx, page, fouten } = await nieuwePagina(browser, doc, '2026-09-10T14:30:00');
+    const { ctx, page, fouten } = await nieuwePagina(browser, doc, om('14:30:00'));
     const middag = await page.$eval('#app', (n) => n.innerText);
     check(
       'De kerntaak van vanmorgen staat er later op de dag nog',
@@ -367,7 +384,7 @@ async function nieuwePagina(browser, doc, klok) {
 
   // ── 8. Dag sluiten: het kompas staat er en tekent ─────────────────
   {
-    const { ctx, page, fouten } = await nieuwePagina(browser, bestand(), '2026-09-10T21:40:00');
+    const { ctx, page, fouten } = await nieuwePagina(browser, bestand(), om('21:40:00'));
     await page.click('.kaart-primair');
     await page.waitForTimeout(600);
     const schijf = await page.evaluate(canvasGevuld, 'canvas.schijf-canvas');

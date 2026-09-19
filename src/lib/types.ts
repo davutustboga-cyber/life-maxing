@@ -85,6 +85,14 @@ export interface Ster {
   streek: Streek;
   datum: string;
   zin: string | null;
+  /**
+   * v27 — welke beweging deze ster opleverde (alleen bij nieuwe sterren van
+   * de hoofdweg; oudere sterren missen het veld en zijn via `momentId` →
+   * `gekozenDeur` terug te vinden). Puur om onder een kaart te kunnen zeggen
+   * "Deze heb je nog niet eerder geprobeerd" — nooit een aantal, nooit een
+   * lijst met vinkjes (bouwplan v27, W4.5).
+   */
+  bewegingId?: string;
 }
 
 export interface Sterrenbeeld {
@@ -236,6 +244,30 @@ export interface LifeMaxingData {
    */
   conceptDoel: ConceptDoel | null;
   conceptDagsluiting: ConceptDagsluiting | null;
+  /**
+   * v27 — wat je vandaag al deed, per dagdeel, zodat het startscherm na een
+   * afgeronde handeling afsluit in plaats van een volgende kaart aan te
+   * bieden ("geef eerst, vraag daarna" — bouwplan v27, W1). Zelfde categorie
+   * als `ochtendMomenten`/`dagsluitingen`: een dag-vlag, geen geschiedenis.
+   * Het wist zichzelf zodra `datum` niet meer vandaag is en wordt nooit
+   * opgeteld of als getal getoond (Wet 4). De sleutels zijn technisch
+   * ("beweging:ochtendlicht-zien") en komen nooit op het scherm.
+   */
+  gedaanVandaag: GedaanVandaag | null;
+  /**
+   * Life Maxi 2.0 — hoe ver elke kamer van het huis was ingericht toen je hem
+   * voor het laatst zag (trap 0–4 per kamer, zie lib/huis.ts). Alleen om één
+   * keer te kunnen zeggen "in Adem & rust is het licht aangegaan"; nooit
+   * getoond als getal. `null` = nog nooit vastgelegd.
+   */
+  huisGezien: Record<string, number> | null;
+}
+
+export interface GedaanVandaag {
+  datum: string; // YYYY-MM-DD
+  /** de dagelijkse aflevering (Motivatiehoek) is vandaag gelezen */
+  aflevering: boolean;
+  items: { dagdeel: string; sleutel: string }[];
 }
 
 export interface ConceptDoel {
@@ -277,6 +309,16 @@ export interface Visie {
   wieIkBen: string;
   watIkHeb: string;
   waarIkSta: string;
+  /**
+   * v27 — de visie is nu een vijfjaarsvisie in de ik-vorm met zeven delen. Deze
+   * vier zijn erbij gekomen naast de oorspronkelijke drie; ze ontbreken in een
+   * visie die vóór v27 geschreven is, en lib/visie.ts leest ze daarom altijd
+   * met een terugval.
+   */
+  hoeIkLeef?: string;
+  geloof?: string;
+  lichaamEnRust?: string;
+  relaties?: string;
   geschrevenOp: string;
   laatstGewijzigdOp: string;
 }
@@ -335,5 +377,7 @@ export function leegBestand(): LifeMaxingData {
     visie: null,
     conceptDoel: null,
     conceptDagsluiting: null,
+    gedaanVandaag: null,
+    huisGezien: null,
   };
 }

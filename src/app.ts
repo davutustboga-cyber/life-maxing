@@ -9,6 +9,7 @@ import type {
   LifeMaxingData,
   Maandbrief,
   Moment,
+  Ster,
   Streek,
   Tijd,
   VisiePeriode,
@@ -24,6 +25,18 @@ import {
   tekenVerschil,
   nauwelijksVerschoven,
 } from "./lib/canvas.js";
+import {
+  toonThuis,
+  toonVisieIntro,
+  toonDoen,
+  toonTerugkijken,
+  toonKamer,
+  toonCheckIn,
+  toonAvondRoutine,
+  toonHuisOplichten,
+} from "./kamers.js";
+import { kamerVanSter, markeerHuisGezien } from "./lib/huis.js";
+import { kamerVanBeweging } from "./data/kamers.js";
 import { woordenNabij, woordById, zetEigenWoorden, zoekWoorden } from "./data/woorden.js";
 import { bewegingById, bewegingen } from "./data/bewegingen.js";
 import { teksten } from "./data/teksten.js";
@@ -44,19 +57,30 @@ import {
   avondVandaagGedaan,
   ochtendMomentVandaag,
   voorVandaagVanGisteren,
+  dagVanJaar,
+  registreerGedaan,
+  registreerAflevering,
+  afleveringGelezen,
+  dagdeelAfgerond,
+  vandaagAlGedaan,
 } from "./lib/ritme.js";
 import { adhkar, dhikrById } from "./data/adhkar.js";
 import { themas, themaById } from "./data/themas.js";
 import {
   begroeting,
   dagdeelVan,
+  dagdeelGroep,
   datumregel,
+  slotRegels,
+  suggestieSleutel,
   suggestiesVoorNu,
+  eigenZinVanEerder,
+  verrasMe,
   type Suggestie,
-  type SuggestieSoort,
 } from "./lib/nu.js";
 import { alleWoorden } from "./data/woorden.js";
 import { motivatiehoekVoorVandaag, type MotivatiehoekDag } from "./data/motivatiehoek.js";
+import { visieDelen } from "./lib/visie.js";
 import {
   visieBeschikbaarAlsIntro,
   registreerVisieIntroAangeboden,
@@ -68,19 +92,54 @@ import {
   toekomstSignaal,
 } from "./lib/visie.js";
 
-let data: LifeMaxingData;
+export let data: LifeMaxingData;
 
 /**
- * v25 — puur voor deze sessie, nooit bewaard (geen Wet-4-schending: dit is
- * geen geschiedenis, het reset bij elke herlaad). `suggestiesVoorNu()` kijkt
- * per dagdeel niet of je iets al deed — "Hoe voel je je?" mag midden op de
- * dag best twee keer, dat is het punt van een stemmingscheck. Maar zonder
- * geheugen kwam precies dezelfde kaart terug op het startscherm nádat je hem
- * net had afgerond, wat aanvoelt alsof er niets gebeurd is. Dit onthoudt
- * alleen "wat stond er net nog als hoofdkaart", zodat die daarna een keer
- * plaatsmaakt voor de volgende die past.
+ * v27 — puur UI-staat voor deze sessie, nooit bewaard: welke suggestie van het
+ * startscherm je nu doorloopt. Pas als die echt is afgerond (toonS7 of een
+ * "terug naar start" na de afronding) schrijft `rondLopendeAf()` hem weg in
+ * `data.gedaanVandaag`. Kom je via terug op het startscherm (toonThuis), dan
+ * telt het niet als gedaan. Dit vervangt de geheugenvariabele
+ * `laatstGekozenSuggestie` van v25, die bij elke herlaad van de PWA wiste.
  */
-let laatstGekozenSuggestie: { soort: SuggestieSoort; id?: string } | null = null;
+let lopendeSuggestie: { dagdeel: string; sleutel: string } | null = null;
+
+/**
+ * v27 — "toch nog iets doen": heb je in dit dagdeel al iets gedaan, dan sluit
+ * het startscherm af. Vraag je er zelf om, dan komt er één volgende. Pull,
+ * geen push; verdwijnt weer zodra je iets nieuws afrondt.
+ */
+let extraGevraagd: string | null = null;
+
+/**
+ * v27 (W5) — de ster die zojuist ontstond, zodat het afsluiten (toonS7) niet
+ * naar zwart dimt maar naar je hemel, met die ene ster die oplicht. Puur UI-
+ * staat: wordt bij gebruik meteen leeggemaakt. De Onderbreker en de
+ * herstelroute maken nooit een ster en blijven dus gewoon naar zwart dimmen.
+ */
+let zojuistGemaakteSter: Ster | null = null;
+
+/** De hal roept dit aan zodra hij opent: een lopende suggestie die je niet afrondde telt niet. */
+export function ruimSessieOp(): void {
+  lopendeSuggestie = null;
+  zojuistGemaakteSter = null;
+}
+
+export function extraIsGevraagd(sleutel: string): boolean {
+  return extraGevraagd === sleutel;
+}
+
+export function vraagExtra(sleutel: string): void {
+  extraGevraagd = sleutel;
+}
+
+function rondLopendeAf(): void {
+  if (!lopendeSuggestie) return;
+  registreerGedaan(data, lopendeSuggestie.dagdeel, lopendeSuggestie.sleutel);
+  lopendeSuggestie = null;
+  extraGevraagd = null;
+  void bewaren();
+}
 
 /**
  * v25 — toonS10() zet bij een mislukte aanmelding voor meldingen een
@@ -132,7 +191,7 @@ function stapKop(titel: string, index: number, totaal: number): ReturnType<typeo
   ];
 }
 
-async function bewaren(): Promise<void> {
+export async function bewaren(): Promise<void> {
   const gelukt = await bewaarBestand(data);
   if (!gelukt) {
     // teksten.yaml → lege_staten.storage_vol_of_geweigerd. Die tekst bestond
@@ -148,7 +207,7 @@ async function bewaren(): Promise<void> {
  * (ember) — spaarzaam, alleen de rand en de tekstkleur veranderen, nooit
  * een groot gekleurd vlak.
  */
-function toonMelding(tekst: string, soort: "neutraal" | "succes" | "fout" = "neutraal"): void {
+export function toonMelding(tekst: string, soort: "neutraal" | "succes" | "fout" = "neutraal"): void {
   const bestaand = document.querySelector(".melding");
   if (bestaand) bestaand.remove();
   const klasse = soort === "neutraal" ? "melding zacht" : `melding zacht melding--${soort}`;
@@ -159,6 +218,8 @@ function toonMelding(tekst: string, soort: "neutraal" | "succes" | "fout" = "neu
 
 export async function startApp(): Promise<void> {
   data = await laadBestand();
+  // "Rustige beelden" zet ook de bewegende achtergronden van de kamers stil.
+  document.body.classList.toggle("rustig", data.instellingen.rustigeBeelden);
   // teksten.yaml belooft dat een eigen woord er de volgende keer weer bij
   // staat; daarvoor moet de woordenlijst ze kennen.
   zetEigenWoorden(data.woordenUitbreiding);
@@ -168,6 +229,11 @@ export async function startApp(): Promise<void> {
   // De brieven van afgesloten maanden worden bij het openen geschreven en
   // daarna bevroren (v2.4 §7B). De lopende maand krijgt er nooit een.
   if (vulBrievenAan(data)) await bewaren();
+  // Life Maxi 2.0: een bestaand bestand hoeft niet te melden wat er al stond.
+  if (data.huisGezien === null) {
+    markeerHuisGezien(data);
+    await bewaren();
+  }
   if (!data.instellingen.ethischeOndergrensGezien) {
     toonS0();
   } else if (visieBeschikbaarAlsIntro(data)) {
@@ -239,11 +305,24 @@ function toonS1(beginPositie: { energie: number; toon: number } | null = null): 
   // weekmoment, instellingen, Frictie, de perfectionisme-check) zit voortaan
   // achter "meer" (S16), het ene stille toegangspunt dat Wet 5 en Wet 10.3
   // altijd al vroegen.
-  const scherm = el("div", { class: "scherm" }, [
+  const scherm = el("div", { class: "scherm", "data-kamer": "adem" }, [
     el("p", { class: "vraag" }, [teksten.eerstOpening.vraag]),
     el("p", { class: "zacht" }, [teksten.kompas.schijfUitleg]),
     kompasVeld(canvas),
     el("p", { class: "zacht" }, [teksten.kompas.schijfUitkomst]),
+    // v27 (W6) — De Schijf is weer de voordeur van de kompaslus; de woorden
+    // staan eronder als alternatief voor wie liever benoemt dan aanwijst.
+    el(
+      "button",
+      {
+        class: "knop-klein",
+        onclick: () => {
+          huidigeTikPositie = null;
+          toonS2();
+        },
+      },
+      ["liever woorden kiezen"]
+    ),
     el("button", { class: "knop-klein", onclick: () => toonS15Onderbreker() }, [teksten.onderbreker.toegangKnoptekst]),
     el("button", { class: "knop-klein", onclick: () => toonThuis() }, ["terug naar start"]),
   ]);
@@ -273,7 +352,11 @@ function toonS2(): void {
   // aangeven, opent alsnog de schijf via S1.
   const viaSchijf = huidigeTikPositie !== null;
   const tikPositie = huidigeTikPositie ?? { energie: 0, toon: 0 };
-  const nabij = viaSchijf ? woordenNabij(tikPositie.energie, tikPositie.toon, 10) : alleWoorden();
+  // v27 (W6) — ongeveer twaalf woorden rond waar je tikte, met "alle woorden"
+  // eronder (het patroon van "de hele bibliotheek" elders). Zonder schijf
+  // staat de hele lijst er, maar het zoekveld staat nu erboven.
+  const nabij = viaSchijf ? woordenNabij(tikPositie.energie, tikPositie.toon, 12) : alleWoorden();
+  let alleTonen = !viaSchijf;
   const gekozen = new Set<string>();
   let eigenWoordTekst = "";
 
@@ -340,7 +423,7 @@ function toonS2(): void {
     // Zonder tekst: de woorden bij je tikpositie. Met tekst: de hele lijst
     // doorzocht (schermenoverzicht.md S2).
     const treffers = zoekWoorden(eigenWoordTekst);
-    const lijst = eigenWoordTekst.trim() ? treffers : nabij;
+    const lijst = eigenWoordTekst.trim() ? treffers : alleTonen ? alleWoorden() : nabij;
     grid.replaceChildren(
       ...lijst.map((w) =>
         el(
@@ -363,6 +446,19 @@ function toonS2(): void {
   vulGrid();
   verversVerderKnop();
 
+  const alleWoordenKnop = el(
+    "button",
+    {
+      class: "knop-klein",
+      onclick: () => {
+        alleTonen = true;
+        vulGrid();
+        alleWoordenKnop.remove();
+      },
+    },
+    ["alle woorden"]
+  );
+
   const zoekInvoer = el("input", {
     type: "text",
     placeholder: teksten.kompas.zoekveldPlaceholder,
@@ -383,8 +479,9 @@ function toonS2(): void {
       // v25 — de lijst laat maximaal twee woorden kiezen; een derde aantikken
       // deed simpelweg niets, zonder dat de app ooit zei waarom.
       el("p", { class: "zacht" }, [teksten.kompas.woordenOnderschrift]),
-      grid,
       zoekInvoer,
+      grid,
+      viaSchijf ? alleWoordenKnop : null,
       verderKnop,
       viaSchijf
         ? null
@@ -398,7 +495,7 @@ function toonS2(): void {
  * al weggeschreven, en zonder dit zou een tweede keuze een tweede moment
  * achterlaten (en daarmee de Maandbrief laten dubbeltellen). Zelfde
  * opruiming als "dit klopt niet" al deed. */
-function verlaatHuidigMoment(): void {
+export function verlaatHuidigMoment(): void {
   if (!huidigMoment) return;
   const idx = data.momenten.indexOf(huidigMoment);
   if (idx >= 0) data.momenten.splice(idx, 1);
@@ -438,7 +535,65 @@ function toonS3(): void {
 }
 
 // ── S4 — De Drie Deuren ───────────────────────────────────────────────
-function toonS4(openWaarom: Set<string> = new Set()): void {
+/**
+ * Een deur kiezen voor het lopende moment: de gemeenschappelijke stap van De
+ * Drie Deuren (S4) en van het voorstel na de gevoelscheck-in. Zet de gekozen
+ * deur op het moment en gaat door naar de oefening (of, bij "niets doen", naar
+ * het afsluiten) — dus ook het voorstel van de check-in loopt via S5 → S6 en
+ * laat dezelfde ster achter als de kompaslus.
+ */
+export function kiesDeurNu(id: string): void {
+  if (!huidigMoment) return;
+  huidigMoment.gekozenDeur = id;
+  void bewaren();
+  if (id === "niets-doen") {
+    render([
+      el("div", { class: "scherm" }, [el("p", { class: "vraag" }, [teksten.deuren.nietsDoen.bijKiezen])]),
+    ]);
+    setTimeout(() => toonS7(), 1600);
+  } else {
+    toonS5(id);
+  }
+}
+
+/**
+ * Waar S4 naartoe teruggaat: standaard de tijdvraag (S3), maar komt je hier
+ * via de gevoelscheck-in, dan naar het voorstel. Alleen UI-staat.
+ */
+let s4Terug: (() => void) | null = null;
+
+/**
+ * De gevoelscheck-in maakt bij een keuze hetzelfde soort moment als de
+ * kompaslus (woorden, zone, tijd), zodat de rotatie in de selectie, de
+ * Maandbrief en de verankering ongewijzigd blijven werken. `deurId` is een
+ * bewegingId, "niets-doen", of "andere" (dan opent De Drie Deuren).
+ */
+export function startMomentUitCheckIn(
+  woordIds: string[],
+  zone: Zone,
+  tijd: Tijd,
+  deurId: string,
+  terug: () => void
+): void {
+  huidigeTikPositie = null;
+  huidigMoment = {
+    id: nieuwId("m"),
+    tijdstip: new Date().toISOString(),
+    woorden: woordIds,
+    tijdBeschikbaar: tijd,
+    zone,
+    gekozenDeur: null,
+    afsluitwoorden: [],
+    verankeringszin: null,
+  };
+  data.momenten.push(huidigMoment);
+  void bewaren();
+  s4Terug = terug;
+  if (deurId === "andere") toonS4();
+  else kiesDeurNu(deurId);
+}
+
+export function toonS4(openWaarom: Set<string> = new Set()): void {
   if (!huidigMoment) return toonThuis();
   const zone: Zone = huidigMoment.zone;
   const deuren = bepaalDeuren(
@@ -449,21 +604,7 @@ function toonS4(openWaarom: Set<string> = new Set()): void {
     huidigMoment.woorden
   );
 
-  function kiesDeur(id: string): void {
-    if (!huidigMoment) return;
-    huidigMoment.gekozenDeur = id;
-    void bewaren();
-    if (id === "niets-doen") {
-      render([
-        el("div", { class: "scherm" }, [
-          el("p", { class: "vraag" }, [teksten.deuren.nietsDoen.bijKiezen]),
-        ]),
-      ]);
-      setTimeout(() => toonS7(), 1600);
-    } else {
-      toonS5(id);
-    }
-  }
+  const kiesDeur = kiesDeurNu;
 
   function ditKloptNiet(bewegingId: string): void {
     registreerOnderdrukking(data, bewegingId, "dit_klopt_niet");
@@ -539,7 +680,16 @@ function toonS4(openWaarom: Set<string> = new Set()): void {
 
   render([
     el("div", { class: "scherm" }, [
-      terugKnop(() => toonS3()),
+      terugKnop(() => {
+        if (s4Terug) {
+          const terug = s4Terug;
+          s4Terug = null;
+          verlaatHuidigMoment();
+          terug();
+        } else {
+          toonS3();
+        }
+      }),
       el("p", { class: "vraag" }, [teksten.deuren.kop]),
       el("p", { class: "zacht" }, [teksten.deuren.onderschrift]),
       el("div", { class: "deuren" }, kaarten),
@@ -592,13 +742,15 @@ function toonS6(streek: Streek): void {
       // afsluitwoorden zijn puur beschrijvend, geen score — dichtstbijzijnde woorden
       huidigMoment.afsluitwoorden = woordenNabij(afsluitpositie.energie, afsluitpositie.toon, 1).map((w) => w.id);
     }
-    data.sterren.push({
+    const nieuweSter: Ster = {
       id: nieuwId("s"),
       momentId: huidigMoment.id,
       streek,
       datum: new Date().toISOString().slice(0, 10),
       zin: zin || null,
-    });
+    };
+    data.sterren.push(nieuweSter);
+    zojuistGemaakteSter = nieuweSter;
     void bewaren();
     toonS7();
   }
@@ -660,7 +812,17 @@ function toonS6(streek: Streek): void {
 // Terugkijken) -- een blijvend leeg scherm na elke afgeronde actie voelt
 // dan niet als rust maar als een vastgelopen app. Op uitdrukkelijk verzoek
 // gefixt: na het dimmen ga je terug naar het startscherm, niet naar niets.
-function toonS7(): void {
+export function toonS7(): void {
+  rondLopendeAf();
+  const nieuweSter = zojuistGemaakteSter;
+  zojuistGemaakteSter = null;
+  const kamerVanNieuweSter = nieuweSter ? kamerVanSter(nieuweSter, data) : null;
+  const systeemRust =
+    typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // v27 (W5) — na een handeling die een ster opleverde dimt het scherm niet
+  // naar zwart maar naar je hemel. Uit bij rustige beelden en bij reduced
+  // motion; de Onderbreker en de herstelroute (geen ster) blijven zoals ze waren.
+  if (kamerVanNieuweSter && !data.instellingen.rustigeBeelden && !systeemRust) return toonHuisOplichten(kamerVanNieuweSter);
   render([el("div", { class: "scherm", style: "min-height:60vh;width:100%;" }, [])]);
   dimEnDan(() => {
     toonThuis();
@@ -679,13 +841,46 @@ function tellingRegelTekst(): string {
   return `${nSterren} ${sterWoord} · ${nBeelden} ${beeldWoord}`;
 }
 
-function toonS8(netGetekend: string | null = null): void {
+/** De nieuwste ster met de datum van vandaag, of null. */
+function sterVanVandaag(): Ster | null {
+  const vandaag = huidigeDagSleutel();
+  const van = data.sterren.filter((st) => st.datum === vandaag);
+  return van.length ? van[van.length - 1] : null;
+}
+
+const STREEK_NAAM: Record<Streek, string> = {
+  lichaam: "Lichaam",
+  geest: "Geest",
+  verbinding: "Verbinding",
+  ziel: "Ziel",
+};
+
+/**
+ * Wat er bij een aangetikte ster staat: de datum, wat je toen deed, en je
+ * eigen zin. "Wat je deed" komt uit `ster.bewegingId` (nieuwe sterren) of via
+ * het moment (oudere sterren uit de kompaslus); ontbreekt dat, dan de streek.
+ */
+function sterKaartTekst(ster: Ster): { meta: string; zin: string | null } {
+  const [j, m, d] = ster.datum.split("-").map(Number);
+  const datum = j && m && d ? new Date(j, m - 1, d).toLocaleDateString("nl-BE", { day: "numeric", month: "long" }) : "";
+  let wat = ster.bewegingId ? bewegingById(ster.bewegingId)?.titel : undefined;
+  if (!wat && ster.momentId) {
+    const deur = data.momenten.find((mo) => mo.id === ster.momentId)?.gekozenDeur;
+    if (deur && deur !== "niets-doen") wat = bewegingById(deur)?.titel;
+  }
+  return {
+    meta: [datum, wat ?? STREEK_NAAM[ster.streek]].filter(Boolean).join(" · "),
+    zin: ster.zin?.trim() || null,
+  };
+}
+
+export function toonS8(netGetekend: string | null = null): void {
   const canvas = el("canvas", { class: "hemel-canvas" });
 
   if (data.sterren.length === 0) {
     render([
-      el("div", { class: "scherm scherm-hemel" }, [
-        terugKnop(() => toonTerugkijken()),
+      el("div", { class: "scherm scherm-hemel", "data-kamer": "hemel" }, [
+        terugKnop(() => toonThuis()),
         canvas,
         el("div", { class: "hemel-onder" }, [el("p", { class: "regel" }, [teksten.deHemel.legeHemel])]),
       ]),
@@ -697,19 +892,24 @@ function toonS8(netGetekend: string | null = null): void {
     return;
   }
 
-  const zinRegel = el("p", { class: "zacht hemel-zin" }, [""]);
+  // v27 (W7) — aantikken geeft nu een klein kaartje: datum · wat je deed · je
+  // zin. Vroeger verscheen er alleen een regeltje, en alleen als je toen een
+  // zin schreef — vaak dus niets.
+  const zinRegel = el("div", { class: "hemel-zin" }, []);
   const tellingRegel = el("p", { class: "hemel-telling" }, [tellingRegelTekst()]);
   const aanbodStreek = netGetekend ? null : aanbodVoorStreek(data);
 
   const onderkant = el("div", { class: "hemel-onder" }, [tellingRegel, zinRegel]);
 
-  render([el("div", { class: "scherm scherm-hemel" }, [terugKnop(() => toonTerugkijken()), canvas, onderkant])]);
+  render([el("div", { class: "scherm scherm-hemel", "data-kamer": "hemel" }, [terugKnop(() => toonThuis()), canvas, onderkant])]);
 
   const stop = tekenHemel(
     canvas,
     data.sterren,
     (ster) => {
-      zinRegel.textContent = ster.zin ?? "";
+      const kaart = sterKaartTekst(ster);
+      zinRegel.replaceChildren(el("p", { class: "hemel-kaart-meta" }, [kaart.meta]));
+      if (kaart.zin) zinRegel.append(el("p", { class: "hemel-kaart-zin" }, [kaart.zin]));
       // Eén korte, zachte opkomst per tik in plaats van een instant
       // tekstwissel — klasse eraf en meteen weer aan dwingt de animatie
       // ook te herstarten als je een volgende ster met dezelfde tekst tikt.
@@ -721,6 +921,8 @@ function toonS8(netGetekend: string | null = null): void {
       sterrenbeelden: data.sterrenbeelden,
       nieuwSterrenbeeldId: netGetekend,
       rustig: data.instellingen.rustigeBeelden,
+      // De ster van vandaag licht bij binnenkomst kort op.
+      oplichtSterId: sterVanVandaag()?.id ?? null,
     }
   );
 
@@ -775,7 +977,7 @@ function toonS8Tekenmodus(streek: Streek): void {
 
   const knoppen = el("div", { class: "aanbod-knoppen" }, [ongedaanKnop, klaarKnop, stoppenKnop]);
 
-  render([el("div", { class: "scherm scherm-hemel" }, [canvas, el("div", { class: "hemel-onder" }, [uitleg, knoppen])])]);
+  render([el("div", { class: "scherm scherm-hemel", "data-kamer": "hemel" }, [canvas, el("div", { class: "hemel-onder" }, [uitleg, knoppen])])]);
 
   const modus = tekenSterrenbeeldModus(
     canvas,
@@ -846,7 +1048,7 @@ function toonS8Naamgeven(streek: Streek, sterIds: string[]): void {
 // het archief opende brengt je terug naar dat archief (twaalf brieven achter
 // elkaar lezen is het eigenlijke product), maar de brief van de maand eindigt
 // zoals alles in deze app eindigt — met sluiten (v2.4 §9, "geen vervolgscherm").
-function toonS12(brief: Maandbrief, vanuitArchief: boolean): void {
+export function toonS12(brief: Maandbrief, vanuitArchief: boolean): void {
   if (!brief.gelezen) {
     brief.gelezen = true;
     void bewaren();
@@ -874,7 +1076,7 @@ function toonS12(brief: Maandbrief, vanuitArchief: boolean): void {
 // Het archief. Alleen opschriften, oudste bovenaan — geen samenvatting, geen
 // aantal, geen zoekveld (v2.5 §5.3 en §5.4: brieven worden nooit gearchiveerd
 // of gewist, en er valt niets te filteren).
-function toonS13(): void {
+export function toonS13(): void {
   const brieven = data.brieven ?? [];
   render([
     el("div", { class: "scherm" }, [
@@ -898,7 +1100,7 @@ function toonS13(): void {
 // bibliotheek: iets wat je deze week in het echte leven doet, niet in de
 // app. Op eigen initiatief bereikbaar vanaf S1, zoals De Hemel en de brief
 // (v2.2 Wet 5): geen automatische pop-up, geen badge, geen aandringen.
-function toonS14Intro(): void {
+export function toonS14Intro(): void {
   render([
     el("div", { class: "scherm" }, [
       el("h1", { class: "brief-opschrift" }, [teksten.weekmoment.intro.kop]),
@@ -1018,7 +1220,9 @@ function toonS14Afsluiting(plan: string, bewegingId: string): void {
 // aan. Schrijft nooit naar het datamodel: "hij houdt niet bij hoe vaak dit
 // gebeurt". Geen crisiscontrole, geen Kompas, geen zone — dit moet in
 // dertig seconden kunnen, niet door de hele dagelijkse lus heen.
-function toonS15Onderbreker(): void {
+export function toonS15Onderbreker(): void {
+  // Stateless (Wet 8): wat je hier doet telt nooit als "gedaan vandaag".
+  lopendeSuggestie = null;
   render([
     el("div", { class: "scherm" }, [
       el("p", { class: "vraag" }, [teksten.onderbreker.vraag]),
@@ -1113,7 +1317,7 @@ function toonS15Beweging(bewegingId: string): void {
 // v2.2 Wet 7, laatste punt. Eén vraag, geen vervolgvraag over waarom — dat
 // zou zelf het soort uitpluizen zijn dat Wet 6 en Wet 7 allebei uitsluiten.
 // Hooguit één per kalendermaand (meer.ts). Elk pad eindigt in S7.
-function toonS17PerfectionismeCheck(): void {
+export function toonS17PerfectionismeCheck(): void {
   function eindigen(): void {
     setTimeout(() => toonS7(), 1200);
   }
@@ -1163,7 +1367,7 @@ function toonS17PerfectionismeCheck(): void {
 // v2.2 Wet 8, punt 2. Vier concrete, niet-aanklikbare suggesties — de app
 // voert er niets van uit. Onthoudt alleen dát het aanbod deze maand gedaan
 // is, nooit welke suggestie gekozen is of of hij is uitgevoerd (meer.ts).
-function toonS18Frictie(): void {
+export function toonS18Frictie(): void {
   render([
     el("div", { class: "scherm" }, [
       el("h1", { class: "brief-opschrift" }, [teksten.frictie.kop]),
@@ -1195,7 +1399,9 @@ function toonS18Frictie(): void {
 // Gespiegeld aan de React-versie (v20). Schrijft, net als De Onderbreker,
 // bewust niets naar het datamodel (Wet 4: geen teller van hoe vaak je
 // "eruit valt").
-function toonS19Normaliseren(): void {
+export function toonS19Normaliseren(): void {
+  // Stateless (Wet 4): de herstelroute houdt niets bij.
+  lopendeSuggestie = null;
   render([
     el("div", { class: "scherm" }, [
       el("p", { class: "vraag" }, [teksten.herstelroute.normaliseren]),
@@ -1233,114 +1439,16 @@ function toonS19Verder(): void {
     ]),
   ]);
 }
-// ── Motivatiehoek (Stateless Noodanker) ─────────────────────────────────
-
-function toonMotivatiequote(): void {
-  const dag = motivatiehoekVoorVandaag();
-  render([
-    el("div", { class: "scherm" }, [
-      terugKnop(() => toonThuis()),
-      el("div", { style: "display: flex; flex-direction: column; justify-content: center; min-height: 60vh;" }, [
-        el("p", { class: "vraag", style: "text-align: center; margin-bottom: 0; font-style: italic;" }, [`"${dag.quote.tekst}"`]),
-        el("p", { class: "motivatie-auteur" }, [dag.quote.auteur]),
-      ]),
-      el("div", { style: "margin-top: auto; padding-top: 2rem; width: 100%; display: flex; justify-content: center;" }, [
-        el("button", { class: "knop", onclick: () => toonMotivatieverhaal(dag) }, [teksten.motivatiehoek.verder])
-      ])
-    ]),
-  ]);
-}
-
-function toonMotivatieverhaal(dag: MotivatiehoekDag): void {
-  const verhaalParagrafen = dag.verhaal.tekst.split("\n\n").map(p => el("p", {}, [p]));
-  
-  render([
-    el("div", { class: "scherm" }, [
-      terugKnop(() => toonMotivatiequote()),
-      el("div", { class: "motivatie-verhaal" }, [
-        el("p", { class: "sectie-kop", style: "text-align: center; margin-bottom: var(--ruimte-2);" }, [dag.verhaal.titel]),
-        el("h2", { class: "vraag", style: "text-align: center; font-size: var(--tekst-kop); margin-bottom: var(--ruimte-6);" }, [dag.verhaal.profeet]),
-        ...verhaalParagrafen,
-        el("span", { class: "bron" }, [dag.verhaal.bronnen.join(" • ")])
-      ]),
-      el("div", { style: "margin-top: var(--ruimte-7); width: 100%; display: flex; justify-content: center;" }, [
-        el("button", { class: "knop", onclick: () => toonRealityCheck(dag) }, [teksten.motivatiehoek.verder])
-      ])
-    ]),
-  ]);
-}
-
-function toonRealityCheck(dag: MotivatiehoekDag): void {
-  const i = dag.realityCheck.interactie;
-  
-  let interactieElement: ReturnType<typeof el>;
-  
-  if (i.soort === "open") {
-    interactieElement = el("textarea", { 
-      placeholder: i.placeholder, 
-      rows: "3", 
-      style: "width: 100%; text-align: left; padding: var(--ruimte-3);" 
-    });
-  } else {
-    interactieElement = el("div", { style: "display: flex; flex-direction: column; gap: var(--ruimte-3); width: 100%;" }, 
-      i.opties.map(optie => 
-        el("button", { 
-          class: "woord-knop reality-optie", 
-          onclick: (e: Event) => {
-            const btn = e.currentTarget as HTMLButtonElement;
-            if (i.soort === "enkel") {
-              const parent = btn.parentElement;
-              if (parent) {
-                Array.from(parent.children).forEach(c => c.setAttribute("aria-pressed", "false"));
-              }
-            }
-            const geselecteerd = btn.getAttribute("aria-pressed") === "true";
-            btn.setAttribute("aria-pressed", geselecteerd ? "false" : "true");
-          }
-        }, [optie])
-      )
-    );
-  }
-
-  render([
-    el("div", { class: "scherm" }, [
-      terugKnop(() => toonMotivatieverhaal(dag)),
-      el("div", { style: "max-width: 34rem; margin-inline: auto; width: 100%; display: flex; flex-direction: column; align-items: center;" }, [
-        el("p", { class: "sectie-kop" }, [teksten.motivatiehoek.realityCheckKop]),
-        el("p", { class: "vraag", style: "text-align: left; margin-bottom: var(--ruimte-4); font-size: 1.4rem; width: 100%;" }, [dag.realityCheck.tekst]),
-        el("p", { class: "zacht", style: "margin-bottom: var(--ruimte-4); width: 100%; text-align: left;" }, [i.vraag]),
-        interactieElement
-      ]),
-      el("div", { style: "margin-top: var(--ruimte-7); width: 100%; display: flex; justify-content: center;" }, [
-        el("button", { class: "knop", onclick: () => toonMotivatieAfsluiting() }, [teksten.motivatiehoek.klaar])
-      ])
-    ]),
-  ]);
-}
-
-function toonMotivatieAfsluiting(): void {
-  render([
-    el("div", { class: "scherm" }, [
-      el("div", { style: "display: flex; flex-direction: column; justify-content: center; min-height: 60vh; text-align: center;" }, [
-        el("p", { class: "vraag" }, ["Genoeg gelezen. Nu doen."])
-      ]),
-      el("div", { style: "margin-top: auto; padding-top: 2rem; width: 100%; display: flex; justify-content: center;" }, [
-        el("button", { class: "knop", onclick: () => toonS7() }, [teksten.motivatiehoek.klaar])
-      ])
-    ])
-  ]);
-}
-
 // ── S20 — "Wie ik word" ─────────────────────────────────────────────────
 // v2.md §9.1 punt 10. Eén zelfgeschreven zin, altijd overschrijfbaar. De
 // bewijslijst-functie bestaat al als De Hemel (S8); hier alleen een link.
-function toonS20WieIkWord(): void {
+export function toonS20WieIkWord(): void {
   const veld = el("textarea", { placeholder: teksten.wieIkWord.placeholder });
   (veld as HTMLTextAreaElement).value = data.wieIkWord ?? "";
   const melding = el("p", { class: "zacht" }, [""]);
   render([
     el("div", { class: "scherm" }, [
-      terugKnop(() => toonTerugkijken()),
+      terugKnop(() => toonKamer("visie")),
       el("p", { class: "vraag" }, [teksten.wieIkWord.vraag]),
       veld,
       el("button", {
@@ -1361,40 +1469,76 @@ function toonS20WieIkWord(): void {
 // v2.md §9.1 punt 9, Masterplan-v2.md §7.3. Het enige echte MVP-gat
 // (Onderzoek-I6-Hal-Maqam.md, Audit-MVP-Scope-9-september-2026.md).
 // Islamitische naam alleen zichtbaar met de laag aan. Geen vaste cadans.
-function toonS21Kwaliteiten(): void {
+export function toonS21Kwaliteiten(): void {
   const islamAan = data.instellingen.islamitischeLaag;
-  const lijst = el("div", { class: "woorden-grid" });
+  const n = kwaliteiten.length;
+  const opgeslagen = (): string | null => data.verlangenVanDePeriode?.kwaliteitId ?? null;
+  // Wat je nu aanwijst; nog niet bewaard tot je "Dit is het" tikt. Zo kun je
+  // rondkijken zonder dat elke tik je periode overschrijft.
+  let keuze: string | null = opgeslagen();
 
-  function vulLijst(): void {
-    const huidig = data.verlangenVanDePeriode?.kwaliteitId ?? null;
-    lijst.replaceChildren(
-      ...kwaliteiten.map((k) =>
-        el(
-          "button",
-          {
-            class: "woord-knop",
-            "aria-pressed": huidig === k.id,
-            onclick: () => {
-              data.verlangenVanDePeriode = { kwaliteitId: k.id, sinds: new Date().toISOString() };
-              void bewaren();
-              vulLijst();
-            },
-          },
-          [islamAan && k.islamNaam ? `${k.naam} (${k.islamNaam})` : k.naam]
-        )
-      )
+  const midden = el("div", { class: "kwaliteit-midden" }, []);
+  const bevestig = el("button", { class: "knop" }, ["Dit is het"]) as HTMLButtonElement;
+
+  // v27 (W6) — een ring waarop je één kwaliteit kiest, in plaats van een
+  // raster met chips. Eén keer per periode, dus het mag iets voorstellen.
+  const punten = kwaliteiten.map((k, i) => {
+    const hoek = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+    const punt = el(
+      "button",
+      {
+        class: "kwaliteit-punt",
+        "aria-label": islamAan && k.islamNaam ? `${k.naam} (${k.islamNaam})` : k.naam,
+        "data-id": k.id,
+        onclick: () => {
+          keuze = k.id;
+          teken();
+        },
+      },
+      [el("span", { class: "kwaliteit-stip" }, [])]
     );
+    punt.style.setProperty("--x", `${50 + 44 * Math.cos(hoek)}%`);
+    punt.style.setProperty("--y", `${50 + 44 * Math.sin(hoek)}%`);
+    return punt;
+  });
+
+  function teken(): void {
+    const k = keuze ? kwaliteitById(keuze) : undefined;
+    midden.replaceChildren(
+      k
+        ? el("p", { class: "kwaliteit-naam" }, [k.naam])
+        : el("p", { class: "kwaliteit-hint" }, ["Tik een punt aan."])
+    );
+    if (k && islamAan && k.islamNaam) {
+      midden.append(el("p", { class: "kwaliteit-islam" }, [k.islamUitleg ? `${k.islamNaam} — ${k.islamUitleg}` : k.islamNaam]));
+    }
+    for (const punt of punten) {
+      const id = punt.getAttribute("data-id");
+      punt.setAttribute("aria-pressed", String(id === keuze));
+      punt.classList.toggle("bewaard", id === opgeslagen());
+    }
+    const alBewaard = keuze !== null && keuze === opgeslagen();
+    bevestig.disabled = keuze === null || alBewaard;
+    bevestig.textContent = alBewaard ? "Dit is je verlangen nu" : "Dit is het";
   }
-  vulLijst();
+
+  bevestig.addEventListener("click", () => {
+    if (!keuze) return;
+    data.verlangenVanDePeriode = { kwaliteitId: keuze, sinds: new Date().toISOString() };
+    void bewaren();
+    teken();
+  });
 
   render([
     el("div", { class: "scherm" }, [
-      terugKnop(() => toonTerugkijken()),
+      terugKnop(() => toonKamer("visie")),
       el("p", { class: "vraag" }, [teksten.kwaliteiten.vraag]),
       el("p", { class: "zacht" }, [teksten.kwaliteiten.onderschrift]),
-      lijst,
+      el("div", { class: "kwaliteit-ring" }, [midden, ...punten]),
+      bevestig,
     ]),
   ]);
+  teken();
 }
 
 // ── S22 — Ochtend: Richting ──────────────────────────────────────────────
@@ -1403,7 +1547,7 @@ function toonS21Kwaliteiten(): void {
 // omgeving niet te installeren was (geen npm-registry-toegang) — zie
 // Fase-3-Bouw-status.md v20. Deze tekstuele versie van S22 is functioneel
 // wel compleet: intentie, kerntaak, het gekozen verlangen in beeld.
-function toonS22Ochtend(): void {
+export function toonS22Ochtend(): void {
   const intentieVeld = el("input", { type: "text", placeholder: teksten.ochtend.intentiePlaceholder });
   const kerntaakVeld = el("textarea", { placeholder: teksten.ochtend.kerntaakPlaceholder });
   const kwaliteit = data.verlangenVanDePeriode ? kwaliteitById(data.verlangenVanDePeriode.kwaliteitId) : null;
@@ -1411,7 +1555,7 @@ function toonS22Ochtend(): void {
   // v22: hetzelfde lichte fragment als op het startscherm, alleen als de
   // ochtend-toggle aan staat.
   const fragment =
-    data.visie && visieCheckInsVoor(data).ochtend ? visieFragment(data.visie, new Date()) : null;
+    data.visie && visieCheckInsVoor(data).ochtend ? visieFragment(data.visie, new Date(), data.instellingen.islamitischeLaag) : null;
 
   function klaar(): void {
     data.ochtendMomenten = data.ochtendMomenten ?? [];
@@ -1422,7 +1566,9 @@ function toonS22Ochtend(): void {
       kerntaak: (kerntaakVeld as HTMLTextAreaElement).value.trim() || null,
     });
     void bewaren();
-    toonS7();
+    // Life Maxi 2.0 — na je intentie mag je zeggen hoe je je voelt, dan komt er
+    // een voorstel voor de ochtend. Overslaan kan altijd (dan gewoon afsluiten).
+    toonCheckIn("ochtend");
   }
 
   render([
@@ -1469,7 +1615,7 @@ function avondVisieBlok(): ReturnType<typeof el> | null {
   // v22: 's avonds de volledige visie teruglezen (geen invoer, alleen
   // lezen) — het enige dagdeel met de volle tekst, zie het plan.
   const visieRegels = data.visie
-    ? [data.visie.wieIkBen, data.visie.watIkHeb, data.visie.waarIkSta].filter((r) => r.trim().length > 0)
+    ? visieDelen(data.visie, data.instellingen.islamitischeLaag).map((d) => `${d.def.stam} ${d.tekst}`)
     : [];
   if (!data.visie || !visieCheckInsVoor(data).avond || visieRegels.length === 0) return null;
   return el("div", { class: "herkomst" }, visieRegels.map((r) => el("p", { class: "herkomst-regel" }, [r])));
@@ -1488,7 +1634,7 @@ function bewaarConceptDagsluiting(state: AvondState): void {
   void bewaren();
 }
 
-function toonS23AvondSluiten(): void {
+export function toonS23AvondSluiten(): void {
   const concept = data.conceptDagsluiting;
   toonS23Stap1Kompas(
     concept
@@ -1643,11 +1789,7 @@ function toonS23Stap5VoorMorgen(state: AvondState): void {
     // het sluiten van de dag, niet ernaast als los alternatief (adhkar.ts:
     // "wanneer": "voor het slapen"). Alleen met de islamitische laag aan;
     // zonder die laag dimt de app direct, zoals voorheen.
-    if (data.instellingen.islamitischeLaag) {
-      toonDhikr("ayat-al-kursi", () => toonS7(), () => toonS7());
-    } else {
-      toonS7();
-    }
+    toonAvondRoutine();
   }
 
   render([
@@ -1672,254 +1814,7 @@ function toonS23Stap5VoorMorgen(state: AvondState): void {
 // heeft een uitgang die niets vastlegt.
 // ══════════════════════════════════════════════════════════════════════
 
-function toonVisieIntro(): void {
-  render([
-    el("div", { class: "scherm" }, [
-      el("p", { class: "vraag" }, [teksten.visie.introKop]),
-      el(
-        "div",
-        { class: "regels" },
-        teksten.visie.introRegels.map((r) => el("p", { class: "regel" }, [r]))
-      ),
-      el("div", { class: "herkomst" }, [el("p", { class: "herkomst-regel" }, [teksten.visie.introHerkomst])]),
-      el(
-        "button",
-        { class: "knop", onclick: () => toonVisiePeriode() },
-        [teksten.visie.beginnen]
-      ),
-      el(
-        "button",
-        {
-          class: "knop-klein",
-          onclick: () => {
-            registreerVisieIntroAangeboden(data);
-            void bewaren();
-            toonThuis();
-          },
-        },
-        [teksten.visie.latereKeer]
-      ),
-    ]),
-  ]);
-}
-
-function toonVisiePeriode(): void {
-  const periodes: VisiePeriode[] = ["3_maanden", "1_jaar", "5_jaar"];
-  let gekozen: VisiePeriode | null = data.visie?.periode ?? null;
-  const grid = el("div", { class: "woorden-grid" });
-
-  function vulGrid(): void {
-    grid.replaceChildren(
-      ...periodes.map((p) =>
-        el(
-          "button",
-          {
-            class: "woord-knop",
-            "aria-pressed": gekozen === p,
-            onclick: () => {
-              gekozen = p;
-              vulGrid();
-            },
-          },
-          [periodeLabel(p)]
-        )
-      )
-    );
-  }
-  vulGrid();
-
-  render([
-    el("div", { class: "scherm" }, [
-      el("p", { class: "vraag" }, [teksten.visie.periodeVraag]),
-      el("p", { class: "zacht" }, [teksten.visie.periodeOnderschrift]),
-      grid,
-      el(
-        "button",
-        {
-          class: "knop",
-          onclick: () => {
-            if (!gekozen) return;
-            toonVisieDeel(gekozen, 0, { wieIkBen: "", watIkHeb: "", waarIkSta: "" });
-          },
-        },
-        [teksten.visie.verder]
-      ),
-      el("button", { class: "knop-klein", onclick: () => toonThuis() }, [teksten.visie.latereKeer]),
-    ]),
-  ]);
-}
-
-interface VisieOnderweg {
-  wieIkBen: string;
-  watIkHeb: string;
-  waarIkSta: string;
-}
-
-/** De drie vragen, één gedeelde functie — index 0/1/2, met de stip-rij uit
- * toonOefening() als voortgang. Elk deel is individueel over te slaan (mag
- * leeg blijven, zelfde geest als elders in de app); de herschrijfhulp is
- * een hint, nooit een blokkade. */
-function toonVisieDeel(periode: VisiePeriode, index: number, onderweg: VisieOnderweg): void {
-  const stappen: { veld: keyof VisieOnderweg; vraag: string; onderschrift: string; placeholder: string }[] = [
-    {
-      veld: "wieIkBen",
-      vraag: teksten.visie.stapWieIkBenVraag,
-      onderschrift: teksten.visie.stapWieIkBenOnderschrift,
-      placeholder: teksten.visie.stapWieIkBenPlaceholder,
-    },
-    {
-      veld: "watIkHeb",
-      vraag: teksten.visie.stapWatIkHebVraag,
-      onderschrift: teksten.visie.stapWatIkHebOnderschrift,
-      placeholder: teksten.visie.stapWatIkHebPlaceholder,
-    },
-    {
-      veld: "waarIkSta",
-      vraag: `${teksten.visie.stapWaarIkStaVraagPrefix} ${periodeLabel(periode)}?`,
-      onderschrift: teksten.visie.stapWaarIkStaOnderschrift,
-      placeholder: teksten.visie.stapWaarIkStaPlaceholder,
-    },
-  ];
-  const stap = stappen[index];
-  const veld = el("textarea", { placeholder: stap.placeholder });
-  (veld as HTMLTextAreaElement).value = onderweg[stap.veld];
-  const hint = el("p", { class: "zacht" }, [""]);
-
-  function verversHint(): void {
-    const signaal = toekomstSignaal((veld as HTMLTextAreaElement).value);
-    hint.textContent = signaal ?? "";
-  }
-  verversHint();
-  veld.addEventListener("input", verversHint);
-
-  function verder(tekst: string): void {
-    const volgende: VisieOnderweg = { ...onderweg, [stap.veld]: tekst.trim() };
-    if (index < stappen.length - 1) {
-      toonVisieDeel(periode, index + 1, volgende);
-    } else {
-      toonVisieKlaar(periode, volgende);
-    }
-  }
-
-  render([
-    el("div", { class: "scherm" }, [
-      index > 0
-        ? terugKnop(() => {
-            const huidig: VisieOnderweg = { ...onderweg, [stap.veld]: (veld as HTMLTextAreaElement).value.trim() };
-            toonVisieDeel(periode, index - 1, huidig);
-          })
-        : terugKnop(() => toonVisiePeriode()),
-      el(
-        "div",
-        { class: "stip-rij" },
-        stappen.map((_, i) => el("span", { class: `stip${i <= index ? " vol" : ""}` }))
-      ),
-      el("p", { class: "vraag" }, [stap.vraag]),
-      el("p", { class: "zacht" }, [stap.onderschrift]),
-      veld,
-      hint,
-      el("button", { class: "knop", onclick: () => verder((veld as HTMLTextAreaElement).value) }, [
-        teksten.visie.verder,
-      ]),
-      el("button", { class: "knop-klein", onclick: () => verder("") }, [teksten.visie.slaOver]),
-    ]),
-  ]);
-}
-
-function toonVisieKlaar(periode: VisiePeriode, onderweg: VisieOnderweg): void {
-  data.visie = schrijfVisie(periode, onderweg.wieIkBen, onderweg.watIkHeb, onderweg.waarIkSta, data.visie);
-  registreerVisieIntroAangeboden(data);
-  void bewaren();
-
-  render([
-    el("div", { class: "scherm" }, [
-      el("p", { class: "vraag" }, [teksten.visie.klaarKop]),
-      el("p", { class: "regel" }, [teksten.visie.klaarRegel]),
-      el("button", { class: "knop", onclick: () => toonThuis() }, [teksten.visie.naarDeApp]),
-      el("button", { class: "knop-klein", onclick: () => toonS24Wish() }, [teksten.visie.klaarNaarDoel]),
-    ]),
-  ]);
-}
-
-/** Leesscherm + toegang tot herschrijven, bereikbaar via Terugkijken. */
-function toonVisieBekijken(): void {
-  if (!data.visie) {
-    render([
-      el("div", { class: "scherm" }, [
-        terugKnop(() => toonTerugkijken()),
-        el("p", { class: "vraag" }, [teksten.visie.bekijkGeenVisie]),
-        el("button", { class: "knop", onclick: () => toonVisiePeriode() }, [teksten.visie.bekijkSchrijf]),
-      ]),
-    ]);
-    return;
-  }
-  const visie = data.visie;
-  const regels = [visie.wieIkBen, visie.watIkHeb, visie.waarIkSta].filter((r) => r.trim().length > 0);
-  render([
-    el("div", { class: "scherm" }, [
-      terugKnop(() => toonTerugkijken()),
-      el("p", { class: "vraag" }, [`${teksten.visie.introKop} — ${periodeLabel(visie.periode)}`]),
-      el(
-        "div",
-        { class: "herkomst" },
-        regels.map((r) => el("p", { class: "herkomst-regel" }, [r]))
-      ),
-      el(
-        "button",
-        {
-          class: "knop",
-          onclick: () =>
-            toonVisieDeel(visie.periode, 0, {
-              wieIkBen: visie.wieIkBen,
-              watIkHeb: visie.watIkHeb,
-              waarIkSta: visie.waarIkSta,
-            }),
-        },
-        [teksten.visie.herschrijven]
-      ),
-    ]),
-  ]);
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// v21 — De nieuwe schil: Nu · Doen · Terugkijken
-//
-// Waarom deze verbouwing (9 september 2026, op eigen verzoek): tot v20 opende
-// de app op een lege schijf met de vraag "Waar ben je?", zonder assen, zonder
-// instructie, en zat álles achter één woordje "meer". De inhoud klopte, de
-// opbouw niet — je moest zelf weten wat je wilde en waar het stond. Vanaf v21
-// opent de app op een startscherm dat zelf zegt wat er op dít moment past
-// (lib/nu.ts), met een vaste navigatie eronder.
-//
-// Wat níét verandert: er wordt nog steeds niets geteld, geen reeksen, geen
-// badges, geen meldingen die aandringen (Wet 4), en elk moment mag nog altijd
-// buiten de app eindigen (Wet 3). Alleen: je hoeft niet meer te raden.
-// ══════════════════════════════════════════════════════════════════════
-
-type Tab = "nu" | "doen" | "terugkijken";
-
-// Kleine, consistente lijnstijl-iconen (24×24, currentColor) — geen los
-// icon-pakket nodig voor drie tekens. "Nu" = een puls (nadruk op dit moment),
-// "Doen" = een play-vorm (actie), "Terugkijken" = een terugdraaiende pijl.
-const NAV_ICOON: Record<Tab, string> = {
-  nu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>',
-  doen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M8 5.5v13l11-6.5z"/></svg>',
-  terugkijken:
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 9a8 8 0 1 1 1.1 9.1"/><path d="M4.5 4v5.2h5.2"/></svg>',
-};
-
-function navBalk(actief: Tab): ReturnType<typeof el> {
-  const item = (tab: Tab, label: string, actie: () => void) =>
-    el("button", { class: `nav-item${actief === tab ? " actief" : ""}`, onclick: actie }, [
-      el("span", { class: "nav-icoon", html: NAV_ICOON[tab] }, []),
-      el("span", { class: "nav-label" }, [label]),
-    ]);
-  return el("nav", { class: "nav-balk" }, [
-    item("nu", "Nu", () => toonThuis()),
-    item("doen", "Doen", () => toonDoen()),
-    item("terugkijken", "Terugkijken", () => toonTerugkijken()),
-  ]);
-}
+// ── Hulpjes voor de schermen ─────────────────────────────────────────
 
 const TERUG_ICOON =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
@@ -1927,11 +1822,51 @@ const TERUG_ICOON =
 /** Eén consistent terug-pijltje linksboven — vervangt overal een los
  * tekstlinkje ("← terug", "Terug"), soms onderaan het scherm. Altijd het
  * eerste element van het scherm, altijd hetzelfde icoon. */
-function terugKnop(actie: () => void): ReturnType<typeof el> {
+export function terugKnop(actie: () => void): ReturnType<typeof el> {
   return el("button", { class: "terug-knop", onclick: actie, "aria-label": "Terug", html: TERUG_ICOON }, []);
 }
 
-function duurTekst(bewegingId: string): string {
+export function voerSuggestieUit(s: Suggestie): void {
+  // "rust" ("Het is laat") heeft geen actie. De andere suggesties worden pas
+  // als gedaan geregistreerd zodra je ze afrondt (rondLopendeAf).
+  if (s.soort !== "rust") {
+    lopendeSuggestie = { dagdeel: dagdeelGroep(dagdeelVan()), sleutel: suggestieSleutel(s) };
+  }
+  switch (s.soort) {
+    case "ochtend":
+      return toonS22Ochtend();
+    case "avond":
+      return toonS23AvondSluiten();
+    case "beweging": {
+      if (!s.id) return;
+      // De begeleiding leidt je naar de juiste kamer: de oefening opent in de
+      // sfeer van die kamer en "terug" brengt je daar, niet in de hal.
+      const kamer = kamerVanBeweging(s.id, themas, Boolean(bewegingById(s.id)?.herkomst.some((h) => h.label === "I")));
+      if (kamer) document.body.dataset.kamer = kamer.id;
+      toonBeweging(s.id, { opKlaar: () => toonVrijeAfronding(s.id!), opTerug: () => (kamer ? toonKamer(kamer.id) : toonThuis()) });
+      return;
+    }
+    case "dhikr":
+      if (s.id) {
+        document.body.dataset.kamer = "geloof";
+        toonDhikr(s.id, () => toonKamer("geloof"));
+      }
+      return;
+    case "kompas":
+      return toonCheckIn("middag");
+    case "week":
+      return toonS14Intro();
+    case "brief": {
+      const b = ongelezenBrief(data);
+      if (b) toonS12(b, false);
+      return;
+    }
+    case "rust":
+      return;
+  }
+}
+
+export function duurTekst(bewegingId: string): string {
   const b = bewegingById(bewegingId);
   if (!b) return "";
   const [van, tot] = b.kosten.tijdMinuten;
@@ -1948,282 +1883,6 @@ function rijKnop(titel: string, onder: string, actie: () => void): ReturnType<ty
   ]);
 }
 
-const EQ_METER_HTML = "<span></span><span></span><span></span><span></span>";
-
-function kaartPrimair(s: Suggestie): ReturnType<typeof el> {
-  return el("button", { class: "kaart kaart-primair", onclick: () => voerSuggestieUit(s) }, [
-    el("span", { class: "kaart-label-rij" }, [
-      el("span", { class: "kaart-label" }, ["Dit past nu"]),
-      el("span", { class: "eq-meter", "aria-hidden": "true", html: EQ_METER_HTML }, []),
-    ]),
-    el("span", { class: "kaart-titel" }, [s.titel]),
-    s.duur ? el("span", { class: "kaart-duur" }, [s.duur]) : null,
-    el("span", { class: "kaart-waarom" }, [s.waaromNu]),
-    el("span", { class: "kaart-actie" }, ["Doen →"]),
-  ]);
-}
-
-/**
- * v25 — wat er staat als er op dit moment niets nieuws meer te "doen" valt
- * (je deed net de enige suggestie die er was). In plaats van diezelfde kaart
- * gewoon nog eens te tonen — wat aanvoelt alsof er niets gebeurd is — komt
- * hier iets dat verder kijkt dan het huidige moment: je eigen visie, of de
- * uitnodiging om er een te schrijven. Geen lege plek, geen herhaling.
- */
-function kaartVisieFallback(): ReturnType<typeof el> {
-  if (data.visie) {
-    const fragment = visieFragment(data.visie, new Date());
-    return el("button", { class: "kaart kaart-primair", onclick: () => toonVisieBekijken() }, [
-      el("span", { class: "kaart-label-rij" }, [
-        el("span", { class: "kaart-label" }, ["Even verder denken"]),
-        el("span", { class: "eq-meter", "aria-hidden": "true", html: EQ_METER_HTML }, []),
-      ]),
-      el("span", { class: "kaart-titel" }, ["Waar je naartoe leeft"]),
-      el("span", { class: "kaart-waarom" }, [
-        fragment ? `${fragment.label}: ${fragment.tekst}` : "Lees nog eens terug wat je opschreef.",
-      ]),
-      el("span", { class: "kaart-actie" }, ["Teruglezen →"]),
-    ]);
-  }
-  return el("button", { class: "kaart kaart-primair", onclick: () => toonVisiePeriode() }, [
-    el("span", { class: "kaart-label-rij" }, [
-      el("span", { class: "kaart-label" }, ["Even verder denken"]),
-      el("span", { class: "eq-meter", "aria-hidden": "true", html: EQ_METER_HTML }, []),
-    ]),
-    el("span", { class: "kaart-titel" }, ["Wie wil je worden?"]),
-    el("span", { class: "kaart-waarom" }, [
-      "Denk aan over een paar maanden, een jaar, vijf jaar — en schrijf het nu al op, alsof het al zo is.",
-    ]),
-    el("span", { class: "kaart-actie" }, ["Beginnen →"]),
-  ]);
-}
-
-function kaartKlein(s: Suggestie): ReturnType<typeof el> {
-  return el("button", { class: "kaart kaart-klein", onclick: () => voerSuggestieUit(s) }, [
-    el("span", { class: "kaart-titel-klein" }, [s.titel]),
-    el("span", { class: "kaart-meta" }, [s.duur ? `${s.duur} · ${s.waaromNu}` : s.waaromNu]),
-  ]);
-}
-
-function voerSuggestieUit(s: Suggestie): void {
-  // "rust" ("Het is laat") heeft geen actie en verdringt dus ook nooit de
-  // volgende hoofdkaart.
-  if (s.soort !== "rust") laatstGekozenSuggestie = { soort: s.soort, id: s.id };
-  switch (s.soort) {
-    case "ochtend":
-      return toonS22Ochtend();
-    case "avond":
-      return toonS23AvondSluiten();
-    case "beweging":
-      if (s.id) toonBeweging(s.id, { opKlaar: () => toonVrijeAfronding(s.id!), opTerug: () => toonThuis() });
-      return;
-    case "dhikr":
-      if (s.id) toonDhikr(s.id, () => toonThuis());
-      return;
-    case "kompas":
-      return startKompasLus();
-    case "week":
-      return toonS14Intro();
-    case "brief": {
-      const b = ongelezenBrief(data);
-      if (b) toonS12(b, false);
-      return;
-    }
-    case "rust":
-      return;
-  }
-}
-
-// ── Het startscherm ───────────────────────────────────────────────────
-function toonThuis(): void {
-  const nu = new Date();
-  const dagdeel = dagdeelVan(nu);
-  const suggesties = suggestiesVoorNu(data, nu);
-  // "Het is laat" is geen actie maar een opmerking — die krijgt geen knop.
-  const opmerking = suggesties.find((s) => s.soort === "rust") ?? null;
-  const kandidaten = suggesties.filter((s) => s.soort !== "rust");
-  // v25 — sla de kaart over die je net als hoofdkaart deed, zodat je na het
-  // afronden ervan niet exact diezelfde kaart terugziet (zie
-  // laatstGekozenSuggestie hierboven). Is er niets anders over, dan komt de
-  // visie-kaart in de plaats — nooit een lege plek waar de hoofdkaart stond.
-  const nietZojuistGedaan = (s: Suggestie) =>
-    !(laatstGekozenSuggestie && s.soort === laatstGekozenSuggestie.soort && s.id === laatstGekozenSuggestie.id);
-  const eersteActie = kandidaten.find(nietZojuistGedaan) ?? null;
-  const verder = kandidaten.filter((s) => s !== eersteActie);
-  // v22: het lichte visie-fragment, alleen ochtend/middag (de avond krijgt
-  // het volledige leesblok in toonS23AvondSluiten) en alleen als de
-  // bijhorende toggle aan staat.
-  const fragment = data.visie && visieFragmentZichtbaar(data, dagdeel) ? visieFragment(data.visie, nu) : null;
-  // v25 — twee velden die de app zelf vraagt en daarna nooit meer toonde.
-  // "Iets kleins voor morgen" bestaat precies om je het de volgende ochtend
-  // terug te geven (dat is het hele mechanisme achter dat veld), en een
-  // kerntaak die je 's ochtends opschrijft heeft alleen zin als je hem
-  // later op de dag nog een keer ziet. Eén stille regel, geen kaart, geen
-  // afvinkvakje, geen herinnering die aandringt.
-  const voorVandaag =
-    dagdeel === "vroege_ochtend" || dagdeel === "ochtend" ? voorVandaagVanGisteren(data, nu) : null;
-  const kerntaakVandaag =
-    dagdeel === "middag" || dagdeel === "avond"
-      ? ochtendMomentVandaag(data, nu)?.kerntaak?.trim() || null
-      : null;
-  // De vaste ingang "Hoe voel je je?" stond er 's middags twee keer: één keer
-  // als hoofdsuggestie en één keer als vaste regel eronder.
-  const kompasAlBoven = suggesties.some((sg) => sg.soort === "kompas");
-
-  render([
-    el("div", { class: "scherm scherm-app" }, [
-      el("header", { class: "thuis-kop" }, [
-        el("p", { class: "merk-kicker" }, ["Life Maxing"]),
-        el("h1", { class: "thuis-groet" }, [begroeting(dagdeel)]),
-        el("p", { class: "thuis-datum" }, [datumregel(nu)]),
-      ]),
-      opmerking ? el("p", { class: "opmerking" }, [`${opmerking.titel}. ${opmerking.waaromNu}`]) : null,
-      voorVandaag ? el("p", { class: "opmerking" }, [`${teksten.nuRegels.voorMorgen}: ${voorVandaag}`]) : null,
-      kerntaakVandaag ? el("p", { class: "opmerking" }, [`${teksten.nuRegels.kerntaak}: ${kerntaakVandaag}`]) : null,
-      fragment ? el("p", { class: "opmerking" }, [`${fragment.label}: ${fragment.tekst}`]) : null,
-      eersteActie ? kaartPrimair(eersteActie) : kaartVisieFallback(),
-      verder.length ? el("p", { class: "sectie-kop" }, ["Past nu ook"]) : null,
-      ...verder.map(kaartKlein),
-      el("p", { class: "sectie-kop" }, ["Of begin hier"]),
-      kompasAlBoven
-        ? null
-        : rijKnop("Hoe voel je je?", "Een woord kiezen, dan drie opties. 2 min.", () => startKompasLus()),
-      rijKnop("Ik ben eruit gevallen", "Terug beginnen zonder het groot te maken.", () => toonS19Normaliseren()),
-      rijKnop("Ik zit vast in mijn telefoon", "Onderbreken zonder jezelf iets te verbieden.", () => toonS15Onderbreker()),
-      // De verhalen zijn uitsluitend profetenverhalen (zie motivatiehoek.ts) —
-      // net als elders een [I]-onderdeel, dus volledig uit als de islamitische
-      // laag uit staat (v2 §instellingen: "in hun geheel").
-      data.instellingen.islamitischeLaag
-        ? rijKnop(teksten.motivatiehoek.rijTitel, teksten.motivatiehoek.rijOnder, () => toonMotivatiequote())
-        : null,
-      navBalk("nu"),
-    ]),
-  ]);
-}
-
-// ── Doen — de bibliotheek, per thema ──────────────────────────────────
-function toonDoen(): void {
-  const islamAan = data.instellingen.islamitischeLaag;
-  render([
-    el("div", { class: "scherm scherm-app" }, [
-      el("h1", { class: "tab-kop" }, ["Doen"]),
-      el("p", { class: "zacht" }, ["Kies waar je nu iets aan hebt."]),
-      ...themas
-        .filter((t) => !t.islamitisch || islamAan)
-        .map((t) =>
-          el(
-            "button",
-            {
-              class: "kaart kaart-klein",
-              onclick: () => (t.bewegingIds.length === 0 && !t.dhikrIds ? toonS24Richting() : toonThema(t.id)),
-            },
-            [
-              el("span", { class: "kaart-titel-klein" }, [t.titel]),
-              el("span", { class: "kaart-meta" }, [t.onderschrift]),
-            ]
-          )
-        ),
-      navBalk("doen"),
-    ]),
-  ]);
-}
-
-function toonThema(id: string): void {
-  const t = themaById(id);
-  if (!t) return toonDoen();
-  // Wat nú past wordt binnen het thema gemarkeerd — hetzelfde oordeel als op
-  // het startscherm, zodat de timing overal doorwerkt en niet alleen op "Nu".
-  const nuIds = new Set(
-    suggestiesVoorNu(data)
-      .map((s) => s.id)
-      .filter((x): x is string => Boolean(x))
-  );
-  const islamAan = data.instellingen.islamitischeLaag;
-
-  const items: (ReturnType<typeof el> | null)[] = [];
-  for (const bid of t.bewegingIds) {
-    const b = bewegingById(bid);
-    if (!b) continue;
-    const past = nuIds.has(bid);
-    items.push(
-      el(
-        "button",
-        {
-          class: `kaart kaart-klein${past ? " past-nu" : ""}`,
-          onclick: () => toonBeweging(bid, { opKlaar: () => toonVrijeAfronding(bid), opTerug: () => toonThema(id) }),
-        },
-        [
-          el("span", { class: "kaart-titel-klein" }, [b.titel]),
-          el("span", { class: "kaart-meta" }, [past ? `${duurTekst(bid)} · past nu` : duurTekst(bid)]),
-        ]
-      )
-    );
-  }
-  if (islamAan && t.dhikrIds) {
-    for (const did of t.dhikrIds) {
-      const d = dhikrById(did);
-      if (!d) continue;
-      const past = nuIds.has(did);
-      items.push(
-        el(
-          "button",
-          { class: `kaart kaart-klein${past ? " past-nu" : ""}`, onclick: () => toonDhikr(did, () => toonThema(id)) },
-          [
-            el("span", { class: "kaart-titel-klein" }, [d.titel]),
-            el("span", { class: "kaart-meta" }, [past ? `${d.wanneer} · past nu` : d.wanneer]),
-          ]
-        )
-      );
-    }
-  }
-
-  render([
-    el("div", { class: "scherm scherm-app" }, [
-      terugKnop(() => toonDoen()),
-      el("h1", { class: "tab-kop" }, [t.titel]),
-      el("p", { class: "zacht" }, [t.onderschrift]),
-      ...items,
-      navBalk("doen"),
-    ]),
-  ]);
-}
-
-// ── Terugkijken ───────────────────────────────────────────────────────
-function toonTerugkijken(): void {
-  const brief = ongelezenBrief(data);
-  const heeftBrieven = (data.brieven ?? []).length > 0;
-  render([
-    el("div", { class: "scherm scherm-app" }, [
-      el("h1", { class: "tab-kop" }, ["Terugkijken"]),
-      rijKnop("Wat je al deed", "De sterren die je onderweg verzamelde.", () => toonS8()),
-      brief
-        ? rijKnop("Er ligt een brief", "Je eigen zinnen van vorige maand.", () => toonS12(brief, false))
-        : heeftBrieven
-          ? rijKnop("Je brieven", "Alles wat je al eerder las.", () => toonS13())
-          : null,
-      weekmomentBeschikbaar(data)
-        ? rijKnop("De spiegel van de week", "Beeld, obstakel, plan. 10 min.", () => toonS14Intro())
-        : null,
-      rijKnop(
-        "Mijn visie",
-        data.visie ? "Herlezen of herschrijven." : "Waar je naartoe leeft, in het nu geschreven.",
-        () => toonVisieBekijken()
-      ),
-      rijKnop("Wie ik word", "Je eigen zin, wanneer je hem wil bijstellen.", () => toonS20WieIkWord()),
-      rijKnop("Verlangen van deze periode", "De kwaliteit waar je nu op mikt.", () => toonS21Kwaliteiten()),
-      perfectionismeCheckBeschikbaar(data)
-        ? rijKnop("Voelt dit nog als hulp?", "Eén vraag, hooguit één keer per maand.", () =>
-            toonS17PerfectionismeCheck()
-          )
-        : null,
-      frictieBeschikbaar(data)
-        ? rijKnop("Frictie buiten de app", "Vier manieren om minder te scrollen.", () => toonS18Frictie())
-        : null,
-      rijKnop("Instellingen", "De islamitische laag, rustige beelden, export.", () => toonS10()),
-      navBalk("terugkijken"),
-    ]),
-  ]);
-}
 
 // ── De oefening, stap voor stap ───────────────────────────────────────
 // Vervangt de muur tekst die S5 en S15 tot v20 toonden: één stap tegelijk,
@@ -2251,6 +1910,42 @@ function stappenVan(script: string): string[] {
   return stappen.length > 0 ? stappen : [script];
 }
 
+/**
+ * v27 (W2.3) — de medische grens van een beweging, elke keer zichtbaar
+ * (veiligheid.md §4: niet weggeklapt). Gedeeld door alle weergaven van een
+ * oefening. Tot v26 kenden alleen de gewone lezer (`toonOefening`) dit; de
+ * ademhalings-pacer en "Even helemaal niets" toonden het veld nooit, ook niet
+ * als het ingevuld was.
+ */
+function grensBlok(b: Beweging): ReturnType<typeof el> | null {
+  if (!b.medischeGrens || b.medischeGrens.length === 0) return null;
+  return el(
+    "div",
+    { class: "herkomst" },
+    b.medischeGrens.map((regel) => el("p", { class: "herkomst-regel herkomst-regel--grens" }, [regel]))
+  );
+}
+
+/**
+ * "waarom dit werkt +" dat open- en dichtklapt zonder het scherm opnieuw op te
+ * bouwen. Nodig bij de pacer: een nieuwe render() zou de lopende cirkel en de
+ * timers afbreken (zie toonAdemPacer). Geeft de knop en het blok terug.
+ */
+function waaromInPlace(b: Beweging): ReturnType<typeof el>[] {
+  const blok = el(
+    "div",
+    { class: "herkomst" },
+    b.herkomst.map((h) => el("p", { class: "herkomst-regel" }, [h.regel]))
+  );
+  blok.hidden = true;
+  const knop = el("button", { class: "knop-klein" }, ["waarom dit werkt +"]);
+  knop.addEventListener("click", () => {
+    blok.hidden = !blok.hidden;
+    knop.textContent = blok.hidden ? "waarom dit werkt +" : "waarom dit werkt −";
+  });
+  return [knop, blok];
+}
+
 // ── Getimede ademhalingsoefeningen ─────────────────────────────────────
 // v25 — tot nu toe was er één ademhalingsvorm ("Ademen met lange
 // uitademing"), met een decoratieve ademvorm die niet op een echt geteld
@@ -2264,6 +1959,12 @@ interface AdemFase {
 }
 
 const GETIMEDE_ADEMHALING: Record<string, AdemFase[]> = {
+  // v27 — "Ademen met lange uitademing" telt nu ook mee (4 in, 6 uit): de
+  // adem-kamer begeleidt elk ritme visueel in plaats van als tekststappen.
+  "adem-lange-uitademing": [
+    { label: "Adem in", seconden: 4 },
+    { label: "Adem lang uit", seconden: 6 },
+  ],
   "box-ademhaling": [
     { label: "Adem in", seconden: 4 },
     { label: "Houd vast", seconden: 4 },
@@ -2292,83 +1993,180 @@ function ademRichting(label: string): "in" | "uit" | "vast" {
   return "vast";
 }
 
+/** De cirkel groeit tot hier bij "in" en krimpt tot hier bij "uit"; hij blijft zo altijd binnen zijn eigen vak. */
+const ADEM_SCHAAL = { klein: 0.6, groot: 1 };
+
 /**
- * Eén render() bij het openen van het scherm; daarna alleen nog directe
- * DOM-updates op dezelfde elementen (tekst, inline transform) in plaats van
- * een nieuwe render() per seconde. Een nieuwe render() zou de cirkel elke
- * seconde opnieuw aanmaken, en daarmee elke lopende CSS-transitie afbreken
- * — precies het soepele, doorlopende groeien/krimpen dat het punt is.
+ * De ademoefening: één ding beweegt, en de tekst staat stil.
+ *
+ * Opbouw van het scherm (van boven naar beneden, vaste plekken):
+ *   titel · ronde · [ het vak met de cirkel en het aftellende getal erin ] ·
+ *   de fase ("Adem in") · wat erna komt · pauze · klaar
+ * De cirkel schaalt alleen binnen zijn eigen vierkante vak; de fasetekst staat
+ * daaronder op een vaste plek en wordt nooit door de cirkel geraakt. Het getal
+ * zit in het midden van de cirkel, die nooit kleiner wordt dan 60% van het vak,
+ * dus ook het getal staat altijd op de cirkel.
+ *
+ * Tijd: één interval van 100 ms rekent met `performance.now()` (verstreken
+ * milliseconden in deze fase) in plaats van te tellen; daardoor kan de oefening
+ * pauzeren, hervatten en na een achtergrond-pauze niet uit de pas lopen. De
+ * cirkel zelf loopt op één CSS-transitie per fase (lineair, precies zo lang als
+ * de fase), dus de beweging is de tijd. Bij pauze bevriezen we de cirkel op de
+ * berekende maat; bij hervatten loopt hij de rest van de fase uit. Eén render()
+ * bij het openen, daarna alleen directe updates, zodat lopende transities
+ * nooit worden afgebroken.
  */
 function toonAdemPacer(bewegingId: string, patroon: AdemFase[], opties: OefeningOpties): void {
   const beweging = bewegingById(bewegingId);
   if (!beweging) return opties.opKlaar();
-  const rustig = data.instellingen.rustigeBeelden;
+  const rustig =
+    data.instellingen.rustigeBeelden ||
+    (typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
   let faseIndex = 0;
   let ronde = 1;
   let gestopt = false;
-  let secondeTimer: number | undefined;
-  let faseTimer: number | undefined;
+  let gepauzeerd = false;
+  let verstreken = 0; // ms in de huidige fase
+  let vanVerstreken = 0; // verstreken op het moment dat de huidige beweging begon
+  let vanSchaal: number = ADEM_SCHAAL.klein;
+  let naarSchaal: number = ADEM_SCHAAL.klein;
+  let laatsteTik = 0;
+  let timer: number | undefined;
+
+  const cirkelEl = el("div", { class: "adem-cirkel", "aria-hidden": "true" });
+  const getalEl = el("span", { class: "adem-getal", "aria-hidden": "true" }, [""]);
+  const stageEl = el("div", { class: `adem-stage${rustig ? " rustig" : ""}`, "data-fase": "vast", "data-vol": "0" }, [
+    el("span", { class: "adem-ring", "aria-hidden": "true" }),
+    el("span", { class: "adem-gloed", "aria-hidden": "true" }),
+    cirkelEl,
+    getalEl,
+  ]);
+  const labelEl = el("p", { class: "adem-label", "aria-live": "polite" }, [""]);
+  const volgendeEl = el("p", { class: "adem-volgende" }, [""]);
+  const rondeEl = el("p", { class: "zacht adem-ronde" }, [""]);
+  const pauzeEl = el("button", { class: "knop-klein adem-pauze", onclick: () => (gepauzeerd ? hervat() : pauzeer()) }, [
+    "Pauzeer",
+  ]);
+
+  const duurVan = (i: number): number => patroon[i].seconden * 1000;
+
+  function schaalNu(): number {
+    const rest = duurVan(faseIndex) - vanVerstreken;
+    const f = rest <= 0 ? 1 : Math.min(1, Math.max(0, (verstreken - vanVerstreken) / rest));
+    return vanSchaal + (naarSchaal - vanSchaal) * f;
+  }
+
+  /** Zet de cirkel op een maat en laat hem in `ms` naar `doel` lopen. */
+  function beweeg(doel: number, ms: number): void {
+    cirkelEl.style.transitionDuration = "0ms";
+    cirkelEl.style.transform = `scale(${vanSchaal})`;
+    void cirkelEl.offsetWidth; // begin de transitie vanaf deze maat, niet vanaf een oude
+    cirkelEl.style.transitionDuration = rustig ? "0ms" : `${Math.max(0, ms)}ms`;
+    cirkelEl.style.transform = `scale(${doel})`;
+  }
 
   function stop(): void {
     gestopt = true;
-    if (secondeTimer !== undefined) window.clearInterval(secondeTimer);
-    if (faseTimer !== undefined) window.clearTimeout(faseTimer);
+    if (timer !== undefined) window.clearInterval(timer);
+    document.removeEventListener("visibilitychange", opZichtbaarheid);
   }
 
-  const cirkelEl = el("div", { class: `adem-pacer-cirkel${rustig ? " rustig" : ""}` });
-  const labelEl = el("p", { class: "vraag" }, [""]);
-  const cijferEl = el("p", { class: "adem-pacer-getal" }, [""]);
-  const rondeEl = el("p", { class: "zacht" }, [""]);
+  function opZichtbaarheid(): void {
+    if (document.hidden) pauzeer();
+  }
+
+  function toonFase(): void {
+    const fase = patroon[faseIndex];
+    const richting = ademRichting(fase.label);
+    const volgende = patroon[(faseIndex + 1) % patroon.length];
+    labelEl.textContent = fase.label;
+    // Wat er straks komt, zodat een korte "houd vast" niet als een pauze voelt.
+    volgendeEl.textContent = `Daarna: ${volgende.label.toLowerCase()}`;
+    labelEl.classList.remove("adem-label--wissel");
+    void labelEl.offsetWidth;
+    labelEl.classList.add("adem-label--wissel");
+    rondeEl.textContent = `Ronde ${ronde} van ${ADEM_RONDES}`;
+    getalEl.textContent = String(fase.seconden);
+    stageEl.dataset.fase = richting;
+    if (richting === "in") naarSchaal = ADEM_SCHAAL.groot;
+    else if (richting === "uit") naarSchaal = ADEM_SCHAAL.klein;
+    // "vast": geen wijziging, de cirkel blijft precies zo groot als hij was.
+    stageEl.dataset.vol = naarSchaal === ADEM_SCHAAL.groot ? "1" : "0";
+  }
 
   function startFase(): void {
     if (gestopt) return;
-    const fase = patroon[faseIndex];
-    let resterend = fase.seconden;
-    labelEl.textContent = fase.label;
-    rondeEl.textContent = `Ronde ${ronde} van ${ADEM_RONDES}`;
-    cijferEl.textContent = String(resterend);
+    verstreken = 0;
+    vanVerstreken = 0;
+    vanSchaal = naarSchaal;
+    toonFase();
+    beweeg(naarSchaal, duurVan(faseIndex));
+  }
 
-    const richting = ademRichting(fase.label);
-    cirkelEl.style.transitionDuration = `${fase.seconden}s`;
-    if (richting === "in") cirkelEl.style.transform = "scale(1.25)";
-    else if (richting === "uit") cirkelEl.style.transform = "scale(0.8)";
-    // "vast" (houd vast): bewust geen wijziging -- de cirkel behoudt precies
-    // de omvang van de fase ervoor.
-
-    if (secondeTimer !== undefined) window.clearInterval(secondeTimer);
-    secondeTimer = window.setInterval(() => {
-      resterend--;
-      if (resterend > 0) cijferEl.textContent = String(resterend);
-    }, 1000);
-
-    if (faseTimer !== undefined) window.clearTimeout(faseTimer);
-    faseTimer = window.setTimeout(() => {
-      faseIndex++;
-      if (faseIndex >= patroon.length) {
-        faseIndex = 0;
-        ronde++;
-        if (ronde > ADEM_RONDES) {
-          stop();
-          opties.opKlaar();
-          return;
-        }
+  function volgendeFase(): void {
+    faseIndex++;
+    if (faseIndex >= patroon.length) {
+      faseIndex = 0;
+      ronde++;
+      if (ronde > ADEM_RONDES) {
+        stop();
+        opties.opKlaar();
+        return;
       }
-      startFase();
-    }, fase.seconden * 1000);
+    }
+    startFase();
+  }
+
+  function tik(): void {
+    if (gestopt) return;
+    if (!cirkelEl.isConnected) return stop(); // het scherm is al weg
+    const nu = performance.now();
+    verstreken += Math.min(nu - laatsteTik, 400); // een geblokkeerde tik telt niet als tijd
+    laatsteTik = nu;
+    const duur = duurVan(faseIndex);
+    if (verstreken >= duur) return volgendeFase();
+    getalEl.textContent = String(Math.ceil((duur - verstreken) / 1000));
+  }
+
+  function loop(): void {
+    laatsteTik = performance.now();
+    timer = window.setInterval(tik, 100);
+  }
+
+  function pauzeer(): void {
+    if (gestopt || gepauzeerd) return;
+    gepauzeerd = true;
+    if (timer !== undefined) window.clearInterval(timer);
+    vanSchaal = schaalNu();
+    vanVerstreken = verstreken;
+    cirkelEl.style.transitionDuration = "0ms";
+    cirkelEl.style.transform = `scale(${vanSchaal})`;
+    stageEl.dataset.pauze = "1";
+    pauzeEl.textContent = "Ga verder";
+  }
+
+  function hervat(): void {
+    if (gestopt || !gepauzeerd) return;
+    gepauzeerd = false;
+    delete stageEl.dataset.pauze;
+    pauzeEl.textContent = "Pauzeer";
+    beweeg(naarSchaal, duurVan(faseIndex) - verstreken);
+    loop();
   }
 
   render([
-    el("div", { class: "scherm" }, [
+    el("div", { class: "scherm scherm-adem", "data-kamer": "adem" }, [
       terugKnop(() => {
         stop();
         (opties.opTerug ?? toonThuis)();
       }),
       el("p", { class: "oefening-titel" }, [beweging.titel]),
       rondeEl,
-      cirkelEl,
+      stageEl,
       labelEl,
-      cijferEl,
+      volgendeEl,
+      pauzeEl,
       el(
         "button",
         {
@@ -2380,10 +2178,16 @@ function toonAdemPacer(bewegingId: string, patroon: AdemFase[], opties: Oefening
         },
         [opties.klaarTekst ?? "Klaar"]
       ),
+      grensBlok(beweging),
+      ...waaromInPlace(beweging),
     ]),
   ]);
 
+  // Begin klein, zonder overgang, en loop dan de eerste fase in.
+  cirkelEl.style.transform = `scale(${ADEM_SCHAAL.klein})`;
+  document.addEventListener("visibilitychange", opZichtbaarheid);
   startFase();
+  loop();
 }
 
 /** "Even helemaal niets" — een zelfgekozen duur, dan alleen een aftellend
@@ -2421,6 +2225,7 @@ function toonPrikkelsLoslaten(opties: OefeningOpties): void {
               beweging!.herkomst.map((h) => el("p", { class: "herkomst-regel" }, [h.regel]))
             )
           : null,
+        grensBlok(beweging!),
       ]),
     ]);
   }
@@ -2459,6 +2264,7 @@ function toonPrikkelsLoslaten(opties: OefeningOpties): void {
           },
           [opties.klaarTekst ?? "Klaar"]
         ),
+        grensBlok(beweging!),
       ]),
     ]);
     bijwerken();
@@ -2476,11 +2282,109 @@ function toonPrikkelsLoslaten(opties: OefeningOpties): void {
   kiesScherm();
 }
 
+// ── Vijf, vier, drie, twee, één — een instrument dat met je meetelt ─────
+// v27 (W6.2) — de oefening telt letterlijk af (5-4-3-2-1), dus hij hoort geen
+// tekstblok te zijn maar een cirkel waarop je bij elk ding tikt dat je opmerkt.
+// Het getal in het midden loopt terug, de ring vult zich. Stateless: er wordt
+// niets geteld of bewaard behalve wat je op dit ene scherm doet.
+const ZINTUIGEN: { n: number; tekst: string }[] = [
+  { n: 5, tekst: "Vijf dingen die je ziet." },
+  { n: 4, tekst: "Vier dingen die je voelt — je kleren, de stoel, de lucht." },
+  { n: 3, tekst: "Drie dingen die je hoort." },
+  { n: 2, tekst: "Twee dingen die je ruikt." },
+  { n: 1, tekst: "Eén ding dat je proeft." },
+];
+
+function telringSvg(n: number): string {
+  const r = 70;
+  const gap = n === 1 ? 0 : 0.16; // radialen tussen de bogen
+  const stuk = (2 * Math.PI) / n;
+  let bogen = "";
+  for (let i = 0; i < n; i++) {
+    const a0 = -Math.PI / 2 + i * stuk + gap / 2;
+    const a1 = -Math.PI / 2 + (i + 1) * stuk - gap / 2 - (n === 1 ? 0.0001 : 0);
+    const x0 = 80 + r * Math.cos(a0);
+    const y0 = 80 + r * Math.sin(a0);
+    const x1 = 80 + r * Math.cos(a1);
+    const y1 = 80 + r * Math.sin(a1);
+    const groot = a1 - a0 > Math.PI ? 1 : 0;
+    bogen += `<path class="telring-boog" d="M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r} ${r} 0 ${groot} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}"/>`;
+  }
+  return `<svg viewBox="0 0 160 160" aria-hidden="true">${bogen}</svg>`;
+}
+
+function toonZintuigenTeller(opties: OefeningOpties): void {
+  const gevonden = bewegingById("vijf-zintuigen-grounding");
+  if (!gevonden) return opties.opKlaar();
+  const beweging: Beweging = gevonden;
+  let fase = 0;
+
+  function teken(): void {
+    const stap = ZINTUIGEN[fase];
+    let geteld = 0;
+    let klaarMelding = false;
+
+    const getal = el("span", { class: "telring-getal" }, [String(stap.n)]);
+    const ring = el(
+      "button",
+      {
+        class: "telring",
+        "aria-label": `${stap.tekst} Tik bij elk ding dat je opmerkt.`,
+        onclick: () => {
+          if (geteld >= stap.n || klaarMelding) return;
+          const bogen = ring.querySelectorAll(".telring-boog");
+          bogen[geteld]?.classList.add("vol");
+          geteld += 1;
+          getal.textContent = String(stap.n - geteld);
+          if (geteld >= stap.n) {
+            klaarMelding = true;
+            // Even laten landen, dan naar het volgende zintuig — of klaar.
+            window.setTimeout(() => {
+              if (fase === ZINTUIGEN.length - 1) return opties.opKlaar();
+              fase += 1;
+              teken();
+            }, 650);
+          }
+        },
+      },
+      [el("span", { class: "telring-svg", html: telringSvg(stap.n) }, []), getal]
+    );
+
+    render([
+      el("div", { class: "scherm scherm-app scherm-midden" }, [
+        terugKnop(() => {
+          if (fase > 0) {
+            fase -= 1;
+            teken();
+          } else {
+            (opties.opTerug ?? toonThuis)();
+          }
+        }),
+        el("p", { class: "oefening-titel" }, [beweging.titel]),
+        el(
+          "div",
+          { class: "stip-rij" },
+          ZINTUIGEN.map((_, i) => el("span", { class: `stip${i <= fase ? " vol" : ""}` }))
+        ),
+        el("p", { class: "vraag" }, [stap.tekst]),
+        ring,
+        el("p", { class: "zacht" }, ["Tik op de cirkel bij elk ding dat je opmerkt."]),
+        el("p", { class: "zacht" }, [`Kort kan ook: ${beweging.minimumversie}`]),
+        grensBlok(beweging),
+        ...waaromInPlace(beweging),
+        el("button", { class: "knop-klein", onclick: () => opties.opKlaar() }, [opties.klaarTekst ?? "Klaar"]),
+      ]),
+    ]);
+  }
+  teken();
+}
+
 /** Eén ingang voor elke beweging: kiest zelf de juiste weergave (getimede
  * ademhaling, de stille aftel-oefening, of anders de gewone stap-voor-stap-
  * lezer) in plaats van dat elke aanroeper dat zelf moet weten. */
-function toonBeweging(bewegingId: string, opties: OefeningOpties): void {
+export function toonBeweging(bewegingId: string, opties: OefeningOpties): void {
   if (bewegingId === "prikkels-loslaten") return toonPrikkelsLoslaten(opties);
+  if (bewegingId === "vijf-zintuigen-grounding") return toonZintuigenTeller(opties);
   const patroon = GETIMEDE_ADEMHALING[bewegingId];
   if (patroon) return toonAdemPacer(bewegingId, patroon, opties);
   return toonOefening(bewegingId, opties);
@@ -2514,13 +2418,7 @@ function toonOefening(bewegingId: string, opties: OefeningOpties): void {
         el("p", { class: "zacht" }, [`Kort kan ook: ${beweging!.minimumversie}`]),
         // veiligheid.md §4: een medische grens staat er elke keer bij, op elke
         // stap — niet weggeklapt achter "waarom dit werkt".
-        beweging!.medischeGrens
-          ? el(
-              "div",
-              { class: "herkomst" },
-              beweging!.medischeGrens.map((regel) => el("p", { class: "herkomst-regel herkomst-regel--grens" }, [regel]))
-            )
-          : null,
+        grensBlok(beweging!),
         el(
           "button",
           {
@@ -2574,7 +2472,7 @@ function toonOefening(bewegingId: string, opties: OefeningOpties): void {
 
 /** Met de islamitische laag uit vallen de [I]-bewegingen weg, net als het
  * hele thema "Geloof en zingeving" in de Doen-tab. */
-function zichtbareBewegingen(): Beweging[] {
+export function zichtbareBewegingen(): Beweging[] {
   const islamAan = data.instellingen.islamitischeLaag;
   return bewegingen.filter((b) => islamAan || !b.herkomst.some((h) => h.label === "I"));
 }
@@ -2590,6 +2488,7 @@ const KORT_ONDERBREKER = [
   "bericht-sturen",
   "uitschrijven-zonder-filter",
   "tien-minuten-wandelen-groen",
+  "voeten-op-de-grond",
   "sayyid-al-istighfar",
 ];
 
@@ -2603,6 +2502,8 @@ const KORT_HERSTEL = [
   "benoemen-en-parkeren",
   "bericht-sturen",
   "vijf-minuten-naar-buiten",
+  "vijf-zintuigen-grounding",
+  "voeten-op-de-grond",
   "sayyid-al-istighfar",
 ];
 
@@ -2692,19 +2593,22 @@ function toonBewegingBibliotheek(opties: KeuzeOpties): void {
 // De Onderbreker en de herstelroute blijven wél stateless: die twee mogen
 // per Wet 8 respectievelijk Wet 4 uitdrukkelijk niets bijhouden, en dat
 // blijft zo.
-function toonVrijeAfronding(bewegingId: string): void {
+export function toonVrijeAfronding(bewegingId: string): void {
   const beweging = bewegingById(bewegingId);
   if (!beweging) return toonS7();
   const veld = el("textarea", { placeholder: teksten.vrijeAfronding.placeholder }) as HTMLTextAreaElement;
 
   function bewaarSter(): void {
-    data.sterren.push({
+    const nieuweSter: Ster = {
       id: nieuwId("s"),
       momentId: null,
       streek: beweging!.streek,
       datum: huidigeDagSleutel(),
       zin: veld.value.trim() || null,
-    });
+      bewegingId: beweging!.id,
+    };
+    data.sterren.push(nieuweSter);
+    zojuistGemaakteSter = nieuweSter;
     void bewaren();
   }
 
@@ -2716,7 +2620,7 @@ function toonVrijeAfronding(bewegingId: string): void {
       el("button", { class: "knop", onclick: () => { bewaarSter(); toonS7(); } }, [
         teksten.vrijeAfronding.sluiten,
       ]),
-      el("button", { class: "knop-klein", onclick: () => { bewaarSter(); toonThuis(); } }, [
+      el("button", { class: "knop-klein", onclick: () => { bewaarSter(); rondLopendeAf(); toonThuis(); } }, [
         teksten.vrijeAfronding.naarStart,
       ]),
     ]),
@@ -2726,7 +2630,7 @@ function toonVrijeAfronding(bewegingId: string): void {
 // ── Dhikr-lezer ───────────────────────────────────────────────────────
 // adhkar.md, ontwerpregel: de app toont de tekst en de betekenis, nooit een
 // aantal — ook niet wanneer het aantal letterlijk in de bron staat.
-function toonDhikr(id: string, opTerug: () => void, opKlaar: () => void = toonKlaar): void {
+export function toonDhikr(id: string, opTerug: () => void, opKlaar: () => void = toonKlaar): void {
   const d = dhikrById(id);
   if (!d) return toonThuis();
   let bronOpen = false;
@@ -2769,7 +2673,7 @@ function toonDhikr(id: string, opTerug: () => void, opKlaar: () => void = toonKl
 // deel van het bewijs; de Obstacle-stap wordt daarom nooit overgeslagen,
 // ook niet als knop "verder zonder". De verbeeldingsstap ertussenin is wel
 // vrijblijvend: lezen en verdergaan, niets in te vullen.
-function toonS24Richting(): void {
+export function toonS24Richting(): void {
   const bestaand = data.doel;
   if (!bestaand) return toonS24Wish();
   render([
@@ -2793,7 +2697,7 @@ function bewaarConceptDoel(veld: Partial<ConceptDoel>): void {
   void bewaren();
 }
 
-function toonS24Wish(): void {
+export function toonS24Wish(): void {
   const concept = data.conceptDoel;
   const veld = el("textarea", { placeholder: teksten.doelen.wishPlaceholder }) as HTMLTextAreaElement;
   veld.value = concept?.wish ?? data.doel?.wish ?? "";
@@ -2928,19 +2832,23 @@ function toonKlaar(): void {
     el("div", { class: "scherm scherm-app scherm-midden" }, [
       el("p", { class: "vraag" }, ["Klaar."]),
       el("button", { class: "knop", onclick: () => toonS7() }, ["Sluiten"]),
-      el("button", { class: "knop-klein", onclick: () => toonThuis() }, ["Terug naar start"]),
+      el("button", { class: "knop-klein", onclick: () => { rondLopendeAf(); toonThuis(); } }, ["Terug naar start"]),
     ]),
   ]);
 }
 
-// ── De kompaslus, nu met woorden eerst ────────────────────────────────
+// ── De kompaslus: de Schijf eerst, woorden als alternatief ─────────────
 // Tot v20 begon deze lus op de schijf: een lege cirkel zonder assen of
-// uitleg. Vanaf v21 begin je bij de woorden (twee tikken) en is de schijf
-// een optie voor wie het preciezer wil aangeven.
-function startKompasLus(): void {
+// uitleg. In v21 schoof de schijf naar achter; sinds v27 is hij weer de
+// voordeur, nu mét aslabels en uitleg, en staan de woorden eronder.
+export function startKompasLus(): void {
+  s4Terug = null;
   huidigeTikPositie = null;
   huidigMoment = null;
-  toonS2();
+  // v27 (W6): de Schijf eerst, woorden als alternatief eronder. In v21 was de
+  // schijf naar achter geschoven omdat hij toen een kale cirkel zonder uitleg
+  // was; die reden is weg (aslabels en uitleg staan er nu omheen).
+  toonS1();
 }
 
 // ── S10 — Instellingen ────────────────────────────────────────────────
@@ -3060,6 +2968,7 @@ export function toonS10(): void {
         data.instellingen.rustigeBeelden,
         async (v) => {
           data.instellingen.rustigeBeelden = v;
+          document.body.classList.toggle("rustig", v);
           await bewaren();
         }
       ),

@@ -54,27 +54,86 @@ export function schrijfVisie(
 export function periodeLabel(periode: VisiePeriode): string {
   switch (periode) {
     case "3_maanden":
-      return "3 maanden";
+      return "drie maanden";
     case "1_jaar":
-      return "1 jaar";
+      return "een jaar";
     case "5_jaar":
-      return "5 jaar";
+      return "vijf jaar";
   }
 }
 
 /**
- * Eén van de drie delen, deterministisch gewisseld per dag (dag-van-het-
+ * v27 — de zeven delen van de vijfjaarsvisie, in leesvolgorde. Elk deel begint
+ * met een stam in de ik-vorm die je zelf afmaakt; de app schrijft nooit een
+ * tekst voor (de placeholders zijn voorbeelden van de vorm, niet van de
+ * inhoud). Het geloof-deel bestaat alleen met de islamitische laag aan.
+ */
+export type VisieDeelVeld = "wieIkBen" | "hoeIkLeef" | "geloof" | "lichaamEnRust" | "relaties" | "watIkHeb" | "waarIkSta";
+
+export interface VisieDeelDef {
+  veld: VisieDeelVeld;
+  stam: string;
+  placeholder: string;
+  islamitisch?: boolean;
+}
+
+export const VISIE_DELEN: VisieDeelDef[] = [
+  { veld: "wieIkBen", stam: "Ik ben iemand die", placeholder: "rustig blijft onder druk, en doet wat ik zeg." },
+  { veld: "hoeIkLeef", stam: "Ik leef mijn dagen met", placeholder: "een vast ritme: vroeg op, buiten in het licht, en tijd voor de mensen die ertoe doen." },
+  {
+    veld: "geloof",
+    stam: "Mijn geloof en mijn band met Allah",
+    placeholder: "zijn een rustig anker in mijn dag. Ik ben er trouw aan, ook op gewone dagen.",
+    islamitisch: true,
+  },
+  { veld: "lichaamEnRust", stam: "Ik zorg voor mijn lichaam en mijn rust door", placeholder: "elke dag iets te bewegen, goed te slapen en mijn lichaam te vertrouwen." },
+  { veld: "relaties", stam: "De mensen om mij heen", placeholder: "kennen mij en ik ken hen. Ik ben er voor hen en ik laat hen dichtbij komen." },
+  { veld: "watIkHeb", stam: "Wat ik heb opgebouwd", placeholder: "is werk dat me iets doet, een thuis waar het rustig is en een leven dat bij me past." },
+  { veld: "waarIkSta", stam: "Ik ben geworden wie ik altijd wilde zijn", placeholder: "doordat ik elke dag kleine keuzes maakte die bij mij passen." },
+];
+
+export type VisieTeksten = Record<VisieDeelVeld, string>;
+
+/** De delen die jij hebt ingevuld, in leesvolgorde (met de laag uit zonder geloof). */
+export function visieDelen(visie: Visie, islamAan: boolean): { def: VisieDeelDef; tekst: string }[] {
+  return VISIE_DELEN.filter((d) => !d.islamitisch || islamAan)
+    .map((def) => ({ def, tekst: ((visie[def.veld] as string | undefined) ?? "").trim() }))
+    .filter((d) => d.tekst.length > 0);
+}
+
+export function visieTeksten(visie: Visie | null): VisieTeksten {
+  const uit = {} as VisieTeksten;
+  for (const d of VISIE_DELEN) uit[d.veld] = ((visie?.[d.veld] as string | undefined) ?? "").trim();
+  return uit;
+}
+
+/** Schrijft de vijfjaarsvisie (of past hem aan). Geen geschiedenis (Wet 4). */
+export function schrijfVisieDelen(teksten: Partial<VisieTeksten>, bestaand: Visie | null, nu: Date = new Date()): Visie {
+  const nieuw: Visie = {
+    periode: bestaand?.periode ?? "5_jaar",
+    wieIkBen: "",
+    watIkHeb: "",
+    waarIkSta: "",
+    geschrevenOp: bestaand?.geschrevenOp ?? nu.toISOString(),
+    laatstGewijzigdOp: nu.toISOString(),
+  };
+  for (const d of VISIE_DELEN) nieuw[d.veld] = (teksten[d.veld] ?? "").trim();
+  return nieuw;
+}
+
+/**
+ * Eén van de ingevulde delen, deterministisch gewisseld per dag (dag-van-het-
  * jaar) zodat het niet bij elke open van de app wisselt — dat zou als
  * willekeurig geknipper voelen — maar de hele dag door wel hetzelfde
- * fragment blijft. Nooit de hele visie in één regel: dat zou het
- * ochtend/middag-moment zwaarder maken dan bedoeld (dat is het avondmoment).
+ * fragment blijft. Nooit de hele visie in één regel; de volle tekst staat in
+ * de kamer "Mijn visie" en 's avonds bij Dag sluiten.
  */
-export function visieFragment(visie: Visie, nu: Date = new Date()): { label: string; tekst: string } | null {
-  const delen: { label: string; tekst: string }[] = [
-    { label: "Wie je bent", tekst: visie.wieIkBen },
-    { label: "Wat je hebt", tekst: visie.watIkHeb },
-    { label: `Waar je staat, over ${periodeLabel(visie.periode)}`, tekst: visie.waarIkSta },
-  ].filter((d) => d.tekst.trim().length > 0);
+export function visieFragment(
+  visie: Visie,
+  nu: Date = new Date(),
+  islamAan = true
+): { label: string; tekst: string } | null {
+  const delen = visieDelen(visie, islamAan).map((d) => ({ label: d.def.stam, tekst: d.tekst }));
   if (delen.length === 0) return null;
   const dagVanJaar = Math.floor(
     (Date.UTC(nu.getFullYear(), nu.getMonth(), nu.getDate()) - Date.UTC(nu.getFullYear(), 0, 0)) / 86400000

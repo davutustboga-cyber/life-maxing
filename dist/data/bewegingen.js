@@ -543,13 +543,18 @@ export const bewegingen = [
         script: "Vier tellen in, vier tellen vasthouden, vier tellen uit, vier tellen vasthouden. Het scherm telt vanzelf mee.",
         herkomst: [
             {
-                label: "W",
-                regel: "Ademen op een vast, gelijkmatig ritme met korte pauzes na in- en uitademen wordt veel gebruikt om snel te kalmeren onder druk, onder meer in training voor hulpverleners. Het bouwt voort op hetzelfde effect als rustiger, trager ademen in het algemeen — hard bewijs voor precies déze 4-4-4-4-verhouding is dunner dan voor een langere uitademing alleen (zie 'Ademen met lange uitademing').",
+                label: "P",
+                regel: "Ademen op een vast, gelijkmatig ritme met korte pauzes wordt veel gebruikt om onder druk te kalmeren. Dat het helpt is vooral ervaring uit de praktijk: hard bewijs voor precies déze 4-4-4-4-verhouding is dunner dan voor een langere uitademing alleen (zie 'Ademen met lange uitademing'). Het staat hier omdat een vaste tel voor veel mensen makkelijker vast te houden is dan vrij ademen, niet omdat dit ritme apart onderzocht is.",
             },
         ],
         pastBij: ["gespannen", "gejaagd", "overprikkeld", "paniekerig", "onrustig", "rusteloos"],
         pastNietBij: [],
         nooitAanbiedenAls: [],
+        medischeGrens: [
+            "Niet tijdens het rijden, en niet in of vlak bij water.",
+            "Bij paniek- of hyperventilatieklachten: eerst kort en rustig ademen, zonder de adem vast te houden. Bij zwangerschap, hart- of vaatklachten of longklachten: eerst navragen bij een arts.",
+            "Word je duizelig of licht in je hoofd: stop en adem gewoon door.",
+        ],
     },
     {
         id: "fysiologische-zucht",
@@ -563,12 +568,16 @@ export const bewegingen = [
         herkomst: [
             {
                 label: "W",
-                regel: "Twee korte inademingen na elkaar, gevolgd door een lange, langzame uitademing, verlaagde in een gecontroleerd onderzoek de spanning sneller dan gewoon rustig ademen of mindfulness — al bij één keer, en het effect was sterker naarmate mensen het vaker herhaalden over een paar weken.",
+                regel: "In een gecontroleerd onderzoek (Balban e.a., 2023) met 108 mensen verbeterde vijf minuten per dag van precies deze zucht — twee korte inademingen, dan een lange uitademing — na een maand de stemming meer en de ademhaling rustiger dan mindfulnessmeditatie van dezelfde duur. Kanttekening: het ging om een dagelijkse oefening over een maand in een vrij kleine groep; één zucht op een acuut moment is niet apart onderzocht.",
             },
         ],
         pastBij: ["gespannen", "gejaagd", "overprikkeld", "paniekerig", "onrustig", "rusteloos", "machteloos"],
         pastNietBij: [],
         nooitAanbiedenAls: [],
+        medischeGrens: [
+            "Niet tijdens het rijden, en niet in of vlak bij water.",
+            "Word je duizelig of licht in je hoofd: stop en adem gewoon door. Bij paniek- of hyperventilatieklachten: houd het bij één zucht en verder rustig ademen.",
+        ],
     },
     {
         id: "2-3-4-5-ademhaling",
@@ -588,6 +597,11 @@ export const bewegingen = [
         pastBij: ["gespannen", "gejaagd", "onrustig", "rusteloos", "piekerend"],
         pastNietBij: [],
         nooitAanbiedenAls: [],
+        medischeGrens: [
+            "Niet tijdens het rijden, en niet in of vlak bij water.",
+            "Bij paniek- of hyperventilatieklachten: eerst kort en rustig ademen, zonder de adem vast te houden. Bij zwangerschap, hart- of vaatklachten of longklachten: eerst navragen bij een arts.",
+            "Word je duizelig of licht in je hoofd: stop en adem gewoon door.",
+        ],
     },
     // ──────────────────────────────────────────────────────────────────────────────
     // v25: grounding (uit een overweldigd gevoel stappen via je zintuigen/lichaam)
@@ -605,8 +619,8 @@ export const bewegingen = [
         script: "Noem, hardop of in je hoofd: vijf dingen die je ziet. Vier dingen die je voelt — je kleren, de stoel, de lucht. Drie dingen die je hoort. Twee dingen die je ruikt. Eén ding dat je proeft.",
         herkomst: [
             {
-                label: "W",
-                regel: "Aandacht sturen naar wat je nu concreet waarneemt via je zintuigen is een veelgebruikte, goed verdraagbare manier om uit piekeren of een overweldigd gevoel te stappen — het onderbreekt de aandacht die anders bij de gedachte zelf zou blijven hangen.",
+                label: "P",
+                regel: "Je aandacht richten op wat je nu concreet waarneemt is een veelgebruikte manier om uit piekeren of een overweldigd gevoel te stappen, en veel mensen ervaren het als kalmerend. Dat is ervaring uit de praktijk, niet iets waar hier gecontroleerd onderzoek onder ligt. Het staat hier omdat het weinig kost en weinig kan misgaan.",
             },
         ],
         pastBij: ["paniekerig", "overprikkeld", "verward", "piekerend", "malend", "gejaagd"],
@@ -624,8 +638,8 @@ export const bewegingen = [
         script: "Ga zitten of staan. Voel je voeten echt op de grond — het gewicht, de temperatuur, de druk. Duw ze een paar tellen tegen de vloer. Adem gewoon door.",
         herkomst: [
             {
-                label: "W",
-                regel: "Aandacht bewust naar lichamelijke waarneming verplaatsen — het contact met de grond — is een basisvorm van grounding die snel uitvoerbaar is en breed gebruikt wordt bij een overweldigd gevoel, vooral in combinatie met de zintuigenoefening hierboven.",
+                label: "P",
+                regel: "Je aandacht bewust naar het contact met de grond brengen is een eenvoudige, snel uit te voeren vorm van grounding die veel gebruikt wordt bij een overweldigd gevoel. Er ligt hier geen apart onderzoek onder; het staat hier omdat het snel gaat en weinig kan misgaan.",
             },
         ],
         pastBij: ["paniekerig", "overprikkeld", "verward", "gejaagd", "onrustig"],
@@ -643,8 +657,8 @@ export const bewegingen = [
         script: "Neem de gedachte die blijft hangen. Zeg of schrijf hem opnieuw, maar begin met: 'Ik heb de gedachte dat...'. Dan nog een keer: 'Ik merk dat ik de gedachte heb dat...'. Niets aan de gedachte zelf veranderen — alleen hoe je ernaar kijkt.",
         herkomst: [
             {
-                label: "W",
-                regel: "Een gedachte herformuleren als iets dat je opmerkt, in plaats van als een feit, vermindert aantoonbaar hoe geloofwaardig en onaangenaam die gedachte aanvoelt — zonder de inhoud ervan te bestrijden of weg te duwen.",
+                label: "P",
+                regel: "Een gedachte benoemen als \"ik heb de gedachte dat...\" komt uit de ACT-traditie (cognitieve defusie): je kijkt naar de gedachte in plaats van er vanuit te redeneren. Er wordt onderzoek gedaan naar defusie in het algemeen, maar dit zinnetje zelf is hier niet apart nagelopen. Het staat hier omdat het voor veel mensen een gedachte iets minder vast laat voelen.",
             },
         ],
         pastBij: ["piekerend", "malend", "zelfkritisch", "onzeker", "verward", "wantrouwend"],
@@ -662,8 +676,8 @@ export const bewegingen = [
         script: "Stel je de gedachte voor als iets buiten jezelf — een wolk die voorbijdrijft, een blaadje op water, een zin op een lopende band. Je hoeft hem niet te geloven of te bestrijden, alleen te zien voorbijgaan.",
         herkomst: [
             {
-                label: "W",
-                regel: "Een gedachte visueel voorstellen als iets dat langsdrijft, in plaats van iets dat je bent, is een kernoefening uit cognitieve-defusietraining en vermindert hoe vast gedachten blijven zitten — werkt het best als losse oefening op een rustig moment, niet als noodgreep midden in een crisis.",
+                label: "P",
+                regel: "Een gedachte voorstellen als iets dat voorbijdrijft — een wolk, een blaadje op water — is een standaardoefening uit de ACT-traditie (cognitieve defusie). Deze specifieke oefening is hier niet apart onderzocht. Het werkt waarschijnlijk het best als losse oefening op een rustig moment, niet als noodgreep midden in een crisis.",
             },
         ],
         pastBij: ["piekerend", "malend", "verward", "onzeker", "besluiteloos"],
@@ -686,8 +700,8 @@ export const bewegingen = [
         script: "Zet een tijd. Doe niets: geen telefoon, geen muziek, geen lezen. Kijk naar iets stils — een muur, het plafond, buiten. Verveling die opkomt hoeft niet weg.",
         herkomst: [
             {
-                label: "W",
-                regel: "Aanhoudende korte prikkels, vooral van een scherm, maken langzame, rustige aandacht lastiger vast te houden. Jezelf bewust en herhaald blootstellen aan verveling zonder een prikkel te pakken, hangt samen met minder verlangen naar diezelfde snelle prikkels en meer verdragen van niets-doen. Het is ongemakkelijk vóór het went — dat ongemak is het punt, niet een teken dat het niet werkt.",
+                label: "P",
+                regel: "Dat schermen en snelle prikkels het lastiger maken om rustig aandacht vast te houden, en dat het helpt om verveling te leren verdragen, is een breed gedeeld idee waar hier geen onderzoek onder ligt dat is nagelopen. Het staat hier als eigen idee. Het is ongemakkelijk vóór het went — dat ongemak is het punt, niet een teken dat het niet werkt.",
             },
         ],
         pastBij: ["leeg", "lusteloos", "rusteloos", "overprikkeld", "niets", "op"],

@@ -69,7 +69,16 @@ export function root(): HTMLElement {
  */
 export function render(children: Kind[]): void {
   window.scrollTo(0, 0);
-  root().replaceChildren(...(children.filter(Boolean) as Node[]));
+  const nodes = children.filter(Boolean) as Node[];
+  root().replaceChildren(...nodes);
+  // v27 — elk scherm dat in een kamer hoort zet een data-kamer op zijn eerste
+  // element; de sfeer van de hele app (kleur van het licht, zie style.css)
+  // volgt. Een scherm zonder die aanduiding — een oefening midden in een
+  // kamer — laat de sfeer van de kamer staan; alleen de hal zet hem expliciet
+  // terug.
+  const eerste = nodes[0];
+  const kamer = eerste instanceof HTMLElement ? eerste.dataset.kamer : undefined;
+  if (kamer) document.body.dataset.kamer = kamer;
 }
 
 /** Dimt het scherm en voert dan de callback uit — voor S7 (Afsluiten). */

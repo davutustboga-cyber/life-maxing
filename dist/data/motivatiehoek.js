@@ -13,103 +13,117 @@
 // Nieuwe content toevoegen is dus altijd gewoon: een item aan de juiste
 // lijst toevoegen, met een echte bron.
 // ── Quotes ────────────────────────────────────────────────────────────
-// Elke quote is gecontroleerd op toeschrijving. Enkele veelgedeelde
-// "motivatiequotes" bleken bij controle niet van de genoemde persoon te
-// zijn (o.a. een aan Boeddha/Seneca en een aan C.S. Lewis toegeschreven
-// citaat) en zijn daarom bewust niet opgenomen.
+// v27 — alle quotes staan nu in het Nederlands, zodat ze in dezelfde stem
+// staan als de rest van de app (bouwplan v27, W3.6). `origineel` bewaart de
+// oorspronkelijke tekst; de vertaling is vrij maar volgt de zin. Twee quotes
+// zijn eruit gehaald omdat er geen harde bron bij te vinden was ("veelvuldig
+// geciteerd" is geen toeschrijving): de Bruce Lee-uitspraak over 10.000
+// trappen en een tweede Kobe Bryant-citaat. Enkele veelgedeelde
+// "motivatiequotes" bleken bij controle niet van de genoemde persoon te zijn
+// (o.a. een aan Boeddha/Seneca en een aan C.S. Lewis toegeschreven citaat) en
+// zijn daarom bewust niet opgenomen. Let op: bij een aantal uitspraken uit
+// interviews staat alleen een globale bron ("Interview") — die zijn niet tot op
+// de bladzijde of het uur nagelopen.
 export const motivatieQuotes = [
     {
-        tekst: "I fear not the man who has practiced 10,000 kicks once, but I fear the man who has practiced one kick 10,000 times.",
-        auteur: "Bruce Lee",
-        bron: "Veelvuldig geciteerd, gekoppeld aan zijn trainingsfilosofie",
-    },
-    {
-        tekst: "I don't stop when I'm tired. I stop when I'm done.",
+        tekst: "Ik stop niet als ik moe ben. Ik stop als ik klaar ben.",
+        origineel: "I don't stop when I'm tired. I stop when I'm done.",
         auteur: "David Goggins",
         bron: "Can't Hurt Me",
     },
     {
-        tekst: "Discipline equals freedom.",
+        tekst: "Discipline is vrijheid.",
+        origineel: "Discipline equals freedom.",
         auteur: "Jocko Willink",
         bron: "Extreme Ownership",
     },
     {
-        tekst: "I've failed over and over and over again in my life. And that is why I succeed.",
+        tekst: "Ik ben keer op keer op keer mislukt in mijn leven. En daarom slaag ik.",
+        origineel: "I've failed over and over and over again in my life. And that is why I succeed.",
         auteur: "Michael Jordan",
         bron: "Nike 'Failure' Commercial (1997)",
     },
     {
-        tekst: "The impediment to action advances action. What stands in the way becomes the way.",
+        tekst: "Wat de daad in de weg staat, bevordert de daad. Wat in de weg staat, wordt de weg.",
+        origineel: "The impediment to action advances action. What stands in the way becomes the way.",
         auteur: "Marcus Aurelius",
         bron: "Meditations (Boek 5, 20)",
     },
     {
-        tekst: "I hated every minute of training, but I said, 'Don't quit. Suffer now and live the rest of your life as a champion.'",
+        tekst: "Ik haatte elke minuut van de training, maar ik zei: 'Geef niet op. Lijd nu en leef de rest van je leven als kampioen.'",
+        origineel: "I hated every minute of training, but I said, 'Don't quit. Suffer now and live the rest of your life as a champion.'",
         auteur: "Muhammad Ali",
         bron: "Interviews, vroege jaren '70",
     },
     {
-        tekst: "A champion is defined not by their wins but by how they can recover when they fall.",
+        tekst: "Een kampioen wordt niet bepaald door de overwinningen, maar door hoe je herstelt als je valt.",
+        origineel: "A champion is defined not by their wins but by how they can recover when they fall.",
         auteur: "Serena Williams",
         bron: "Interviews en publieke uitspraken",
     },
     {
-        tekst: "Job's not finished.",
+        tekst: "De klus is nog niet af.",
+        origineel: "Job's not finished.",
         auteur: "Kobe Bryant",
         bron: "Persconferentie, NBA Finals, 7 juni 2009",
     },
     {
-        tekst: "Everybody has a plan until they get hit for the first time.",
+        tekst: "Iedereen heeft een plan, tot je voor het eerst een klap krijgt.",
+        origineel: "Everybody has a plan until they get hit for the first time.",
         auteur: "Mike Tyson",
         bron: "Interview, 1987",
     },
     {
-        tekst: "It is not the critic who counts... The credit belongs to the man who is actually in the arena, whose face is marred by dust and sweat and blood.",
+        tekst: "Niet de criticus telt. De eer is voor de man die echt in de arena staat, met een gezicht getekend door stof, zweet en bloed.",
+        origineel: "It is not the critic who counts... The credit belongs to the man who is actually in the arena, whose face is marred by dust and sweat and blood.",
         auteur: "Theodore Roosevelt",
         bron: "\"Citizenship in a Republic\", toespraak aan de Sorbonne, 1910",
     },
     {
-        tekst: "Talent without work is nothing, and work without talent is nothing. They have to work together at the same time.",
+        tekst: "Talent zonder werk is niets, en werk zonder talent is niets. Ze moeten tegelijk samenwerken.",
+        origineel: "Talent without work is nothing, and work without talent is nothing. They have to work together at the same time.",
         auteur: "Cristiano Ronaldo",
         bron: "Whoop-podcast",
     },
     {
-        tekst: "All you have to do is try. And to me, the worst kind of defeat is not failure per se. It's the decision not to try.",
+        tekst: "Je hoeft alleen maar te proberen. En de ergste vorm van nederlaag is voor mij niet het falen zelf, maar de beslissing om het niet te proberen.",
+        origineel: "All you have to do is try. And to me, the worst kind of defeat is not failure per se. It's the decision not to try.",
         auteur: "Novak Djokovic",
         bron: "Interview",
     },
     {
-        tekst: "If you know the enemy and know yourself, you need not fear the result of a hundred battles.",
+        tekst: "Als je de vijand kent en jezelf kent, hoef je de uitkomst van honderd veldslagen niet te vrezen.",
+        origineel: "If you know the enemy and know yourself, you need not fear the result of a hundred battles.",
         auteur: "Sun Tzu",
         bron: "De Kunst van het Oorlogvoeren, hoofdstuk 3",
     },
     {
-        tekst: "Men are disturbed not by things, but by the views which they take of them.",
+        tekst: "Mensen worden niet verontrust door de dingen zelf, maar door de kijk die ze erop hebben.",
+        origineel: "Men are disturbed not by things, but by the views which they take of them.",
         auteur: "Epictetus",
         bron: "Enchiridion, hoofdstuk 5",
     },
     {
-        tekst: "You have power over your mind – not outside events. Realize this, and you will find strength.",
+        tekst: "Je hebt macht over je geest, niet over wat er buiten je gebeurt. Besef dat, en je vindt kracht.",
+        origineel: "You have power over your mind – not outside events. Realize this, and you will find strength.",
         auteur: "Marcus Aurelius",
         bron: "Meditations (Boek 4)",
     },
     {
-        tekst: "The moment you give up is the moment you let someone else win.",
-        auteur: "Kobe Bryant",
-        bron: "Veelvuldig geciteerde uitspraak",
-    },
-    {
-        tekst: "There will be obstacles. There will be doubters. There will be mistakes. But with hard work, with belief, with confidence and trust in yourself and those around you, there are no limits.",
+        tekst: "Er zullen obstakels zijn. Er zullen twijfelaars zijn. Er zullen fouten zijn. Maar met hard werken, met geloof, met vertrouwen in jezelf en in de mensen om je heen, zijn er geen grenzen.",
+        origineel: "There will be obstacles. There will be doubters. There will be mistakes. But with hard work, with belief, with confidence and trust in yourself and those around you, there are no limits.",
         auteur: "Michael Phelps",
         bron: "No Limits: The Will to Succeed",
     },
     {
-        tekst: "I learned that courage was not the absence of fear, but the triumph over it.",
+        tekst: "Ik leerde dat moed niet de afwezigheid van angst is, maar de overwinning erop.",
+        origineel: "I learned that courage was not the absence of fear, but the triumph over it.",
         auteur: "Nelson Mandela",
         bron: "Long Walk to Freedom (1995)",
     },
     {
-        tekst: "I don't want to be remembered as the girl who was shot. I want to be remembered as the girl who stood up.",
+        tekst: "Ik wil niet herinnerd worden als het meisje dat werd neergeschoten. Ik wil herinnerd worden als het meisje dat opstond.",
+        origineel: "I don't want to be remembered as the girl who was shot. I want to be remembered as the girl who stood up.",
         auteur: "Malala Yousafzai",
         bron: "Publieke uitspraken, 2013",
     },

@@ -10,28 +10,30 @@ function toonIntro(): void {
   const el = document.getElementById("intro");
   if (!el) return;
 
-  const SLEUTEL = "life-maxing-intro-getoond";
-  let al_getoond = true;
+  // v27 (W8) — de intro duurde 3,5 s bij elke verse sessie en dus meerdere
+  // keren per dag; in een app waarvan de eerste wet "houd het kort" is, was
+  // dat de langste wachttijd die de app kende. Nu alleen de eerste keer per
+  // dag, en korter. Een UI-vlag met de datum, geen gebruiksgegeven (Wet 4).
+  const SLEUTEL = "life-maxing-intro-dag";
+  const vandaag = new Date().toISOString().slice(0, 10);
+  let alGetoond = false;
   try {
-    al_getoond = sessionStorage.getItem(SLEUTEL) === "1";
-    if (!al_getoond) sessionStorage.setItem(SLEUTEL, "1");
+    alGetoond = localStorage.getItem(SLEUTEL) === vandaag;
+    if (!alGetoond) localStorage.setItem(SLEUTEL, vandaag);
   } catch {
-    // privénavigatie o.i.d. — dan toont de intro gewoon elke keer, geen harde afhankelijkheid
-    al_getoond = false;
+    // privénavigatie o.i.d. — dan toont de intro gewoon, geen harde afhankelijkheid
+    alGetoond = false;
   }
 
-  if (al_getoond) {
+  if (alGetoond) {
     el.remove();
     return;
   }
 
-  // v25 — stond eerst op 1550ms (voelde te snel voorbij), toen op 5000ms
-  // (voelde net te lang). 3500ms blijft "pakken" zonder te lang te duren.
-  // Reduced motion blijft bewust korter (geen animatie om naar te kijken,
-  // dan is langer wachten alleen maar een wachttijd).
+  // Reduced motion blijft bewust korter (geen animatie om naar te kijken).
   const rustig = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const uitNa = rustig ? 900 : 3500;
-  const wegNa = rustig ? 1200 : 4050;
+  const uitNa = rustig ? 600 : 1500;
+  const wegNa = rustig ? 900 : 2050;
   setTimeout(() => el.classList.add("intro--uit"), uitNa);
   setTimeout(() => el.remove(), wegNa);
 }

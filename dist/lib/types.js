@@ -30,5 +30,7 @@ export function leegBestand() {
         visie: null,
         conceptDoel: null,
         conceptDagsluiting: null,
+        gedaanVandaag: null,
+        huisGezien: null,
     };
 }

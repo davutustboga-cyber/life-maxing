@@ -82,12 +82,32 @@ export const zoneConfig: Record<Zone, ZoneConfig> = {
   A_kalmeren: {
     // v1.1: bij 2 min wisselt de tweede deur tussen uitschrijven-zonder-filter
     // en afstand-nemen-van-jezelf. adem-lange-uitademing blijft altijd eerst.
+    // v27 (bouwplan W4.2): de vier stilliggende grounding-/ademoefeningen
+    // doen hier mee — hun eigen `pastBij` (gespannen, gejaagd, overprikkeld,
+    // paniekerig) is exact waar zone A voor bestaat, maar ze kwamen nergens
+    // in de motor voor. Ze roteren mee in de tweede deur; de `pastBij`-
+    // sortering onderaan bepaalt welke voorop staat.
     bij2min: {
       eerste: "adem-lange-uitademing",
-      tweede: [{ id: "uitschrijven-zonder-filter" }, { id: "afstand-nemen-van-jezelf" }],
+      tweede: [
+        { id: "uitschrijven-zonder-filter" },
+        { id: "afstand-nemen-van-jezelf" },
+        { id: "fysiologische-zucht" },
+        { id: "box-ademhaling" },
+        { id: "vijf-zintuigen-grounding" },
+        { id: "voeten-op-de-grond" },
+      ],
     },
-    // Bij 10 min of meer verandert er niets in v1.1.
-    bij10minOfMeer: { eerste: "adem-lange-uitademing", tweede: "vijf-minuten-naar-buiten" },
+    // v27: ook bij 10 min of meer een rotatie, met de getimede ademhalingen.
+    bij10minOfMeer: {
+      eerste: "adem-lange-uitademing",
+      tweede: [
+        { id: "vijf-minuten-naar-buiten" },
+        { id: "box-ademhaling" },
+        { id: "2-3-4-5-ademhaling" },
+        { id: "vijf-zintuigen-grounding" },
+      ],
+    },
   },
 
   B_activeren: {
@@ -120,6 +140,9 @@ export const zoneConfig: Record<Zone, ZoneConfig> = {
         { id: "tien-minuten-wandelen-groen" },
         { id: "wandelen-met-een-vraag" },
         { id: "lopen-met-dhikr", vereistIslamitischeLaag: true },
+        // v27: "Even helemaal niets" hoort bij leeg, lusteloos en op
+        // (zijn eigen `pastBij`) en kwam nergens in de motor voor.
+        { id: "prikkels-loslaten" },
       ],
       tweede: "bericht-sturen",
     },
@@ -134,15 +157,31 @@ export const zoneConfig: Record<Zone, ZoneConfig> = {
       // v1.1: bij 10 min of meer wordt lopen de eerste deur; de tweede
       // wisselt tussen benoemen-en-parkeren en afstand-nemen-van-jezelf.
       eerste: "wandelen-met-een-vraag",
-      tweede: [{ id: "benoemen-en-parkeren" }, { id: "afstand-nemen-van-jezelf" }],
+      tweede: [
+        { id: "benoemen-en-parkeren" },
+        { id: "afstand-nemen-van-jezelf" },
+        { id: "gedachte-in-woorden" },
+        { id: "gedachte-een-vorm-geven" },
+      ],
     },
+    // v27 (W4.2): de twee defusie-oefeningen roteren mee in zone C (ordenen).
     islamitischeLaagAanBij2min: {
       eerste: "benoemen-en-parkeren",
-      tweede: [{ id: "tawakkul-route" }, { id: "afstand-nemen-van-jezelf" }],
+      tweede: [
+        { id: "tawakkul-route" },
+        { id: "afstand-nemen-van-jezelf" },
+        { id: "gedachte-in-woorden" },
+        { id: "gedachte-een-vorm-geven" },
+      ],
     },
     islamitischeLaagUitBij2min: {
       eerste: "benoemen-en-parkeren",
-      tweede: [{ id: "afstand-nemen-van-jezelf" }, { id: "zelfcompassie-na-misstap" }],
+      tweede: [
+        { id: "afstand-nemen-van-jezelf" },
+        { id: "zelfcompassie-na-misstap" },
+        { id: "gedachte-in-woorden" },
+        { id: "gedachte-een-vorm-geven" },
+      ],
     },
     vervangingen: [
       // Ongewijzigd principe uit v1, nu uitgebreid: het woord bepaalt, niet
