@@ -20,13 +20,18 @@
 // server (die kent alleen een push-adres en een tijdstip, nooit iets uit
 // het bestand in db.ts); deze service worker toont 'm alleen.
 
-const CACHE_NAAM = "life-maxing-shell-v1";
+// v2 — nieuw icoon en nieuwe bestandsnamen (lm-*). Een nieuwe cache-naam ruimt
+// bij "activate" de oude cache op; alleen de app-cache verdwijnt, de gebruikers-
+// gegevens staan in IndexedDB (db.ts) en worden hier nooit aangeraakt. Het
+// icoon moest van naam wisselen: de iconen zijn cache-eerst, dus een nieuw
+// plaatje onder een oude naam zou bij bestaande gebruikers nooit aankomen.
+const CACHE_NAAM = "life-maxing-shell-v2";
 
 const STABIELE_PADEN = [
   "/manifest.json",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
-  "/icons/icon-maskable-512.png",
+  "/icons/lm-192.png",
+  "/icons/lm-512.png",
+  "/icons/lm-maskable-512.png",
   "/fonts/InstrumentSerif-Regular.woff2",
   "/fonts/HankenGrotesk-Regular.woff2",
 ];
@@ -96,8 +101,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.titel, {
       body: data.tekst,
-      icon: "./icons/icon-192.png",
-      badge: "./icons/icon-192.png",
+      icon: "./icons/lm-192.png",
+      badge: "./icons/lm-192.png",
     })
   );
 });

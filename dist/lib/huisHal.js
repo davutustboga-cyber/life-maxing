@@ -1,4 +1,4 @@
-// huisHal.ts — de centrale hal van binnen (Life Maxi v29).
+// huisHal.ts — de centrale hal van binnen (Life Maxing v29).
 //
 // Je komt binnen in een hoge hal met twee verdiepingen: beneden Adem & rust,
 // Lichaam en Mensen; op de galerij Mijn visie, Geloof en Motivatie. De

@@ -255,7 +255,7 @@ export interface LifeMaxingData {
    */
   gedaanVandaag: GedaanVandaag | null;
   /**
-   * Life Maxi 2.0 — hoe ver elke kamer van het huis was ingericht toen je hem
+   * Life Maxing 2.0 — hoe ver elke kamer van het huis was ingericht toen je hem
    * voor het laatst zag (trap 0–4 per kamer, zie lib/huis.ts). Alleen om één
    * keer te kunnen zeggen "in Adem & rust is het licht aangegaan"; nooit
    * getoond als getal. `null` = nog nooit vastgelegd.

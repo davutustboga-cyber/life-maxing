@@ -1,6 +1,6 @@
 {
-  "name": "Life Maxi",
-  "short_name": "Life Maxi",
+  "name": "Life Maxing",
+  "short_name": "Life Maxing",
   "description": "Waar ben je? Een rustige metgezel, geen tracker.",
   "start_url": "./index.html",
   "scope": "./",
@@ -9,8 +9,8 @@
   "background_color": "#110f16",
   "theme_color": "#110f16",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "icons/lm-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/lm-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/lm-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

@@ -145,7 +145,7 @@ export async function startApp() {
     // daarna bevroren (v2.4 §7B). De lopende maand krijgt er nooit een.
     if (vulBrievenAan(data))
         await bewaren();
-    // Life Maxi 2.0: een bestaand bestand hoeft niet te melden wat er al stond.
+    // Life Maxing 2.0: een bestaand bestand hoeft niet te melden wat er al stond.
     if (data.huisGezien === null) {
         markeerHuisGezien(data);
         await bewaren();
@@ -1297,7 +1297,7 @@ export function toonS22Ochtend() {
             kerntaak: kerntaakVeld.value.trim() || null,
         });
         void bewaren();
-        // Life Maxi 2.0 — na je intentie mag je zeggen hoe je je voelt, dan komt er
+        // Life Maxing 2.0 — na je intentie mag je zeggen hoe je je voelt, dan komt er
         // een voorstel voor de ochtend. Overslaan kan altijd (dan gewoon afsluiten).
         toonCheckIn("ochtend");
     }

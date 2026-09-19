@@ -5,6 +5,14 @@ const DB_NAAM = "life-maxing";
 const STORE_NAAM = "bestand";
 const DOC_KEY = "het-bestand";
 const DB_VERSIE = 1;
+/**
+ * Als het lezen van het bestand mislukt (geen toegang tot IndexedDB, een
+ * onderbroken transactie) begint de app met een leeg bestand. Bewaren we dan
+ * gewoon, dan overschrijft dat lege bestand mogelijk de gegevens die er wél
+ * staan. Daarom bewaren we in zo'n sessie niets: liever een sessie zonder
+ * opslaan dan een leeg bestand over iemands voortgang heen.
+ */
+let laadMislukt = false;
 const STREKEN = ["lichaam", "geest", "verbinding", "ziel"];
 function openDb() {
     return new Promise((resolve, reject) => {
@@ -48,10 +56,13 @@ export async function laadBestand() {
         });
     }
     catch {
+        laadMislukt = true;
         return leegBestand();
     }
 }
 export async function bewaarBestand(data) {
+    if (laadMislukt)
+        return false;
     try {
         const db = await openDb();
         await new Promise((resolve, reject) => {

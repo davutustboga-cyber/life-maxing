@@ -1,4 +1,4 @@
-// huisWereld.ts — de buitenkant van je huis (Life Maxi v29).
+// huisWereld.ts — de buitenkant van je huis (Life Maxing v29).
 //
 // Iedereen begint met hetzelfde, complete huis: een moderne villa met een tuin,
 // een vijver, bomen, lantaarns en een pad naar de voordeur. Dat huis verandert

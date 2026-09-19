@@ -1,4 +1,4 @@
-// routing.ts — "wat heb je nu nodig?" (Life Maxi 2.0).
+// routing.ts — "wat heb je nu nodig?" (Life Maxing 2.0).
 //
 // Een gekozen gevoel is een aanwijzing voor een mogelijke behoefte, geen
 // diagnose. Dit bestand vertaalt een gevoel + het moment van de dag + de

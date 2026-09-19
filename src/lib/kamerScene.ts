@@ -1,4 +1,4 @@
-// kamerScene.ts — de zes kamers van binnen (Life Maxi v29).
+// kamerScene.ts — de zes kamers van binnen (Life Maxing v29).
 //
 // Elke kamer is een echte ruimte: een muur, een vloer, een raam en licht, met
 // voorwerpen die bij het doel van die kamer horen. Wat er staat hangt af van wat

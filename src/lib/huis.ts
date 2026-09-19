@@ -1,4 +1,4 @@
-// huis.ts — het huis als voortgang (Life Maxi 2.0, herzien in v29).
+// huis.ts — het huis als voortgang (Life Maxing 2.0, herzien in v29).
 //
 // De buitenkant van het huis is voor iedereen hetzelfde en verandert nooit. De
 // voortgang zit BINNEN: elke kamer krijgt voorwerpen die bij zijn doel horen
