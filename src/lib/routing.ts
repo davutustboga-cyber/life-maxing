@@ -129,7 +129,9 @@ export function adviesVoor(gevoelId: string, tijd: Tijd, data: LifeMaxingData, n
 
   // "Geen idee": geen aanname over hoe je je voelt; het voorstel volgt het moment van de dag.
   if (gevoel.woorden.length === 0) {
-    const dagVoorstel = suggestiesVoorNu(data, nu).find((s) => s.soort !== "rust");
+    // Wat je vandaag al deed hoeft niet nog eens; is er niets anders, dan mag het wel.
+    const dagVoorstel =
+      suggestiesVoorNu(data, nu).find((s) => s.soort !== "rust") ?? suggestiesVoorNu(data, nu, true).find((s) => s.soort !== "rust");
     if (!dagVoorstel) return null;
     const kamer = dagVoorstel.id
       ? kamerVanBeweging(dagVoorstel.id, themas, Boolean(bewegingById(dagVoorstel.id)?.herkomst.some((h) => h.label === "I")))

@@ -22,7 +22,7 @@
 //   nooit of je gebeden hebt (gebed-anker.md).
 
 import type { LifeMaxingData } from "./types.js";
-import { ochtendVandaagGedaan, avondVandaagGedaan, laatsteDagsluiting, dagVanJaar } from "./ritme.js";
+import { ochtendVandaagGedaan, avondVandaagGedaan, laatsteDagsluiting, dagVanJaar, huidigeDagSleutel } from "./ritme.js";
 import { weekmomentBeschikbaar } from "./weekmoment.js";
 import { ongelezenBrief } from "./maandbrief.js";
 import { bewegingById } from "../data/bewegingen.js";
@@ -162,161 +162,281 @@ function draaiOpDag(pool: (Suggestie | null)[], nu: Date): Suggestie[] {
 }
 
 /**
- * De volledige lijst voor dit moment, belangrijkste eerst. Het startscherm
- * toont alleen de eerste die je vandaag nog niet deed; de rest dient als
- * "toch nog iets doen".
- *
- * Volgorde (bouwplan v27, §4): iets wekelijks of maandelijks vervangt het
- * dagelijkse aanbod — dus de spiegel van de week (zondagavond) gaat vóór Dag
- * sluiten, en een ongelezen brief gaat vóór de bewegingen van de dag. Een
- * vast ritueel (Richting, Dag sluiten) blijft vóór de brief staan, zodat een
- * ongelezen brief die dagelijkse rituelen niet wekenlang kan wegdrukken.
+ * Alles wat je vandaag al deed, als sleutels (`soort:id`). Twee bronnen: wat
+ * het startscherm zelf als gedaan vastlegde (`gedaanVandaag`) én de sterren van
+ * vandaag, want een oefening die je vanuit een kamer deed telt evengoed. Alleen
+ * om te weten wat je niet nog eens hoeft voor te stellen; niets wordt geteld.
  */
-export function suggestiesVoorNu(data: LifeMaxingData, nu: Date = new Date()): Suggestie[] {
+function gedaanVandaagSleutels(data: LifeMaxingData, nu: Date): Set<string> {
+  const sleutels = new Set<string>();
+  const dag = huidigeDagSleutel(nu);
+  const record = data.gedaanVandaag;
+  if (record && record.datum === dag) for (const i of record.items) sleutels.add(i.sleutel);
+  for (const ster of data.sterren ?? []) {
+    if (ster.datum !== dag) continue;
+    const id = ster.bewegingId ?? (ster.momentId ? data.momenten.find((m) => m.id === ster.momentId)?.gekozenDeur : undefined);
+    if (id && id !== "niets-doen") sleutels.add(`beweging:${id}`);
+  }
+  if (ochtendVandaagGedaan(data, nu)) sleutels.add("ochtend:");
+  if (avondVandaagGedaan(data, nu)) sleutels.add("avond:");
+  return sleutels;
+}
+
+/** Deed je dit vandaag al? Sleutel is `soort:id`, zoals `suggestieSleutel`. */
+export function alVandaagGedaan(data: LifeMaxingData, sleutel: string, nu: Date = new Date()): boolean {
+  return gedaanVandaagSleutels(data, nu).has(sleutel);
+}
+
+/** Wat telt als "vandaag al buiten geweest, of licht gezien": één van deze is genoeg. */
+const BUITEN_IDS = [
+  "ochtendlicht-zien",
+  "vijf-minuten-naar-buiten",
+  "tien-minuten-wandelen-groen",
+  "wandelen-met-een-vraag",
+  "lopen-met-dhikr",
+];
+
+/** Hooguit zoveel extra's achter elkaar, en alleen op verzoek. */
+const MAX_EXTRA = 2;
+
+/**
+ * Wat er nu op tafel ligt, in drie lagen (bouwplan 2.1, "aanbevelingen"):
+ *
+ *  kern   het belangrijkste voor dit moment (één), met hooguit één korte
+ *         aanvulling. Dit is alles wat het startscherm uit zichzelf toont.
+ *  extra  wat er daarna nog kan, hooguit twee, alleen als je zelf om iets extra's
+ *         vraagt. Nooit een lange lijst, nooit "je bent nog niet klaar".
+ *  rust   alleen 's nachts: er is niets te doen behalve slapen.
+ */
+export interface DagAanbod {
+  rust: Suggestie | null;
+  kern: Suggestie[];
+  extra: Suggestie[];
+}
+
+/**
+ * Het aanbod voor dit moment. Rekening houdend met het uur, wat je vandaag al
+ * deed (dan komt het niet nog eens), wat je gisteravond zelf aanvinkte, en hoe
+ * ver je bent in het dagdeel. Elk dagdeel kiest wat er op dít moment het meest
+ * toe doet, en houdt het klein:
+ *
+ *  ochtend  daglicht zien (het stevigst onderzochte wat een ochtend kan doen),
+ *           dan je richting voor de dag; een glas water komt als klein extraatje.
+ *  middag   geen tweede ochtendroutine: naar buiten als dat nog niet gebeurd is,
+ *           anders even stilstaan bij hoe het gaat, en een kleine pauze.
+ *  avond    de dag rustig sluiten; na half acht komt het scherm zachter erbij.
+ *  slapen   vertragen: de dag kort sluiten, of ademen / Ayat al-Kursi als dat al
+ *           gebeurd is. Niets erbij dat nog moet.
+ *  nacht    niets, alleen de opmerking dat slapen nu het beste is.
+ *
+ * `metGedaan` laat wat je vandaag al deed weer meedoen. Dat wil alleen wie een
+ * voorstel zoekt zonder uit te sluiten dat het al gebeurde ("geen idee" in de
+ * gevoelscheck).
+ */
+export function dagAanbod(data: LifeMaxingData, nu: Date = new Date(), metGedaan = false): DagAanbod {
   const dagdeel = dagdeelVan(nu);
+  if (dagdeel === "nacht") {
+    // Bouwplan v27, §4: "Nacht — de app biedt niets aan." Alleen de opmerking;
+    // de bewegingen blijven onder Doen bereikbaar.
+    return {
+      rust: {
+        soort: "rust",
+        titel: "Het is laat",
+        duur: "",
+        waaromNu: "Slapen is nu waarschijnlijk het beste wat er is. De app loopt niet weg.",
+      },
+      kern: [],
+      extra: [],
+    };
+  }
+
+  const groep = dagdeelGroep(dagdeel);
   const islam = data.instellingen.islamitischeLaag;
-  const gedaan = eerderGedaan(data);
-  const beweging = (id: string, waarom: string) => bewegingSuggestie(id, waarom, gedaan);
+  const eerder = eerderGedaan(data);
+  const gedaan = gedaanVandaagSleutels(data, nu);
+  const heeft = (soort: string, id = "") => gedaan.has(`${soort}:${id}`);
+  const beweging = (id: string, waarom: string) => bewegingSuggestie(id, waarom, eerder);
+  const buiten = BUITEN_IDS.some((id) => heeft("beweging", id));
+  const chips = new Set(laatsteDagsluiting(data, nu)?.chips ?? []);
+  const uur = nu.getHours() + nu.getMinutes() / 60;
+  const gisterenNietBuiten = chips.has("niet_buiten_geweest") || chips.has("niet_bewogen");
 
-  const vast: Suggestie[] = []; // wekelijks en vaste rituelen
-  let pool: (Suggestie | null)[] = [];
+  let kern: (Suggestie | null)[] = [];
+  let vooraan: (Suggestie | null)[] = []; // eerste extra's, in vaste volgorde
+  let pool: (Suggestie | null)[] = []; // daarna, per dag gedraaid
 
-  switch (dagdeel) {
-    case "vroege_ochtend":
+  switch (groep) {
     case "ochtend": {
-      if (!ochtendVandaagGedaan(data)) {
-        vast.push({
-          soort: "ochtend",
-          titel: "Richting voor vandaag",
-          duur: "1 min",
-          waaromNu: "Eén zin en één kerntaak, voor de dag je meesleept.",
-        });
-      }
-      // v25 — je hebt gisteravond zelf aangevinkt wat er meespeelde. Dat
-      // maakt het verschil tussen een generieke suggestie en een die ergens
-      // over gaat. Bewust één dag terug, en alleen in de reden-regel: geen
-      // trend, geen score, geen "drie dagen op rij" (Wet 4).
-      const chips = new Set(laatsteDagsluiting(data, nu)?.chips ?? []);
+      const richtingGedaan = heeft("ochtend");
+      const licht = beweging(
+        "ochtendlicht-zien",
+        chips.has("slecht_geslapen")
+          ? "Je sloot gisteren af met slecht geslapen. Daglicht vroeg op de dag kan je ritme weer op zijn plek helpen — één minuut voor het raam is al goed."
+          : uur >= 10
+            ? "Ook later op de ochtend doet daglicht je ritme goed, buiten of voor een raam. Eén minuut is genoeg."
+            : "Dit kan een fijne manier zijn om je ochtend te beginnen: even daglicht zien, buiten of voor een raam. De telefoon mag nog even wachten."
+      );
+      const richting: Suggestie | null = richtingGedaan
+        ? null
+        : {
+            soort: "ochtend",
+            titel: "Richting voor vandaag",
+            duur: "1 min",
+            waaromNu: "Eén zin en één kerntaak, om rustig te weten waar je de dag mee begint.",
+          };
+      const water = beweging("glas-water", "Na een nacht heb je een paar uur niets gedronken. Een glas water is een zacht begin.");
+      if (!buiten) kern = [licht, richting ?? water];
+      else if (richting) kern = [richting, water];
+      // Zijn licht en richting al gedaan, dan is de ochtend af: alleen nog kleine extra's.
+      vooraan = kern.includes(water) ? [] : [water];
       pool = [
-        beweging(
-          "ochtendlicht-zien",
-          chips.has("slecht_geslapen")
-            ? "Je sloot gisteren af met slecht geslapen — licht in het eerste uur zet je ritme weer op zijn plek."
-            : "Licht in het eerste uur zet je dag- en slaapritme."
-        ),
-        beweging(
-          "vijf-minuten-naar-buiten",
-          chips.has("niet_buiten_geweest") || chips.has("niet_bewogen")
-            ? "Gisteren kwam je er niet aan toe — vroeg op de dag is dit het makkelijkst."
-            : "Kort naar buiten werkt het beste vroeg op de dag."
-        ),
-        islam ? dhikrSuggestie("subhan-allahi-wa-bihamdihi") : null,
         beweging("voeten-op-de-grond", "Even voelen dat je er staat, voor de dag begint."),
         beweging("savoring-zestig-seconden", "Eén ding echt opmerken voor het drukker wordt."),
+        islam ? dhikrSuggestie("subhan-allahi-wa-bihamdihi") : null,
+        beweging("even-opstaan-bewegen", "Een paar minuten je lichaam wakker maken, zonder er iets van te maken."),
       ];
       break;
     }
 
-    case "middag":
+    case "middag": {
+      const kompasGedaan = heeft("kompas");
+      const bewogen = buiten || heeft("beweging", "even-opstaan-bewegen") || heeft("beweging", "bewegen-met-een-beeld");
+      const naarBuiten = beweging(
+        "vijf-minuten-naar-buiten",
+        gisterenNietBuiten
+          ? "Gisteren kwam je er niet aan toe. Misschien is het nu goed om even naar buiten te gaan — ook vijf minuten telt."
+          : uur >= 16
+            ? "Als het nog licht is, kan het goed doen om even naar buiten te gaan. Ook vijf minuten telt."
+            : "Misschien is het nu goed om even naar buiten te gaan — zeker als je al een tijd hebt gezeten."
+      );
+      const kompas: Suggestie | null = kompasGedaan
+        ? null
+        : { soort: "kompas", titel: "Hoe voel je je?", duur: "2 min", waaromNu: "Even stilstaan bij hoe het gaat. Je hoeft niets uit te leggen." };
+      // Een korte mentale pauze, per dag een andere.
+      const pauze = draaiOpDag(
+        [
+          beweging("box-ademhaling", "Een korte pauze voor je hoofd: een paar rondes op een vaste tel."),
+          beweging("vijf-zintuigen-grounding", "Even uit je hoofd en terug in wat er nu is."),
+        ],
+        nu
+      )[0] ?? null;
+      if (!buiten) kern = [naarBuiten, kompas ?? pauze];
+      else if (kompas) kern = [kompas, pauze];
+      vooraan = [
+        bewogen ? null : beweging("even-opstaan-bewegen", "Als je al een tijd hebt gezeten: even rechtop, rekken, een rondje lopen."),
+      ];
       pool = [
-        {
-          soort: "kompas",
-          titel: "Hoe voel je je?",
-          duur: "2 min",
-          waaromNu: "Midden op de dag is dit meestal waar je iets aan hebt.",
-        },
-        beweging("tien-minuten-wandelen-groen", "Even weg van het scherm, halverwege de dag."),
-        beweging("vijftien-minuten-moeilijke-ding", "Als er iets blijft liggen: nu is er nog dag over."),
-        beweging("vijf-zintuigen-grounding", "Even uit je hoofd en terug in wat er nu is."),
-        beweging("box-ademhaling", "Halverwege de dag: een paar rondes op een vaste tel."),
-        beweging("prikkels-loslaten", "Een paar minuten zonder scherm, nu de dag op gang is."),
+        beweging("prikkels-loslaten", "Een paar minuten zonder scherm: een moment om zelf te kiezen waar je aandacht heen gaat."),
+        beweging("vijftien-minuten-moeilijke-ding", "Als er iets blijft liggen: nu is er nog dag over, en klein beginnen is genoeg."),
+        buiten ? null : beweging("tien-minuten-wandelen-groen", "Wat langer lopen mag ook, als je er ruimte voor hebt."),
       ];
       break;
+    }
 
     case "avond": {
+      const laat = uur >= 19.5;
       // De spiegel van de week is wekelijks en vervangt Dag sluiten op één
       // avond — niet ernaast. Zondagavond; wie hem dan mist, vindt hem onder
       // Terugkijken zolang de week nog loopt.
-      if (nu.getDay() === 0 && weekmomentBeschikbaar(data, nu)) {
-        vast.push({
-          soort: "week",
-          titel: "De spiegel van de week",
-          duur: "10 min",
-          waaromNu: "Deze week nog niet gedaan.",
-        });
-      }
-      if (!avondVandaagGedaan(data)) {
-        vast.push({
-          soort: "avond",
-          titel: "Dag sluiten",
-          duur: "3 min",
-          waaromNu: "Terwijl de dag nog vers is, maar af.",
-        });
+      const week = nu.getDay() === 0 && weekmomentBeschikbaar(data, nu);
+      const sluiten: Suggestie | null = heeft("avond")
+        ? null
+        : {
+            soort: "avond",
+            titel: "Dag sluiten",
+            duur: "3 min",
+            waaromNu: "Een rustig moment om de dag af te ronden, als je daar zin in hebt.",
+          };
+      const scherm = beweging(
+        "scherm-zachter-voor-bed",
+        "Zet je scherm op nachtstand en kies iets rustigs. Nog fijner: de telefoon straks ergens anders neerleggen."
+      );
+      if (week) {
+        kern = [{ soort: "week", titel: "De spiegel van de week", duur: "10 min", waaromNu: "Deze week nog niet gedaan." }];
+        vooraan = [sluiten];
+      } else {
+        kern = [sluiten, laat ? scherm : null];
+        vooraan = [laat ? null : buiten ? null : beweging("vijf-minuten-naar-buiten", "Als het nog licht is: even naar buiten, voor de avond begint.")];
       }
       pool = [
+        laat && !kern.includes(scherm) ? scherm : null,
+        beweging("adem-lange-uitademing", "Rustiger ademen maakt de avond zachter."),
         islam ? beweging("muhasabah-twee-vragen", "Twee vragen terugkijken hoort bij dit uur.") : null,
-        beweging("dankbaarheid-naar-persoon", "Avond is het makkelijkste moment om iemand te bereiken."),
+        beweging("dankbaarheid-naar-persoon", "De avond is het makkelijkste moment om iemand te bereiken."),
         beweging("gedachte-in-woorden", "Blijft er iets malen? Zeg het eens anders."),
-        beweging("gedachte-een-vorm-geven", "Een gedachte die blijft hangen, laat je even voorbijdrijven."),
         beweging("savoring-zestig-seconden", "Eén ding van vandaag nog een keer echt proeven."),
       ];
       break;
     }
 
-    case "voor_slapen": {
+    case "slapen": {
       // Ayat al-Kursi hoort als allerlaatste vóór het slapen (adhkar.ts,
       // "wanneer": "voor het slapen"). Is de dag al gesloten, dan staat de
       // dhikr vooraan; anders komt Dag sluiten eerst en volgt de dhikr
       // vanzelf (zie toonS23Stap5VoorMorgen).
-      const avondAlGedaan = avondVandaagGedaan(data);
-      if (islam && avondAlGedaan) {
-        const d = dhikrSuggestie("ayat-al-kursi");
-        if (d) vast.push(d);
-      }
-      if (!avondAlGedaan) {
-        vast.push({
-          soort: "avond",
-          titel: "Dag sluiten",
-          duur: "3 min",
-          waaromNu: "Nog niet gedaan vandaag — kan ook kort.",
-        });
+      const gesloten = heeft("avond");
+      const ademen = beweging("adem-lange-uitademing", "Rustiger ademen vlak voor het slapen scheelt.");
+      const scherm = beweging(
+        "scherm-zachter-voor-bed",
+        "Je zit nu op je scherm: zet hem op nachtstand en leg hem daarna weg, liefst niet naast je bed."
+      );
+      const ayat = islam ? dhikrSuggestie("ayat-al-kursi") : null;
+      if (!gesloten) {
+        kern = [{ soort: "avond", titel: "Dag sluiten", duur: "3 min", waaromNu: "Als je wil, sluit je de dag kort af. Meer hoeft er niet." }];
+        vooraan = [scherm, ayat];
+      } else {
+        // Ayat al-Kursi hoort als allerlaatste: er komt dus niets "daarna" achter.
+        // Zonder de islamitische laag sluit het scherm zachter de avond af.
+        kern = islam && ayat ? [ayat] : [ademen, scherm];
+        vooraan = islam ? [scherm, ademen] : [];
       }
       pool = [
-        beweging("adem-lange-uitademing", "Rustiger ademen vlak voor het slapen scheelt."),
         beweging("2-3-4-5-ademhaling", "Een langzame tel die je hoofd iets te doen geeft, vlak voor het slapen."),
         beweging("fysiologische-zucht", "Eén of twee zuchten, en dan slapen."),
-        islam && !avondAlGedaan ? dhikrSuggestie("ayat-al-kursi") : null,
       ];
       break;
     }
-
-    case "nacht":
-      // Bouwplan v27, §4: "Nacht — de app biedt niets aan." Alleen de
-      // opmerking; de bewegingen blijven onder Doen bereikbaar.
-      return [
-        {
-          soort: "rust",
-          titel: "Het is laat",
-          duur: "",
-          waaromNu: "Slapen is nu waarschijnlijk het beste wat er is. De app loopt niet weg.",
-        },
-      ];
   }
 
-  const dagelijks = draaiOpDag(pool, nu);
-  const lijst: Suggestie[] = [...vast];
-  // Een ongelezen brief komt maar één keer per maand en verdwijnt niet
-  // vanzelf; hij vervangt de aanrader van de dag (maar niet het vaste ritueel).
+  const kernRuw = kern.filter((s): s is Suggestie => s !== null);
+  const rest = [...vooraan, ...draaiOpDag(pool, nu)].filter((s): s is Suggestie => s !== null);
+
+  // Een ongelezen brief komt maar één keer per maand en verdwijnt niet vanzelf.
+  // Is er nog ruimte in de kern, dan staat hij daar (na het vaste ritueel), anders
+  // vooraan bij wat er extra kan.
   if (ongelezenBrief(data)) {
-    lijst.push({
+    const brief: Suggestie = {
       soort: "brief",
       titel: "Er ligt een brief",
       duur: "3 min",
       waaromNu: "Je eigen zinnen van vorige maand, teruggelezen.",
-    });
+    };
+    if (kernRuw.length < 2) kernRuw.push(brief);
+    else rest.unshift(brief);
   }
-  lijst.push(...dagelijks);
-  return lijst;
+
+  const zichtbaar = (s: Suggestie) => metGedaan || !heeft(s.soort, s.id ?? "");
+  const gezien = new Set<string>();
+  const uniek = (s: Suggestie) => {
+    const sleutel = suggestieSleutel(s);
+    if (gezien.has(sleutel)) return false;
+    gezien.add(sleutel);
+    return true;
+  };
+  const kernLijst = kernRuw.filter(zichtbaar).filter(uniek).slice(0, 2);
+  const extraLijst = rest.filter(zichtbaar).filter(uniek).slice(0, MAX_EXTRA);
+  return { rust: null, kern: kernLijst, extra: extraLijst };
+}
+
+/**
+ * De volledige lijst voor dit moment, belangrijkste eerst: de kern (één, met
+ * hooguit één aanvulling), dan de extra's. Voor wie één voorstel zoekt zonder
+ * het startscherm (de gevoelscheck bij "geen idee"). Het startscherm zelf gebruikt
+ * `dagAanbod`, want dat weet welke van deze de kern is.
+ */
+export function suggestiesVoorNu(data: LifeMaxingData, nu: Date = new Date(), metGedaan = false): Suggestie[] {
+  const a = dagAanbod(data, nu, metGedaan);
+  return a.rust ? [a.rust] : [...a.kern, ...a.extra];
 }
 
 /**
@@ -363,6 +483,8 @@ export function verrasMe(
     .filter((b) => !(laat && b.id === "korte-koude-douche"))
     // Licht in het eerste uur heeft alleen 's ochtends zin.
     .filter((b) => !(nu.getHours() >= 12 && b.id === "ochtendlicht-zien"))
+    // Het scherm zachter zetten past pas als de avond op gang komt.
+    .filter((b) => !(nu.getHours() < 19 && nu.getHours() >= 5 && b.id === "scherm-zachter-voor-bed"))
     .filter((b) => !uitsluiten.includes(b.id));
   if (kandidaten.length === 0) kandidaten = zichtbaar.map((b) => bewegingById(b.id)).filter((b): b is NonNullable<ReturnType<typeof bewegingById>> => Boolean(b));
   if (kandidaten.length === 0) return null;

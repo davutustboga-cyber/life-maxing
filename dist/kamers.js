@@ -31,8 +31,8 @@ import { bewegingById } from "./data/bewegingen.js";
 import { adhkar, dhikrById } from "./data/adhkar.js";
 import { teksten } from "./data/teksten.js";
 import { profetenVerhalen, motivatiehoekVoorVandaag } from "./data/motivatiehoek.js";
-import { begroeting, dagdeelVan, dagdeelGroep, datumregel, slotRegels, suggestieSleutel, suggestiesVoorNu, eigenZinVanEerder, verrasMe, } from "./lib/nu.js";
-import { huidigeDagSleutel, dagVanJaar, dagdeelAfgerond, vandaagAlGedaan, ochtendMomentVandaag, voorVandaagVanGisteren, } from "./lib/ritme.js";
+import { begroeting, dagdeelVan, dagdeelGroep, datumregel, slotRegels, dagAanbod, alVandaagGedaan, eigenZinVanEerder, verrasMe, } from "./lib/nu.js";
+import { huidigeDagSleutel, dagVanJaar, dagdeelAfgerond, ochtendMomentVandaag, voorVandaagVanGisteren, } from "./lib/ritme.js";
 import { VISIE_DELEN, visieDelen, visieFragment, visieFragmentZichtbaar, visieTeksten, schrijfVisieDelen, periodeLabel, toekomstSignaal, registreerVisieIntroAangeboden, } from "./lib/visie.js";
 import { weekmomentBeschikbaar } from "./lib/weekmoment.js";
 import { ongelezenBrief } from "./lib/maandbrief.js";
@@ -160,15 +160,20 @@ export function toonThuis() {
     const nu = new Date();
     const dagdeel = dagdeelVan(nu);
     const groep = dagdeelGroep(dagdeel);
-    const suggesties = suggestiesVoorNu(data, nu);
-    const rust = suggesties.find((s) => s.soort === "rust") ?? null;
-    const kandidaten = suggesties.filter((s) => s.soort !== "rust" && !vandaagAlGedaan(data, suggestieSleutel(s), nu));
-    const afgerond = dagdeelAfgerond(data, groep, nu);
+    // Eén duidelijke kern (met hooguit één korte aanvulling); wat daarna kan komt
+    // pas als je er zelf om vraagt (zie lib/nu.ts, dagAanbod).
+    const dag = dagAanbod(data, nu);
+    const rust = dag.rust;
+    const kandidaten = [...dag.kern, ...dag.extra];
+    const afgerond = dagdeelAfgerond(data, groep, nu) || dag.kern.length === 0;
     const extraSleutel = `${huidigeDagSleutel(nu)}|${groep}`;
     const nacht = groep === "nacht";
     const toonSlot = !nacht && (afgerond ? !extraIsGevraagd(extraSleutel) || kandidaten.length === 0 : kandidaten.length === 0);
     const aanbod = nacht || toonSlot ? null : (kandidaten[0] ?? null);
     const kanNogIets = !nacht && toonSlot && kandidaten.length > 0;
+    // De korte aanvulling staat onder de kern, maar niet meer als je al iets deed
+    // in dit dagdeel: dan is het aan jou of je nog iets wil.
+    const daarna = aanbod && !afgerond && dag.kern.length === 2 && aanbod === dag.kern[0] ? dag.kern[1] : null;
     // Eén stille regel onder de visie: wat je gisteravond voor vandaag schreef,
     // je kerntaak, of één van je eigen eerdere zinnen. Nooit meer dan één. Is er
     // in het huis iets bijgekomen sinds je het voor het laatst zag, dan gaat die
@@ -221,7 +226,7 @@ export function toonThuis() {
             ]),
             visieHero(),
             stilleRegel ? el("p", { class: "opmerking" }, [stilleRegel]) : null,
-            vandaagPaneel(aanbod, toonSlot ? groep : null, kanNogIets, extraSleutel),
+            vandaagPaneel(aanbod, toonSlot ? groep : null, kanNogIets, extraSleutel, daarna),
             el("nav", { class: "kamerdeuren", "aria-label": "De kamers" }, zichtbareKamers().map((k, i) => {
                 const deur = el("button", { class: `kamerdeur${k.islamitisch && !islamAan() ? " kamerdeur--uit" : ""}`, "data-kamer": k.id, "aria-haspopup": "dialog", onclick: (e) => toonKamerBlad(k, e.currentTarget) }, [
                     glyph(k.glyph, "kamerdeur-glyph"),
@@ -242,7 +247,7 @@ export function toonThuis() {
  * zeggen hoe je je voelt (de eerste, dus iets groter), je laten verrassen, en
  * "het gaat even niet". De onderbreker blijft daarmee één tik bereikbaar (wet 8).
  */
-function vandaagPaneel(aanbod, slotVoor, kanNogIets, extraSleutel) {
+function vandaagPaneel(aanbod, slotVoor, kanNogIets, extraSleutel, daarna = null) {
     const kamer = aanbod ? kamerVanSuggestie(aanbod) : null;
     const meta = aanbod ? [kamer?.naam, aanbod.duur].filter(Boolean).join(" · ") : "";
     const kern = aanbod
@@ -265,7 +270,7 @@ function vandaagPaneel(aanbod, slotVoor, kanNogIets, extraSleutel) {
                             vraagExtra(extraSleutel);
                             toonThuis();
                         },
-                    }, ["toch nog iets doen"])
+                    }, ["Ik wil nog iets extra doen"])
                     : null,
             ])
             : null;
@@ -273,8 +278,16 @@ function vandaagPaneel(aanbod, slotVoor, kanNogIets, extraSleutel) {
         el("span", { class: "dock-teken" }, [glyph(naam)]),
         el("span", { class: "dock-naam" }, [tekst]),
     ]);
+    const daarnaRij = daarna
+        ? el("button", { class: "vandaag-daarna", onclick: () => voerSuggestieUit(daarna) }, [
+            el("span", { class: "daarna-label" }, ["Daarna", el("span", { class: "daarna-wil" }, [", als je wil"])]),
+            el("span", { class: "daarna-titel" }, [daarna.titel]),
+            el("span", { class: "daarna-duur" }, [daarna.duur]),
+        ])
+        : null;
     return el("section", { class: `vandaag${kern ? "" : " vandaag--alleen"}`, "data-kamer": kamer?.id ?? "vandaag", "aria-label": "Vandaag" }, [
         kern,
+        daarnaRij,
         el("div", { class: "vandaag-dock" }, [
             dockKnop("gevoel", "gevoel", "Hoe voel je je?", () => toonCheckIn("vrij")),
             dockKnop("verras", "verras", "Verras me", () => toonVerrasMe()),
@@ -542,16 +555,19 @@ function toonKamerAdem() {
 }
 // ── Lichaam ────────────────────────────────────────────────────────────
 const LICHAAM_VANDAAG = {
-    ochtend: ["ochtendlicht-zien", "vijf-minuten-naar-buiten", "voeten-op-de-grond"],
-    middag: ["tien-minuten-wandelen-groen", "vijf-minuten-naar-buiten", "wandelen-met-een-vraag", "bewegen-met-een-beeld"],
+    ochtend: ["ochtendlicht-zien", "vijf-minuten-naar-buiten", "glas-water", "voeten-op-de-grond"],
+    middag: ["vijf-minuten-naar-buiten", "even-opstaan-bewegen", "tien-minuten-wandelen-groen", "wandelen-met-een-vraag", "bewegen-met-een-beeld"],
     avond: ["vijf-minuten-naar-buiten", "adem-lange-uitademing"],
-    slapen: ["adem-lange-uitademing", "2-3-4-5-ademhaling"],
+    slapen: ["adem-lange-uitademing", "scherm-zachter-voor-bed", "2-3-4-5-ademhaling"],
     nacht: ["adem-lange-uitademing"],
 };
 function toonKamerLichaam() {
     const kamer = kamerById("lichaam");
     const groep = dagdeelGroep(dagdeelVan());
-    const pool = (LICHAAM_VANDAAG[groep] ?? []).map((id) => bewegingById(id)).filter((b) => Boolean(b));
+    const alle = (LICHAAM_VANDAAG[groep] ?? []).map((id) => bewegingById(id)).filter((b) => Boolean(b));
+    // Wat je vandaag al deed komt niet nog eens; is alles gedaan, dan mag het weer.
+    const nieuwPool = alle.filter((b) => !alVandaagGedaan(data, `beweging:${b.id}`));
+    const pool = nieuwPool.length ? nieuwPool : alle;
     const vandaag = pool.length ? pool[dagVanJaar(new Date()) % pool.length] : null;
     const terug = () => toonKamerLichaam();
     render([
@@ -907,7 +923,7 @@ function kamerStart(id, metStap = true) {
     const trap = trappen(data)[id] ?? 0;
     const zin = laatsteZinInKamer(data, id);
     const status = zin ? `${datumKort(zin.datum)} — je schreef: “${zin.zin}”` : trapZin(trap);
-    const stap = metStap ? eersteStapVoorKamer(id, data, (s) => vandaagAlGedaan(data, s), dagVanJaar(new Date())) : null;
+    const stap = metStap ? eersteStapVoorKamer(id, data, (s) => alVandaagGedaan(data, s), dagVanJaar(new Date())) : null;
     const visieRegel = visieRegelVoorKamer(data, id);
     return [
         el("p", { class: "kamer-status" }, [status]),

@@ -495,12 +495,17 @@ export const bewegingen: Beweging[] = [
     kosten: { tijdMinuten: [2, 5], energie: "laag", drempel: "klein" },
     minimumversie: "Eén minuut voor het raam, gordijnen open.",
     script:
-      "Ga binnen het eerste uur na het wakker worden even naar buiten, of voor een raam zonder zonnebril. Geen minimum aantal minuten — het gaat om het moment, niet om de duur.",
+      "Ga binnen het eerste uur na het wakker worden even naar buiten, of voor een raam zonder zonnebril. Geen minimum aantal minuten — het gaat om het moment, niet om de duur. Je telefoon mag nog even wachten.",
     herkomst: [
       {
         label: "W",
         regel:
           "Licht vroeg op de dag helpt je interne klok vroeger te lopen, wat 's avonds makkelijker inslapen geeft — dat is stevig onderzocht. Minder stevig: dat het je die ochtend zelf al vrolijker maakt. Dat belooft deze beweging dan ook niet.",
+      },
+      {
+        label: "P",
+        regel:
+          "De telefoon nog even laten liggen is een eigen idee: het houdt de eerste minuten waarschijnlijk rustiger, maar daar is geen onderzoek naar nagelopen.",
       },
     ],
     pastBij: ["lusteloos", "dof", "moe", "somber", "leeg"],
@@ -770,6 +775,82 @@ export const bewegingen: Beweging[] = [
       },
     ],
     pastBij: ["leeg", "lusteloos", "rusteloos", "overprikkeld", "niets", "op"],
+    pastNietBij: [],
+    nooitAanbiedenAls: [],
+  },
+  // ──────────────────────────────────────────────────────────────────────────────
+  // v29 (20 sept 2026): drie kleine bewegingen die de tijdsgebonden aanbevelingen
+  // (lib/nu.ts) nodig hadden en die er nog niet waren: een glas water (ochtend),
+  // even opstaan uit stilzitten (middag) en het scherm zachter voor het slapen
+  // (avond). Bewust klein en met eerlijke herkomst: geen belofte die het onderzoek
+  // niet draagt. Ze staan niet in selectie.ts; alleen het startscherm en de kamers
+  // bieden ze aan.
+  // ──────────────────────────────────────────────────────────────────────────────
+  {
+    id: "glas-water",
+    titel: "Een glas water",
+    soort: "nu",
+    streek: "lichaam",
+    domeinLabel: "lichaam — basis",
+    kosten: { tijdMinuten: [1, 1], energie: "laag", drempel: "klein" },
+    minimumversie: "Een paar slokken is ook goed.",
+    script: "Pak een glas water. Drink het rustig op, zittend of staand. Meer hoeft er niet bij.",
+    herkomst: [
+      {
+        label: "W",
+        regel:
+          "In kleine onderzoeken maakten een paar uur weinig drinken mensen wat vermoeider en gespannener, en gaf iets drinken vooral meer gevoelde alertheid. Voor concentratie zijn de uitkomsten minder consistent. Water is prettig, goedkoop en risicoloos, maar geen sterke hefboom: een zacht begin, geen oplossing.",
+      },
+    ],
+    pastBij: ["moe", "lusteloos", "dof", "leeg"],
+    pastNietBij: [],
+    nooitAanbiedenAls: [],
+    medischeGrens: ["Heb je van een arts een grens gekregen voor hoeveel je mag drinken, dan gaat die voor."],
+  },
+  {
+    id: "even-opstaan-bewegen",
+    titel: "Even opstaan en bewegen",
+    soort: "nu",
+    streek: "lichaam",
+    domeinLabel: "beweging — stilzitten onderbreken",
+    kosten: { tijdMinuten: [2, 3], energie: "laag", drempel: "klein" },
+    minimumversie: "Sta op en loop een rondje door de kamer.",
+    script:
+      "Sta op en loop een rondje door de kamer, of naar het raam. Rek je armen en schouders een paar keer uit. Ga weer verder wanneer het genoeg is.",
+    herkomst: [
+      {
+        label: "W",
+        regel:
+          "De WHO adviseert lang stilzitten te beperken en te vervangen door beweging van elke intensiteit, ook rustig. Hoe vaak of hoe lang precies, is niet vast te stellen: daarvoor is er te weinig onderzoek. Dit is dus een richting, geen norm.",
+      },
+    ],
+    pastBij: ["lusteloos", "dof", "rusteloos", "leeg", "moe"],
+    pastNietBij: [],
+    nooitAanbiedenAls: [],
+  },
+  {
+    id: "scherm-zachter-voor-bed",
+    titel: "Het scherm zachter, en dan weg",
+    soort: "nu",
+    streek: "lichaam",
+    domeinLabel: "slaap en herstel — schermen",
+    kosten: { tijdMinuten: [2, 5], energie: "laag", drempel: "klein" },
+    minimumversie: "Zet de helderheid lager en leg je telefoon verder weg dan je arm reikt.",
+    script:
+      "Zet je scherm op nachtstand, of zet de helderheid lager. Kies rustige dingen om naar te kijken, niets dat je opjaagt. Leg je telefoon daarna ergens neer waar je er niet zomaar bij kunt, niet naast je bed.",
+    herkomst: [
+      {
+        label: "W",
+        regel:
+          "Schermgebruik vlak voor het slapen hangt in meerdere overzichtsstudies samen met later inslapen en korter slapen, vooral bij interactieve dingen zoals social media en games. Dat is een verband, geen bewezen oorzaak. Een blauwlichtfilter of nachtstand deed in gecontroleerde onderzoeken weinig of niets aantoonbaars voor de slaap: de meeste winst zit in het scherm eerder wegleggen, niet in de filter.",
+      },
+      {
+        label: "P",
+        regel:
+          "De nachtstand staat hier voor wie toch nog op het scherm zit: zachter licht is prettiger voor je ogen. Dat is een eigen idee, geen belofte voor je slaap.",
+      },
+    ],
+    pastBij: ["onrustig", "overprikkeld", "rusteloos", "gejaagd"],
     pastNietBij: [],
     nooitAanbiedenAls: [],
   },

@@ -12,12 +12,12 @@ export function huidigeDagSleutel(nu = new Date()) {
 export function dagVanJaar(nu = new Date()) {
     return Math.floor((Date.UTC(nu.getFullYear(), nu.getMonth(), nu.getDate()) - Date.UTC(nu.getFullYear(), 0, 0)) / 86400000);
 }
-export function ochtendVandaagGedaan(data) {
-    const vandaag = huidigeDagSleutel();
+export function ochtendVandaagGedaan(data, nu = new Date()) {
+    const vandaag = huidigeDagSleutel(nu);
     return (data.ochtendMomenten ?? []).some((o) => o.datum === vandaag);
 }
-export function avondVandaagGedaan(data) {
-    const vandaag = huidigeDagSleutel();
+export function avondVandaagGedaan(data, nu = new Date()) {
+    const vandaag = huidigeDagSleutel(nu);
     return (data.dagsluitingen ?? []).some((d) => d.datum === vandaag);
 }
 const ONTBREKENDE_GROND_CHIPS = ["slecht_geslapen", "niet_bewogen", "niet_buiten_geweest", "veel_alleen"];

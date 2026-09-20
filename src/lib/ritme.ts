@@ -17,13 +17,13 @@ export function dagVanJaar(nu: Date = new Date()): number {
   return Math.floor((Date.UTC(nu.getFullYear(), nu.getMonth(), nu.getDate()) - Date.UTC(nu.getFullYear(), 0, 0)) / 86400000);
 }
 
-export function ochtendVandaagGedaan(data: LifeMaxingData): boolean {
-  const vandaag = huidigeDagSleutel();
+export function ochtendVandaagGedaan(data: LifeMaxingData, nu: Date = new Date()): boolean {
+  const vandaag = huidigeDagSleutel(nu);
   return (data.ochtendMomenten ?? []).some((o) => o.datum === vandaag);
 }
 
-export function avondVandaagGedaan(data: LifeMaxingData): boolean {
-  const vandaag = huidigeDagSleutel();
+export function avondVandaagGedaan(data: LifeMaxingData, nu: Date = new Date()): boolean {
+  const vandaag = huidigeDagSleutel(nu);
   return (data.dagsluitingen ?? []).some((d) => d.datum === vandaag);
 }
 

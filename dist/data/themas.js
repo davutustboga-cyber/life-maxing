@@ -37,6 +37,8 @@ export const themas = [
             "wandelen-met-een-vraag",
             "korte-koude-douche",
             "bewegen-met-een-beeld",
+            "even-opstaan-bewegen",
+            "glas-water",
         ],
     },
     {
@@ -87,7 +89,7 @@ export const themas = [
         onderschrift: "Wat je dag- en nachtritme op zijn plek houdt.",
         doet: "Zet je dag- en nachtritme terug op zijn plek.",
         accent: "dusk",
-        bewegingIds: ["ochtendlicht-zien", "adem-lange-uitademing", "vijf-minuten-naar-buiten"],
+        bewegingIds: ["ochtendlicht-zien", "adem-lange-uitademing", "vijf-minuten-naar-buiten", "scherm-zachter-voor-bed"],
     },
     {
         id: "doorzetten",

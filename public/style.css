@@ -3230,3 +3230,36 @@ body.rustig .sfeer-mesh { animation: none; }
   .vandaag-kern { padding: 0.85rem 1rem 0.75rem; }
   .dock-knop { min-height: 4rem; padding: 0.65rem 0.3rem 0.6rem; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   v33 — Aanbevelingen per moment: één kern, hooguit één korte aanvulling.
+   De aanvulling staat als stille rij onder de kern, in hetzelfde paneel. Geen
+   kaart, geen kleur, geen teller: alleen "daarna, als je wil".
+   ══════════════════════════════════════════════════════════════════════ */
+.vandaag-daarna {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: var(--raakvlak-min, 44px);
+  padding: 0.6rem 1.35rem;
+  text-align: left;
+  color: var(--voorgrond-zacht);
+  background: none;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 14%, transparent);
+  font-size: 0.86rem;
+  line-height: 1.3;
+  transition: background 160ms ease, color 160ms ease;
+}
+.vandaag-daarna:active { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.daarna-label { flex: none; opacity: 0.85; }
+.daarna-label::after { content: " ·"; }
+.daarna-titel { flex: 1 1 auto; min-width: 0; color: var(--voorgrond); }
+.daarna-duur { flex: none; font-size: 0.78rem; opacity: 0.8; }
+@media (hover: hover) and (pointer: fine) {
+  .vandaag-daarna:hover { color: var(--voorgrond); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+}
+@media (max-height: 900px) { .vandaag-daarna { padding-inline: 1.15rem; } }
+@media (max-height: 620px) { .vandaag-daarna { padding-block: 0.45rem; padding-inline: 1rem; } }
+@media (max-width: 359px) { .daarna-wil { display: none; } .vandaag-daarna { font-size: 0.82rem; } }
