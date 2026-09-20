@@ -593,7 +593,7 @@ function toonS6(streek) {
             id: nieuwId("s"),
             momentId: huidigMoment.id,
             streek,
-            datum: new Date().toISOString().slice(0, 10),
+            datum: huidigeDagSleutel(),
             zin: zin || null,
         };
         data.sterren.push(nieuweSter);

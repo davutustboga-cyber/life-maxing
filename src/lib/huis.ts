@@ -16,8 +16,8 @@
 //    ingericht, er voor als je hem nodig hebt.
 //
 // Wat telt: elke afgeronde handeling is een ster in de kamer waar hij thuishoort
-// (zie kamerVanSter). Dat zijn de bestaande gegevens; er komt geen scorebestand
-// bij. Bij Mijn visie telt niet het aantal keren maar wat je zelf neerlegt: elk
+// (zie kamerVanSter); dezelfde activiteit telt één keer per dag mee. Dat zijn de
+// bestaande gegevens; er komt geen scorebestand bij. Bij Mijn visie telt niet het aantal keren maar wat je zelf neerlegt: elk
 // deel van je visie is één voorwerp, en elk maar één keer.
 //
 // Bron van de waarheid blijven de sterren (`data.sterren`) en de eigen
@@ -101,9 +101,20 @@ function visieDelen(data: LifeMaxingData): boolean[] {
  * de bron voor het tekenen van de kamer. Motivatie is altijd ingericht.
  */
 export function objectenAan(data: LifeMaxingData): Record<string, boolean[]> {
+  // Dezelfde activiteit telt één keer per dag mee voor je kamer: nogmaals
+  // afronden (of per ongeluk twee keer tikken) bouwt de kamer niet verder op.
+  // De sterren zelf blijven allemaal bewaard (je eigen zinnen, De Hemel); alleen
+  // het tellen voor de kamer is per activiteit per dag. Een ster zonder
+  // bekende activiteit telt altijd (er is dan niets om mee samen te vallen).
   const aantal: Record<string, number> = {};
+  const geteld = new Set<string>();
   for (const ster of data.sterren ?? []) {
     const k = kamerVanSter(ster, data);
+    const activiteit =
+      ster.bewegingId ?? (ster.momentId ? data.momenten.find((m) => m.id === ster.momentId)?.gekozenDeur : undefined) ?? ster.id;
+    const sleutel = `${k}|${activiteit}|${ster.datum}`;
+    if (geteld.has(sleutel)) continue;
+    geteld.add(sleutel);
     aantal[k] = (aantal[k] ?? 0) + 1;
   }
   const uit: Record<string, boolean[]> = {};
@@ -112,7 +123,11 @@ export function objectenAan(data: LifeMaxingData): Record<string, boolean[]> {
       uit[k] = visieDelen(data);
     } else {
       const n = OBJECT_DREMPELS.filter((d) => (aantal[k] ?? 0) >= d).length;
-      uit[k] = Array.from({ length: KAMER_OBJECTEN[k] }, (_, i) => i < n);
+      // Een kamer wordt nooit leger: wat je al zag (huisGezien) blijft staan, ook
+      // als een ouder bestand meer dubbele sterren had dan nu meetellen.
+      const gezien = Math.min(KAMER_OBJECTEN[k], Math.max(0, Math.floor(data.huisGezien?.[k] ?? 0)));
+      const zichtbaar = Math.max(n, gezien);
+      uit[k] = Array.from({ length: KAMER_OBJECTEN[k] }, (_, i) => i < zichtbaar);
     }
   }
   uit.motivatie = Array.from({ length: 6 }, () => true);
