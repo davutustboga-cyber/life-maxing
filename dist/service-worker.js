@@ -20,12 +20,13 @@
 // server (die kent alleen een push-adres en een tijdstip, nooit iets uit
 // het bestand in db.ts); deze service worker toont 'm alleen.
 
-// v2 — nieuw icoon en nieuwe bestandsnamen (lm-*). Een nieuwe cache-naam ruimt
+// v3 — schone cache na de audit-aanpassing hieronder (alleen goede antwoorden bewaren)
+// en een offline terugval op de startpagina. v2 — nieuw icoon en nieuwe bestandsnamen (lm-*). Een nieuwe cache-naam ruimt
 // bij "activate" de oude cache op; alleen de app-cache verdwijnt, de gebruikers-
 // gegevens staan in IndexedDB (db.ts) en worden hier nooit aangeraakt. Het
 // icoon moest van naam wisselen: de iconen zijn cache-eerst, dus een nieuw
 // plaatje onder een oude naam zou bij bestaande gebruikers nooit aankomen.
-const CACHE_NAAM = "life-maxing-shell-v2";
+const CACHE_NAAM = "life-maxing-shell-v3";
 
 const STABIELE_PADEN = [
   "/manifest.json",
@@ -92,7 +93,14 @@ self.addEventListener("fetch", (event) => {
         }
         return response;
       })
-      .catch(() => caches.match(event.request).then((match) => match || geenVerbinding()))
+      .catch(() =>
+        caches
+          .match(event.request, { ignoreSearch: true })
+          // Een pagina die je zonder verbinding opent (het beginschermicoon opent
+          // index.html, een gewone bezoek opent /) valt terug op de bewaarde startpagina.
+          .then((match) => match || (event.request.mode === "navigate" ? caches.match("./index.html").then((m) => m || caches.match("./")) : undefined))
+          .then((match) => match || geenVerbinding())
+      )
   );
 });
 

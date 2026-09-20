@@ -1271,8 +1271,8 @@ textarea:focus {
   border: 1px solid var(--lijn);
   border-radius: 999px;
   color: var(--voorgrond-zacht);
-  width: 2.5rem;
-  height: 2.5rem;
+  width: var(--raakvlak-min);
+  height: var(--raakvlak-min);
   min-height: 0;
   padding: 0;
   margin: 0 auto var(--ruimte-4) 0;
@@ -2425,7 +2425,7 @@ body[data-kamer="motivatie"] .motief--motivatie * { animation-play-state: runnin
 
 /* Adem: rimpels die uitwaaieren, golven die traag voorbijdrijven. */
 .m-rimpel { transform-box: fill-box; transform-origin: center; opacity: 0; animation: m-rimpel 10.2s cubic-bezier(0.2, 0.6, 0.3, 1) infinite; }
-@keyframes m-rimpel { 0% { transform: scale(0.4); opacity: 0; } 14% { opacity: 0.5; } 100% { transform: scale(4.6); opacity: 0; } }
+@keyframes m-rimpel { 0% { transform: scale(0.4); opacity: 0; } 14% { opacity: 0.34; } 100% { transform: scale(3.2); opacity: 0; } }
 .m-golf { animation: m-golf var(--dur, 50s) linear infinite; }
 @keyframes m-golf { to { transform: translateX(120px); } }
 
@@ -2597,14 +2597,14 @@ button.vandaag-kern:active { background: color-mix(in srgb, var(--accent) 9%, tr
   position: absolute;
   right: -4%;
   bottom: 0;
-  width: 62%;
+  width: 46%;
   height: 100%;
   z-index: -1;
   pointer-events: none;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 80' preserveAspectRatio='none' fill='none' stroke='%23eb9a72' stroke-opacity='.4'%3E%3Cpath d='M0 66C40 36 80 40 120 54S180 42 200 26'/%3E%3Cpath d='M0 76C50 50 90 56 130 66S180 58 200 46'/%3E%3Cpath d='M30 80C64 58 100 64 140 78' stroke-opacity='.25'/%3E%3C/svg%3E") no-repeat right bottom / 100% 100%;
 }
-.band--vandaag::after { opacity: 1; }
-.band:not(.band--vandaag)::after { opacity: 0.55; }
+.band--vandaag::after { opacity: 0.75; }
+.band:not(.band--vandaag)::after { opacity: 0.4; }
 
 /* Mensen: elke zin heeft twee kringen die iets dichter naar elkaar toe komen. */
 .zin { position: relative; padding-right: 4.6rem; }
@@ -3161,7 +3161,7 @@ input, textarea, select { font-size: max(16px, 1em); }
 .scherm-hal .vandaag { flex: none; }
 .dock-knop { font-size: clamp(0.74rem, 3.3vw, 0.82rem); }
 /* Lage schermen (iPhone SE, landscape): compacter, zodat het niet eindeloos scrolt. */
-@media (max-height: 820px) {
+@media (max-height: 900px) {
   .kamerdeur { aspect-ratio: 1 / 0.9; padding-bottom: 0.65rem; }
   .visie-hero { padding-top: var(--ruimte-3); padding-bottom: var(--ruimte-2); }
   .vandaag-kern { padding: 1rem 1.15rem 0.9rem; }
@@ -3203,3 +3203,30 @@ input, textarea, select { font-size: max(16px, 1em); }
 body.scrolt .motief *, body.scrolt .lucht-wolk, body.scrolt .sfeer-mesh { animation-play-state: paused !important; }
 @media (prefers-reduced-motion: reduce) { .sfeer-mesh { animation: none; } }
 body.rustig .sfeer-mesh { animation: none; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   v32 — Laatste polish
+
+   - Een lege kamer is al een ruimte: een lambrisering, licht van het raam op de
+     vloer en één stuk basismeubilair (voortgang voegt daar dingen aan toe).
+   - Het huis van buiten vult een hoge telefoon beter: op smalle schermen loopt
+     de tekening iets voorbij de zijkanten (bomen aan de rand mogen afgesneden).
+   - Twee serif-regels onder elkaar hadden geen ruimte ertussen.
+   ══════════════════════════════════════════════════════════════════════ */
+.ks-dado { fill: color-mix(in srgb, var(--accent) 17%, var(--grond)); }
+.ks-dadolijn { fill: none; stroke: color-mix(in srgb, var(--accent) 30%, transparent); stroke-width: 1.2; }
+.ks-vlek { fill: #ffe0a8; opacity: 0.07; }
+.kamer-visieregel + .kamer-principe { margin-top: var(--ruimte-3); }
+@media (max-width: 600px) {
+  .huis-buiten-svg { width: 118%; max-width: none; margin-left: -9%; }
+}
+/* Heel lage schermen (iPhone SE 1e generatie, 568 px): nog iets compacter, zodat het
+   dagpaneel en de zes deuren niet meer dan een korte scroll kosten. */
+@media (max-height: 620px) {
+  .kamerdeur { aspect-ratio: 1 / 0.78; }
+  .scherm-hal > .visie-hero { min-height: 5.5rem; }
+  .visie-hero-zin { font-size: clamp(1.3rem, 6.2vw, 1.6rem); }
+  .scherm-hal .opmerking { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+  .vandaag-kern { padding: 0.85rem 1rem 0.75rem; }
+  .dock-knop { min-height: 4rem; padding: 0.65rem 0.3rem 0.6rem; }
+}

@@ -34,6 +34,10 @@ function ster8(cx, cy, groot, klein) {
 function wandlamp(x, y) {
     return E("ks-gw", x, y + 6, 30, 30) + R("ks-h2", x - 4, y - 6, 8, 13, 2) + C("ks-w", x, y, 2.4);
 }
+/** Licht van het raam op de vloer: een zachte vlek, zodat ook een lege kamer al een ruimte is. */
+function lichtvlek(d) {
+    return P("ks-vlek", d);
+}
 /** Een geometrische fries: kleine ruiten in een rij (Geloof). */
 function fries(y) {
     let d = "";
@@ -67,7 +71,8 @@ function boeken(x, plankY, hoogte, breedtes) {
 function bouwAdem() {
     return {
         basis: R("ks-raam", 34, 24, 100, 96, 4) + C("ks-maan", 100, 54, 11) + C("ks-ster", 62, 46, 1.2) + C("ks-ster", 78, 88, 1) + C("ks-ster", 116, 92, 1.2) +
-            P("ks-lijn", "M84 24V120M34 72H134") + R("ks-plank", 28, 120, 112, 5, 2) + wandlamp(172, 54),
+            P("ks-lijn", "M84 24V120M34 72H134") + R("ks-plank", 28, 120, 112, 5, 2) + wandlamp(172, 54) + lichtvlek("M44 180L134 180L206 240L98 240Z") +
+            R("ks-h", 142, 148, 30, 5, 2) + R("ks-h2", 146, 153, 4, 19) + R("ks-h2", 164, 153, 4, 19),
         voorwerpen: [
             { i: 4, z: E("ks-a", 196, 198, 124, 14) },
             {
@@ -99,7 +104,8 @@ function bouwAdem() {
 function bouwLichaam() {
     return {
         basis: R("ks-raam", 240, 24, 100, 84, 4) + C("ks-w", 312, 88, 11) + P("ks-a2", "M240 108V86c20-14 40-14 60-2s30 4 40-4V108z") +
-            P("ks-lijn", "M290 24V108M240 66H340") + R("ks-plank", 234, 108, 112, 5, 2) + wandlamp(218, 46),
+            P("ks-lijn", "M290 24V108M240 66H340") + R("ks-plank", 234, 108, 112, 5, 2) + wandlamp(218, 46) + lichtvlek("M250 180L340 180L382 238L284 238Z") +
+            R("ks-h2", 96, 58, 32, 4, 1) + R("ks-h2", 101, 61, 3, 6) + R("ks-h2", 120, 61, 3, 6) + R("ks-a2", 104, 62, 16, 36, 2),
         voorwerpen: [
             { i: 5, z: R("ks-h", 126, 142, 100, 9, 3) + R("ks-h2", 134, 151, 6, 22) + R("ks-h2", 212, 151, 6, 22) + R("ks-a", 140, 134, 28, 8, 4) },
             {
@@ -127,7 +133,7 @@ function bouwLichaam() {
 function bouwMensen() {
     return {
         basis: R("ks-raam", 252, 24, 84, 88, 4) + C("ks-w", 300, 84, 9) + P("ks-a2", "M252 112V92c14-8 28-8 42 0s28 6 42 0V112z") +
-            P("ks-lijn", "M294 24V112M252 68H336") + R("ks-plank", 246, 112, 96, 5, 2) + wandlamp(56, 84),
+            P("ks-lijn", "M294 24V112M252 68H336") + R("ks-plank", 246, 112, 96, 5, 2) + wandlamp(56, 84) + lichtvlek("M262 180L336 180L374 238L292 238Z"),
         voorwerpen: [
             { i: 7, z: E("ks-a", 172, 200, 122, 13) + R("ks-h2", 22, 110, 5, 62) + R("ks-h", 22, 144, 30, 6, 2) + R("ks-h2", 24, 150, 5, 22) + R("ks-h2", 46, 150, 5, 22) },
             {
@@ -158,7 +164,7 @@ function bouwVisie() {
             R("ks-h", 16, 138, 164, 9, 2) + R("ks-h2", 26, 147, 6, 26) + R("ks-h2", 162, 147, 6, 26) +
             P("ks-lijnh", "M150 138V116L130 102") + P("ks-h2", "M118 98l16-10 8 12z") + E("ks-gw", 126, 112, 44, 30) +
             // een plank met drie boeken
-            R("ks-h", 96, 52, 62, 4, 1) + R("ks-a2", 102, 32, 8, 20, 1) + R("ks-a", 112, 36, 7, 16, 1) + R("ks-a2", 121, 30, 9, 22, 1),
+            R("ks-h", 96, 52, 62, 4, 1) + R("ks-a2", 102, 32, 8, 20, 1) + R("ks-a", 112, 36, 7, 16, 1) + R("ks-a2", 121, 30, 9, 22, 1) + lichtvlek("M210 180L330 180L382 240L242 240Z"),
         voorwerpen: [
             {
                 i: 0,
@@ -180,7 +186,8 @@ function bouwGeloof() {
     }).join("");
     return {
         basis: P("ks-raam", "M36 122V64a38 38 0 0 1 76 0v58z") + P("ks-w", "M80 44a10 10 0 1 0 6 16 8 8 0 0 1-6-16z") + C("ks-ster", 52, 52, 1.2) +
-            C("ks-ster", 96, 84, 1.1) + C("ks-ster", 58, 96, 1) + R("ks-plank", 30, 122, 88, 5, 2) + fries(150),
+            C("ks-ster", 96, 84, 1.1) + C("ks-ster", 58, 96, 1) + R("ks-plank", 30, 122, 88, 5, 2) + fries(150) + lichtvlek("M42 180L112 180L172 240L98 240Z") +
+            P("ks-a2", "M14 172c-3-14 1-26 8-26s11 12 8 26z") + P("ks-lijnh", "M22 146V118M22 132l-8-10M22 127l8-10"),
         voorwerpen: [
             { i: 5, z: P("ks-a2", "M150 172V96a30 30 0 0 1 60 0v76z") + P("ks-nis", "M158 172V98a22 22 0 0 1 44 0v74z") + E("ks-gw", 180, 122, 34, 42) },
             {
@@ -244,7 +251,7 @@ export function kamerSceneSvg(id, aan, nieuw = null, viewBox = "0 0 360 220") {
         .join("");
     return (`<svg class="ks-svg" viewBox="${viewBox}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="De kamer van binnen">` +
         `<defs><radialGradient id="ks-gw"><stop offset="0" stop-color="#ffd28a" stop-opacity=".6"/><stop offset="1" stop-color="#ffd28a" stop-opacity="0"/></radialGradient></defs>` +
-        `<rect class="ks-wand" x="-900" y="-900" width="2160" height="1074"/><rect class="ks-vloer" x="-900" y="174" width="2160" height="900"/><path class="ks-plint" d="M-900 174H1260"/><path class="ks-planklijn" d="M-900 192H1260M-900 208H1260M-900 228H1260M-900 250H1260M-900 278H1260M-900 310H1260"/>` +
+        `<rect class="ks-wand" x="-900" y="-900" width="2160" height="1074"/><rect class="ks-dado" x="-900" y="130" width="2160" height="44"/><path class="ks-dadolijn" d="M-900 130H1260"/><rect class="ks-vloer" x="-900" y="174" width="2160" height="900"/><path class="ks-plint" d="M-900 174H1260"/><path class="ks-planklijn" d="M-900 192H1260M-900 208H1260M-900 228H1260M-900 250H1260M-900 278H1260M-900 310H1260"/>` +
         bouw.basis +
         voorwerpen +
         `</svg>`);
