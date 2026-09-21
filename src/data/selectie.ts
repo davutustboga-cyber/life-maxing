@@ -106,6 +106,9 @@ export const zoneConfig: Record<Zone, ZoneConfig> = {
         { id: "box-ademhaling" },
         { id: "2-3-4-5-ademhaling" },
         { id: "vijf-zintuigen-grounding" },
+        // v30: progressieve spierontspanning past qua duur (5-12 min) en
+        // pastBij precies bij deze rotatie van zone A.
+        { id: "progressieve-spierontspanning" },
       ],
     },
   },

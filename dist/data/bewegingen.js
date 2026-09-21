@@ -133,7 +133,7 @@ export const bewegingen = [
         herkomst: [
             {
                 label: "W",
-                regel: "Ergens anders naar leren kijken werkt over allerlei culturen heen beter dan een gevoel wegduwen — maar pas als de eerste onrust al wat gezakt is, en dat is precies waarom dit hier pas als tweede stap komt.",
+                regel: "Dit is 'zorgtijd' (worry postponement): een piekergedachte opschrijven en een vast moment kiezen om erop terug te komen, in plaats van hem meteen te willen oplossen. Een meta-analyse van zeven onderzoeken bij bijna duizend mensen (Dippel e.a., 2023) vond dat dit de tijd die mensen piekerend doorbrengen en hoe vaak dat gebeurt allebei iets terugbrengt — een bescheiden effect, gemeten over hooguit een maand: over de lange termijn is er geen onderzoek.",
             },
         ],
         pastBij: ["piekerend", "malend", "onzeker", "besluiteloos", "wantrouwend", "verward"],
@@ -605,6 +605,36 @@ export const bewegingen = [
             "Niet tijdens het rijden, en niet in of vlak bij water.",
             "Bij paniek- of hyperventilatieklachten: eerst kort en rustig ademen, zonder de adem vast te houden. Bij zwangerschap, hart- of vaatklachten of longklachten: eerst navragen bij een arts.",
             "Word je duizelig of licht in je hoofd: stop en adem gewoon door.",
+        ],
+    },
+    // ──────────────────────────────────────────────────────────────────────────────
+    // v30 (21 sept 2026): progressieve spierontspanning — ontbrak in de
+    // lichaamscategorie (die tot nu toe alleen adem, licht, kou en lopen had).
+    // Bronnen gecontroleerd, zelfde eerlijke stijl als de andere bewegingen:
+    // een echt cijfer, met de spreiding en de tegenvallers erbij, geen gladde
+    // samenvatting.
+    // ──────────────────────────────────────────────────────────────────────────────
+    {
+        id: "progressieve-spierontspanning",
+        titel: "Progressieve spierontspanning",
+        soort: "nu",
+        streek: "lichaam",
+        domeinLabel: "algemeen — kalmerend, via het lichaam",
+        kosten: { tijdMinuten: [5, 12], energie: "laag", drempel: "klein" },
+        minimumversie: "Alleen je handen en schouders aanspannen en loslaten is al een begin.",
+        script: "Ga zitten of liggen. Span steeds één spiergroep zo'n vijf tellen aan, en laat daarna helemaal los — voel bewust het verschil. Begin bij je voeten en kuiten. Dan je bovenbenen en billen. Dan je buik. Dan je handen en armen. Dan je schouders, naar je oren toe. Eindig met je gezicht: ogen dicht, kaak los. Adem gewoon door terwijl je aanspant.",
+        herkomst: [
+            {
+                label: "W",
+                regel: "Een overzicht van 46 publicaties bij meer dan 3.400 volwassenen (Muhammad Khir e.a., 2024) vond dat progressieve spierontspanning stress, angst en somberheid verminderde; hoe lang (5 tot 28 minuten) en hoe vaak mensen oefenden maakte daarbij geen duidelijk verschil. Eerlijke nuance: het is een overzicht zonder samengevoegd effectcijfer, van onderzoeken van wisselende kwaliteit (ook zonder gerandomiseerde controlegroep) — een goede aanwijzing dat het vaak helpt, geen garantie.",
+            },
+        ],
+        pastBij: ["gespannen", "gejaagd", "overprikkeld", "onrustig", "rusteloos"],
+        pastNietBij: [],
+        nooitAanbiedenAls: [],
+        medischeGrens: [
+            "Bij een recente spierblessure, operatie of ernstige hart- of vaatklachten: sla die spiergroep over, of vraag het eerst na.",
+            "Span nooit tot pijn — een duidelijke spanning is genoeg.",
         ],
     },
     // ──────────────────────────────────────────────────────────────────────────────

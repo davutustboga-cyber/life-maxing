@@ -40,6 +40,7 @@ export const themas: Thema[] = [
       "fysiologische-zucht",
       "box-ademhaling",
       "2-3-4-5-ademhaling",
+      "progressieve-spierontspanning",
       "benoemen-en-parkeren",
       "afstand-nemen-van-jezelf",
       "tawakkul-route",
